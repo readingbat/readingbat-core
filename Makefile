@@ -5,8 +5,8 @@
         publish-maven-central upgrade-wrapper \
         _check-gpg-env _require-version _require-gradle-version
 
-VERSION := $(shell grep -E '^version=' gradle.properties | cut -d= -f2)
-GRADLE_VERSION := $(shell grep -E '^gradle[[:space:]]*=' gradle/libs.versions.toml | sed -E 's/.*"([^"]+)".*/\1/')
+VERSION := $(shell sed -n 's/^version=\(.*\)/\1/p' gradle.properties)
+GRADLE_VERSION := $(shell sed -n 's/^gradle = "\(.*\)"/\1/p' gradle/libs.versions.toml)
 
 GPG_ENV = \
 	ORG_GRADLE_PROJECT_signingInMemoryKey="$$(gpg --armor --export-secret-keys "$$GPG_SIGNING_KEY_ID")" \
@@ -15,9 +15,10 @@ GPG_ENV = \
 
 default: versioncheck
 
-help: ## Show this help message
-	@awk 'BEGIN { FS = ":.*## "; printf "Available targets:\n\n" } \
-	/^[a-zA-Z_-]+:.*## / { printf "  \033[36m%-24s\033[0m %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
+help:  ## Show this help (list of targets)
+	@awk 'BEGIN {FS = ":.*?## "; printf "Usage: make <target>\n\nTargets:\n"} \
+		/^[a-zA-Z0-9_-]+:.*?## / {printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}' \
+		$(MAKEFILE_LIST)
 
 stop: ## Stop the Gradle daemon
 	./gradlew --stop
@@ -128,6 +129,10 @@ publish-maven-central: _require-version _check-gpg-env ## Publish and release a 
 	$(GPG_ENV) ./gradlew publishAndReleaseToMavenCentral
 
 upgrade-wrapper: _require-gradle-version ## Upgrade the Gradle wrapper to the catalog version
+	# Gradle's documented upgrade procedure: the first run rewrites
+	# gradle-wrapper.properties using the *old* wrapper jar; the second run
+	# regenerates the wrapper itself with the new version.
+	./gradlew wrapper --gradle-version=$(GRADLE_VERSION) --distribution-type=bin
 	./gradlew wrapper --gradle-version=$(GRADLE_VERSION) --distribution-type=bin
 
 _check-gpg-env:
