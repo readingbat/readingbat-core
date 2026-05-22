@@ -1,6 +1,6 @@
 # Release Notes
 
-## v3.1.9 — Unreleased
+## v3.2.0 — Unreleased
 
 Cleanup release: dedupes the `/oauth` URL literal, trims redundant entries from the auth/readiness allowlists, adds a Codecov configuration, centralizes toolchain versions in the version catalog, migrates detekt to the 2.0 alpha line, and tightens the Makefile.
 
@@ -15,7 +15,7 @@ Cleanup release: dedupes the `/oauth` URL literal, trims redundant entries from 
 - **Kotlin serialization plugin wired explicitly.** `readingbat-core/build.gradle.kts` now applies `libs.plugins.kotlin.serialization` via the catalog alias so the compiler plugin is in effect for the subproject (root keeps the `apply false` declaration).
 - **Makefile tightening.** New `make help` target prints a self-documenting index of every target with a `## description` annotation, and a bare `make` invokes it. `make lint` now runs Kotlinter and detekt in a single Gradle invocation instead of double-running detekt via a prerequisite. The inline Python in `make coverage-packages` moves to `scripts/coverage_packages.py`. Inline `ifeq` version guards become explicit prerequisite targets (`_check-gpg-env`, `_require-version`, `_require-gradle-version`), and `$GPG_SIGNING_KEY_ID` is properly quoted in the signing block.
 
-**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.8...3.1.9
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.8...3.2.0
 
 ---
 
