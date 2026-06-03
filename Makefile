@@ -1,6 +1,6 @@
 .PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
         coverage coverage-html coverage-xml coverage-log coverage-verify coverage-open coverage-packages coverage-clean \
-        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline depends versioncheck kdocs clean-docs \
+        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline depends versions kdocs clean-docs \
         site publish-local publish-local-snapshot publish-snapshot \
         publish-maven-central upgrade-wrapper \
         _check-gpg-env _require-version _require-gradle-version
@@ -13,7 +13,7 @@ GPG_ENV = \
 	ORG_GRADLE_PROJECT_signingInMemoryKeyId="$$GPG_SIGNING_KEY_ID" \
 	ORG_GRADLE_PROJECT_signingInMemoryKeyPassword="$$(security find-generic-password -a "gpg-signing" -s "gradle-signing-password" -w)"
 
-default: versioncheck
+default: help
 
 help:  ## Show this help (list of targets)
 	@awk 'BEGIN {FS = ":.*?## "; printf "Usage: make <target>\n\nTargets:\n"} \
@@ -103,8 +103,8 @@ detekt-baseline: ## Generate detekt baseline file
 depends: ## Show project dependency tree
 	./gradlew dependencies
 
-versioncheck: ## Report available dependency updates
-	./gradlew dependencyUpdates --no-parallel
+versions: ## Report available dependency updates
+	./gradlew dependencyUpdates --no-configuration-cache --no-parallel
 
 kdocs: ## Generate Dokka HTML documentation
 	./gradlew dokkaGeneratePublicationHtml
