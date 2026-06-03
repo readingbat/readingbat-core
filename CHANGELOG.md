@@ -4,7 +4,7 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [3.1.9] - Unreleased
+## [3.2.0] - Unreleased
 
 ### Changed
 
@@ -17,7 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Applied the `kotlin.serialization` plugin to `readingbat-core/build.gradle.kts` via the catalog alias (root declares it `apply false`); the subproject already pulled in the `serialization` runtime dependency, this wires the compiler plugin so adapters generate correctly
 - `make lint` now runs `lintKotlinMain`, `lintKotlinTest`, and `detekt` in a single Gradle invocation instead of invoking detekt twice via a prerequisite target
 - Quoted `$GPG_SIGNING_KEY_ID` in the Makefile `GPG_ENV` block so a key id containing spaces or shell metacharacters can't break the export
-- Bumped version to 3.1.9
+- Bumped version to 3.2.0
 
 ### Added
 
