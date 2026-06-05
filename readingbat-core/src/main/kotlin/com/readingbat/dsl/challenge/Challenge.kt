@@ -262,7 +262,7 @@ class JavaChallenge(
           }
       }
 
-    val correctAnswers = timedValue.value
+    val correctAnswers = timedValue.value ?: error("Null result for answers for $challengeName")
     logger.debug { "$challengeName computed answers in ${timedValue.duration}" }
 
     if (correctAnswers !is List<*>)
