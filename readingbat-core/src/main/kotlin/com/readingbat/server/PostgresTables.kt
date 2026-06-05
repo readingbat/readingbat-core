@@ -35,12 +35,16 @@ val userChallengeInfoIndex =
   Index(listOf(UserChallengeInfoTable.userRef, UserChallengeInfoTable.md5), true, "user_challenge_info_unique")
 
 val userAnswerHistoryIndex =
-  Index(listOf(UserAnswerHistoryTable.userRef, UserAnswerHistoryTable.md5), true, "user_answer_history_unique")
+  Index(
+    listOf(UserAnswerHistoryTable.userRef, UserAnswerHistoryTable.md5, UserAnswerHistoryTable.invocation),
+    true,
+    "user_answer_history_unique",
+  )
 
 val oauthLinksProviderIndex =
   Index(listOf(OAuthLinksTable.provider, OAuthLinksTable.providerId), true, "oauth_links_provider_unique")
 
-val geoInfosUnique = Index(listOf(GeoInfosTable.id), true, "geo_info_unique")
+val geoInfosUnique = Index(listOf(GeoInfosTable.ip), true, "geo_info_unique")
 
 /** Tracks anonymous browser sessions identified by a random session ID cookie. */
 object BrowserSessionsTable : LongIdTable("browser_sessions") {
