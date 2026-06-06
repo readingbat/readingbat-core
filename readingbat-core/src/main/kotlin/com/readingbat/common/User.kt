@@ -228,8 +228,8 @@ class User {
         select(likeDislike)
           .where {
             (userRef eq userDbmsId) and
-            ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
-              }
+              ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
+          }
           .map { it.toString() }
       }
     }
@@ -359,7 +359,7 @@ class User {
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean) =
     transaction {
       with(UserSessionsTable) {
-        upsert(userSessionIndex) { row ->
+        upsert(conflictIndex = userSessionIndex) { row ->
           row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
           row[updated] = nowInstant()
@@ -374,7 +374,7 @@ class User {
     logger.info { "Resetting $fullName ($email) active class code" }
     transaction {
       with(UserSessionsTable) {
-        upsert(userSessionIndex) { row ->
+        upsert(conflictIndex = userSessionIndex) { row ->
           row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
           row[updated] = nowInstant()
@@ -475,29 +475,29 @@ class User {
     readonlyTx {
       val browserSessionCount =
         with(UserSessionsTable) {
-        select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
-      }
+          select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
+        }
       val correctAnswerCount =
         with(UserChallengeInfoTable) {
-        select(Count(id)).where { (userRef eq userDbmsId) and allCorrect }.map { it[0] as Long }.first()
-      }
+          select(Count(id)).where { (userRef eq userDbmsId) and allCorrect }.map { it[0] as Long }.first()
+        }
       val likeDislikeCount =
         with(UserChallengeInfoTable) {
-        select(Count(id))
-          .where {
-            (userRef eq userDbmsId) and
-            ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
-              }
-          .map { it[0] as Long }.first()
-      }
+          select(Count(id))
+            .where {
+              (userRef eq userDbmsId) and
+                ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
+            }
+            .map { it[0] as Long }.first()
+        }
       val challengeCount =
         with(UserChallengeInfoTable) {
-        select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
-      }
+          select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
+        }
       val invocationCount =
         with(UserAnswerHistoryTable) {
-        select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
-      }
+          select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
+        }
 
       logger.info { "Deleting User: $userId $fullName ($email)" }
       logger.info { "Browser sessions: $browserSessionCount, Correct: $correctAnswerCount, Likes: $likeDislikeCount" }
@@ -527,7 +527,7 @@ class User {
         val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(userAnswerHistoryIndex) { row ->
+            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
               row[userRef] = userDbmsId
               row[md5] = challenge.md5(result.invocation)
               row[updated] = nowInstant()
@@ -594,13 +594,13 @@ class User {
 
         else -> {
           transaction {
-          with(UserSessionsTable) {
-            select(column)
-              .where { (sessionRef eq user.queryOrCreateSessionDbmsId()) and (userRef eq user.userDbmsId) }
-              .map { it[0] as String }
-              .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            with(UserSessionsTable) {
+              select(column)
+                .where { (sessionRef eq user.queryOrCreateSessionDbmsId()) and (userRef eq user.userDbmsId) }
+                .map { it[0] as String }
+                .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            }
           }
-        }
         }
       }
 

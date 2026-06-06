@@ -29,6 +29,6 @@ import org.jetbrains.exposed.v1.jdbc.upsert
  * Exposed's upsert directly.
  */
 fun <T : Table> T.upsert(
-  index: Index,
+  conflictIndex: Index,
   body: T.(UpsertStatement<Long>) -> Unit,
-): UpsertStatement<Long> = upsert(keys = index.columns.toTypedArray(), body = body)
+): UpsertStatement<Long> = upsert(keys = conflictIndex.columns.toTypedArray(), body = body)

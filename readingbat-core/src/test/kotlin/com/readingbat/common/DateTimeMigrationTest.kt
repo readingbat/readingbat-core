@@ -150,7 +150,7 @@ class DateTimeMigrationTest : StringSpec() {
         val firstInsertTime = nowInstant().truncateToMicros()
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = firstInsertTime
@@ -175,7 +175,7 @@ class DateTimeMigrationTest : StringSpec() {
         val updateTime = nowInstant().truncateToMicros()
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = updateTime
@@ -216,7 +216,7 @@ class DateTimeMigrationTest : StringSpec() {
 
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(userAnswerHistoryIndex) { row ->
+            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = historyMd5
               row[invocation] = invocationText
@@ -256,7 +256,7 @@ class DateTimeMigrationTest : StringSpec() {
         val challengeMd5 = "instantexpr-md5"
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = nowInstant()

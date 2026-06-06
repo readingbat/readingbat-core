@@ -411,7 +411,7 @@ internal object ChallengePost {
               }
 
             with(UserChallengeInfoTable) {
-              upsert(userChallengeInfoIndex) { row ->
+              upsert(conflictIndex = userChallengeInfoIndex) { row ->
                 row[userRef] = user.userDbmsId
                 row[md5] = challengeMd5
                 row[updated] = nowInstant()
@@ -423,7 +423,7 @@ internal object ChallengePost {
             // Save the history of each answer on a per-invocation basis
             pairs.forEach { (historyMd5, history) ->
               with(UserAnswerHistoryTable) {
-                upsert(userAnswerHistoryIndex) { row ->
+                upsert(conflictIndex = userAnswerHistoryIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = historyMd5
                   row[invocation] = history.invocation.value
@@ -457,7 +457,7 @@ internal object ChallengePost {
       val challengeMd5 = names.md5()
       transaction {
         with(UserChallengeInfoTable) {
-          upsert(userChallengeInfoIndex) { row ->
+          upsert(conflictIndex = userChallengeInfoIndex) { row ->
             row[userRef] = user.userDbmsId
             row[md5] = challengeMd5
             row[updated] = nowInstant()

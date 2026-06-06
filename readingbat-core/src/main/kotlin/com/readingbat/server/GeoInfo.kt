@@ -100,7 +100,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
   fun insert() {
     transaction {
       with(GeoInfosTable) {
-        upsert(geoInfosUnique) { row ->
+        upsert(conflictIndex = geoInfosUnique) { row ->
           row[ip] = remoteHost
           row[json] = this@GeoInfo.json
 

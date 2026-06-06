@@ -110,7 +110,7 @@ class CodeQualityFixesTest : StringSpec() {
         // Insert a like using enum value
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "likedislike-query-md5"
               row[updated] = nowInstant()
@@ -252,7 +252,7 @@ class CodeQualityFixesTest : StringSpec() {
         // Add some challenge data so COUNT queries have rows to count
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "delete-count-md5"
               row[updated] = nowInstant()
@@ -262,7 +262,7 @@ class CodeQualityFixesTest : StringSpec() {
             }
           }
           with(UserAnswerHistoryTable) {
-            upsert(userAnswerHistoryIndex) { row ->
+            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "delete-count-md5"
               row[invocation] = "test(1)"

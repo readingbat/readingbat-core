@@ -65,7 +65,7 @@ class LikeDislikePersistenceTest : StringSpec() {
         // Set like (value = 1)
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = nowInstant()
@@ -93,7 +93,7 @@ class LikeDislikePersistenceTest : StringSpec() {
         // Set dislike (value = 2)
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = nowInstant()
@@ -137,7 +137,7 @@ class LikeDislikePersistenceTest : StringSpec() {
         // Set like
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = nowInstant()
@@ -151,7 +151,7 @@ class LikeDislikePersistenceTest : StringSpec() {
         // Update to dislike
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = nowInstant()

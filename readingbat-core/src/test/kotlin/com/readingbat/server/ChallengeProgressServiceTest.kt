@@ -62,7 +62,7 @@ class ChallengeProgressServiceTest : StringSpec() {
 
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[UserChallengeInfoTable.md5] = md5
               row[created] = nowInstant()
@@ -92,7 +92,7 @@ class ChallengeProgressServiceTest : StringSpec() {
 
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(userChallengeInfoIndex) { row ->
+            upsert(conflictIndex = userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[UserChallengeInfoTable.md5] = md5
               row[created] = nowInstant()
