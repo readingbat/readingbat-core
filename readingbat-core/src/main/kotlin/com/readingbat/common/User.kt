@@ -22,7 +22,6 @@ import com.pambrose.common.email.Email.Companion.EMPTY_EMAIL
 import com.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
-import com.pambrose.common.exposed.upsert
 import com.pambrose.common.util.maxLength
 import com.pambrose.common.util.md5Of
 import com.pambrose.common.util.randomId
@@ -63,6 +62,7 @@ import com.readingbat.server.UserAnswerHistoryTable
 import com.readingbat.server.UserChallengeInfoTable
 import com.readingbat.server.UserSessionsTable
 import com.readingbat.server.UsersTable
+import com.readingbat.server.upsert
 import com.readingbat.server.userAnswerHistoryIndex
 import com.readingbat.server.userSessionIndex
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -228,8 +228,8 @@ class User {
         select(likeDislike)
           .where {
             (userRef eq userDbmsId) and
-            ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
-              }
+              ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
+          }
           .map { it.toString() }
       }
     }
@@ -475,29 +475,29 @@ class User {
     readonlyTx {
       val browserSessionCount =
         with(UserSessionsTable) {
-        select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
-      }
+          select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
+        }
       val correctAnswerCount =
         with(UserChallengeInfoTable) {
-        select(Count(id)).where { (userRef eq userDbmsId) and allCorrect }.map { it[0] as Long }.first()
-      }
+          select(Count(id)).where { (userRef eq userDbmsId) and allCorrect }.map { it[0] as Long }.first()
+        }
       val likeDislikeCount =
         with(UserChallengeInfoTable) {
-        select(Count(id))
-          .where {
-            (userRef eq userDbmsId) and
-            ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
-              }
-          .map { it[0] as Long }.first()
-      }
+          select(Count(id))
+            .where {
+              (userRef eq userDbmsId) and
+                ((likeDislike eq LikeDislike.LIKE.value) or (likeDislike eq LikeDislike.DISLIKE.value))
+            }
+            .map { it[0] as Long }.first()
+        }
       val challengeCount =
         with(UserChallengeInfoTable) {
-        select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
-      }
+          select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
+        }
       val invocationCount =
         with(UserAnswerHistoryTable) {
-        select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
-      }
+          select(Count(id)).where { userRef eq userDbmsId }.map { it[0] as Long }.first()
+        }
 
       logger.info { "Deleting User: $userId $fullName ($email)" }
       logger.info { "Browser sessions: $browserSessionCount, Correct: $correctAnswerCount, Likes: $likeDislikeCount" }
@@ -594,13 +594,13 @@ class User {
 
         else -> {
           transaction {
-          with(UserSessionsTable) {
-            select(column)
-              .where { (sessionRef eq user.queryOrCreateSessionDbmsId()) and (userRef eq user.userDbmsId) }
-              .map { it[0] as String }
-              .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            with(UserSessionsTable) {
+              select(column)
+                .where { (sessionRef eq user.queryOrCreateSessionDbmsId()) and (userRef eq user.userDbmsId) }
+                .map { it[0] as String }
+                .firstOrNull()?.let { ClassCode(it) } ?: DISABLED_CLASS_CODE
+            }
           }
-        }
         }
       }
 

@@ -21,7 +21,6 @@ import com.pambrose.common.dsl.KtorDsl.get
 import com.pambrose.common.dsl.KtorDsl.withHttpClient
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
-import com.pambrose.common.exposed.upsert
 import com.readingbat.common.Constants
 import com.readingbat.common.EnvVar
 import io.github.oshai.kotlinlogging.KotlinLogging

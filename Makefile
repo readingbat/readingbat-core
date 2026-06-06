@@ -1,8 +1,7 @@
 .PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
         coverage coverage-html coverage-xml coverage-log coverage-verify coverage-open coverage-packages coverage-clean \
         dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline depends versions kdocs clean-docs \
-        site publish-local publish-local-snapshot publish-snapshot \
-        publish-maven-central upgrade-wrapper \
+        site publish-local publish-local-snapshot publish-snapshot publish-maven-central upgrade-wrapper \
         _check-gpg-env _require-version _require-gradle-version
 
 VERSION := $(shell sed -n 's/^version=\(.*\)/\1/p' gradle.properties)
