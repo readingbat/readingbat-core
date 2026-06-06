@@ -19,7 +19,6 @@ package com.readingbat.common
 
 import com.pambrose.common.email.Email
 import com.pambrose.common.exposed.readonlyTx
-import com.pambrose.common.exposed.upsert
 import com.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.readingbat.common.User.Companion.emailCache
@@ -46,6 +45,7 @@ import kotlinx.html.Entities
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.upsert
 
 class CodeQualityFixesTest : StringSpec() {
   init {
@@ -110,7 +110,7 @@ class CodeQualityFixesTest : StringSpec() {
         // Insert a like using enum value
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "likedislike-query-md5"
               row[updated] = nowInstant()
@@ -252,7 +252,7 @@ class CodeQualityFixesTest : StringSpec() {
         // Add some challenge data so COUNT queries have rows to count
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "delete-count-md5"
               row[updated] = nowInstant()
@@ -262,7 +262,7 @@ class CodeQualityFixesTest : StringSpec() {
             }
           }
           with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "delete-count-md5"
               row[invocation] = "test(1)"

@@ -22,7 +22,6 @@ import com.pambrose.common.email.Email.Companion.EMPTY_EMAIL
 import com.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
-import com.pambrose.common.exposed.upsert
 import com.pambrose.common.util.maxLength
 import com.pambrose.common.util.md5Of
 import com.pambrose.common.util.randomId
@@ -82,6 +81,7 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
+import org.jetbrains.exposed.v1.jdbc.upsert
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.contracts.contract
 import kotlin.time.measureTime
@@ -359,7 +359,7 @@ class User {
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean) =
     transaction {
       with(UserSessionsTable) {
-        upsert(conflictIndex = userSessionIndex) { row ->
+        upsert(*userSessionIndex.columns.toTypedArray()) { row ->
           row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
           row[updated] = nowInstant()
@@ -374,7 +374,7 @@ class User {
     logger.info { "Resetting $fullName ($email) active class code" }
     transaction {
       with(UserSessionsTable) {
-        upsert(conflictIndex = userSessionIndex) { row ->
+        upsert(*userSessionIndex.columns.toTypedArray()) { row ->
           row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
           row[updated] = nowInstant()
@@ -527,7 +527,7 @@ class User {
         val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = userDbmsId
               row[md5] = challenge.md5(result.invocation)
               row[updated] = nowInstant()

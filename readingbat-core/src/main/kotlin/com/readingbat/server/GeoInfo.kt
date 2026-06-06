@@ -21,7 +21,6 @@ import com.pambrose.common.dsl.KtorDsl.get
 import com.pambrose.common.dsl.KtorDsl.withHttpClient
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
-import com.pambrose.common.exposed.upsert
 import com.readingbat.common.Constants
 import com.readingbat.common.EnvVar
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -36,6 +35,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.upsert
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -101,7 +101,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
   fun insert() {
     transaction {
       with(GeoInfosTable) {
-        upsert(conflictIndex = geoInfosUnique) { row ->
+        upsert(*geoInfosUnique.columns.toTypedArray()) { row ->
           row[ip] = remoteHost
           row[json] = this@GeoInfo.json
 

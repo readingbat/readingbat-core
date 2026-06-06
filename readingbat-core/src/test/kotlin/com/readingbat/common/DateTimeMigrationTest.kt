@@ -18,9 +18,7 @@
 package com.readingbat.common
 
 import com.pambrose.common.email.Email
-import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
-import com.pambrose.common.exposed.upsert
 import com.readingbat.server.FullName
 import com.readingbat.server.OAuthLinksTable
 import com.readingbat.server.UserAnswerHistoryTable
@@ -39,6 +37,7 @@ import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.upsert
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
 
@@ -151,7 +150,7 @@ class DateTimeMigrationTest : StringSpec() {
         val firstInsertTime = nowInstant().truncateToMicros()
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = firstInsertTime
@@ -176,7 +175,7 @@ class DateTimeMigrationTest : StringSpec() {
         val updateTime = nowInstant().truncateToMicros()
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = updateTime
@@ -217,7 +216,7 @@ class DateTimeMigrationTest : StringSpec() {
 
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = historyMd5
               row[invocation] = invocationText
@@ -257,7 +256,7 @@ class DateTimeMigrationTest : StringSpec() {
         val challengeMd5 = "instantexpr-md5"
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = nowInstant()

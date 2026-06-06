@@ -18,7 +18,6 @@
 package com.readingbat.posts
 
 import com.pambrose.common.email.Email
-import com.pambrose.common.exposed.upsert
 import com.readingbat.common.OAuthProvider
 import com.readingbat.common.User
 import com.readingbat.common.nowInstant
@@ -36,6 +35,7 @@ import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.shouldBe
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.upsert
 
 class AnswerHistoryPersistenceTest : StringSpec() {
   init {
@@ -72,7 +72,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         // Write answer history
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[UserAnswerHistoryTable.md5] = md5
               row[updated] = nowInstant()
@@ -109,7 +109,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
 
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[UserAnswerHistoryTable.md5] = md5
               row[updated] = nowInstant()
@@ -142,7 +142,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         // Insert two history entries
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = md5A
               row[updated] = nowInstant()
@@ -151,7 +151,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
               row[incorrectAttempts] = 0
               row[historyJson] = Json.encodeToString(listOf("answerA"))
             }
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = md5B
               row[updated] = nowInstant()
@@ -188,7 +188,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         // Initial insert
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[UserAnswerHistoryTable.md5] = md5
               row[updated] = nowInstant()
@@ -205,7 +205,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         // Upsert with updated data
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[UserAnswerHistoryTable.md5] = md5
               row[updated] = nowInstant()
@@ -239,7 +239,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         // Insert challenge info as incomplete
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = nowInstant()
@@ -254,7 +254,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         // Update to all correct
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = challengeMd5
               row[updated] = nowInstant()
@@ -284,7 +284,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         // Add challenge info entry
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "activity-challenge-md5"
               row[updated] = nowInstant()
@@ -297,7 +297,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         // Add answer history entry
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "activity-invocation-md5"
               row[updated] = nowInstant()

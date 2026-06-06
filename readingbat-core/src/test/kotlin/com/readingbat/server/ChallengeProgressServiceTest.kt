@@ -18,7 +18,6 @@
 package com.readingbat.server
 
 import com.pambrose.common.email.Email
-import com.pambrose.common.exposed.upsert
 import com.readingbat.common.OAuthProvider
 import com.readingbat.common.User
 import com.readingbat.common.nowInstant
@@ -26,6 +25,7 @@ import com.readingbat.withTestApp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.upsert
 
 class ChallengeProgressServiceTest : StringSpec() {
   init {
@@ -63,7 +63,7 @@ class ChallengeProgressServiceTest : StringSpec() {
 
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[UserChallengeInfoTable.md5] = md5
               row[created] = nowInstant()
@@ -93,7 +93,7 @@ class ChallengeProgressServiceTest : StringSpec() {
 
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(conflictIndex = userChallengeInfoIndex) { row ->
+            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
               row[userRef] = user.userDbmsId
               row[UserChallengeInfoTable.md5] = md5
               row[created] = nowInstant()

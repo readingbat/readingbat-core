@@ -17,7 +17,6 @@
 
 package com.readingbat.posts
 
-import com.pambrose.common.exposed.upsert
 import com.pambrose.common.util.encode
 import com.pambrose.common.util.maxLength
 import com.pambrose.common.util.md5Of
@@ -83,6 +82,7 @@ import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import org.jetbrains.exposed.v1.jdbc.upsert
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
@@ -411,7 +411,7 @@ internal object ChallengePost {
               }
 
             with(UserChallengeInfoTable) {
-              upsert(conflictIndex = userChallengeInfoIndex) { row ->
+              upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
                 row[userRef] = user.userDbmsId
                 row[md5] = challengeMd5
                 row[updated] = nowInstant()
@@ -423,7 +423,7 @@ internal object ChallengePost {
             // Save the history of each answer on a per-invocation basis
             pairs.forEach { (historyMd5, history) ->
               with(UserAnswerHistoryTable) {
-                upsert(conflictIndex = userAnswerHistoryIndex) { row ->
+                upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = historyMd5
                   row[invocation] = history.invocation.value
@@ -457,7 +457,7 @@ internal object ChallengePost {
       val challengeMd5 = names.md5()
       transaction {
         with(UserChallengeInfoTable) {
-          upsert(conflictIndex = userChallengeInfoIndex) { row ->
+          upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
             row[userRef] = user.userDbmsId
             row[md5] = challengeMd5
             row[updated] = nowInstant()
