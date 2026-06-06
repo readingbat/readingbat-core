@@ -35,7 +35,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.jetbrains.exposed.v1.jdbc.upsert
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -101,7 +100,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
   fun insert() {
     transaction {
       with(GeoInfosTable) {
-        upsert(*geoInfosUnique.columns.toTypedArray()) { row ->
+        upsert(geoInfosUnique) { row ->
           row[ip] = remoteHost
           row[json] = this@GeoInfo.json
 

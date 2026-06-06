@@ -62,6 +62,7 @@ import com.readingbat.server.UserAnswerHistoryTable
 import com.readingbat.server.UserChallengeInfoTable
 import com.readingbat.server.UserSessionsTable
 import com.readingbat.server.UsersTable
+import com.readingbat.server.upsert
 import com.readingbat.server.userAnswerHistoryIndex
 import com.readingbat.server.userSessionIndex
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -81,7 +82,6 @@ import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
-import org.jetbrains.exposed.v1.jdbc.upsert
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.contracts.contract
 import kotlin.time.measureTime
@@ -359,7 +359,7 @@ class User {
   fun assignActiveClassCode(classCode: ClassCode, resetPreviousClassCode: Boolean) =
     transaction {
       with(UserSessionsTable) {
-        upsert(*userSessionIndex.columns.toTypedArray()) { row ->
+        upsert(userSessionIndex) { row ->
           row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
           row[updated] = nowInstant()
@@ -374,7 +374,7 @@ class User {
     logger.info { "Resetting $fullName ($email) active class code" }
     transaction {
       with(UserSessionsTable) {
-        upsert(*userSessionIndex.columns.toTypedArray()) { row ->
+        upsert(userSessionIndex) { row ->
           row[sessionRef] = queryOrCreateSessionDbmsId()
           row[userRef] = userDbmsId
           row[updated] = nowInstant()
@@ -527,7 +527,7 @@ class User {
         val history = ChallengeHistory(result.invocation).apply { markUnanswered() }
         transaction {
           with(UserAnswerHistoryTable) {
-            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
+            upsert(userAnswerHistoryIndex) { row ->
               row[userRef] = userDbmsId
               row[md5] = challenge.md5(result.invocation)
               row[updated] = nowInstant()

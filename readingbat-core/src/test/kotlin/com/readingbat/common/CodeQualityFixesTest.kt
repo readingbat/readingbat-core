@@ -33,6 +33,7 @@ import com.readingbat.server.FullName
 import com.readingbat.server.UserAnswerHistoryTable
 import com.readingbat.server.UserChallengeInfoTable
 import com.readingbat.server.UsersTable
+import com.readingbat.server.upsert
 import com.readingbat.server.userAnswerHistoryIndex
 import com.readingbat.server.userChallengeInfoIndex
 import com.readingbat.withTestApp
@@ -45,7 +46,6 @@ import kotlinx.html.Entities
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.jetbrains.exposed.v1.jdbc.upsert
 
 class CodeQualityFixesTest : StringSpec() {
   init {
@@ -110,7 +110,7 @@ class CodeQualityFixesTest : StringSpec() {
         // Insert a like using enum value
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
+            upsert(userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "likedislike-query-md5"
               row[updated] = nowInstant()
@@ -252,7 +252,7 @@ class CodeQualityFixesTest : StringSpec() {
         // Add some challenge data so COUNT queries have rows to count
         transaction {
           with(UserChallengeInfoTable) {
-            upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
+            upsert(userChallengeInfoIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "delete-count-md5"
               row[updated] = nowInstant()
@@ -262,7 +262,7 @@ class CodeQualityFixesTest : StringSpec() {
             }
           }
           with(UserAnswerHistoryTable) {
-            upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
+            upsert(userAnswerHistoryIndex) { row ->
               row[userRef] = user.userDbmsId
               row[md5] = "delete-count-md5"
               row[invocation] = "test(1)"

@@ -62,6 +62,7 @@ import com.readingbat.server.PageResult
 import com.readingbat.server.ServerUtils.paramMap
 import com.readingbat.server.UserAnswerHistoryTable
 import com.readingbat.server.UserChallengeInfoTable
+import com.readingbat.server.upsert
 import com.readingbat.server.userAnswerHistoryIndex
 import com.readingbat.server.userChallengeInfoIndex
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -82,7 +83,6 @@ import org.jetbrains.exposed.v1.core.dao.id.LongIdTable
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import org.jetbrains.exposed.v1.jdbc.upsert
 
 internal data class StudentInfo(val studentId: String, val firstName: String, val lastName: String)
 
@@ -411,7 +411,7 @@ internal object ChallengePost {
               }
 
             with(UserChallengeInfoTable) {
-              upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
+              upsert(userChallengeInfoIndex) { row ->
                 row[userRef] = user.userDbmsId
                 row[md5] = challengeMd5
                 row[updated] = nowInstant()
@@ -423,7 +423,7 @@ internal object ChallengePost {
             // Save the history of each answer on a per-invocation basis
             pairs.forEach { (historyMd5, history) ->
               with(UserAnswerHistoryTable) {
-                upsert(*userAnswerHistoryIndex.columns.toTypedArray()) { row ->
+                upsert(userAnswerHistoryIndex) { row ->
                   row[userRef] = user.userDbmsId
                   row[md5] = historyMd5
                   row[invocation] = history.invocation.value
@@ -457,7 +457,7 @@ internal object ChallengePost {
       val challengeMd5 = names.md5()
       transaction {
         with(UserChallengeInfoTable) {
-          upsert(*userChallengeInfoIndex.columns.toTypedArray()) { row ->
+          upsert(userChallengeInfoIndex) { row ->
             row[userRef] = user.userDbmsId
             row[md5] = challengeMd5
             row[updated] = nowInstant()
