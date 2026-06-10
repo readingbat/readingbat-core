@@ -53,10 +53,8 @@ import com.readingbat.posts.ChallengeResults
 import com.readingbat.server.ChallengeMd5
 import com.readingbat.server.Invocation
 import com.readingbat.server.LanguageName
-import com.readingbat.server.ScriptPools.pythonEvaluatorPool
 import com.readingbat.utils.toCapitalized
 import io.github.oshai.kotlinlogging.KotlinLogging
-import javax.script.ScriptException
 
 /**
  * Metadata and answer-checking logic for a single challenge function.
@@ -285,25 +283,47 @@ class FunctionInfo(
       return csv.split(",").map { it.trim() }
     }
 
-    private suspend fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
-      fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
-      val compareExpr = "${trim()} == ${correctAnswer.trim()}"
-      return runCatching {
-        logger.debug { "Check answers expression: $compareExpr" }
-        val result = pythonEvaluatorPool.eval(compareExpr) as Boolean
-        result to (if (result) "" else deriveHint())
-      }.getOrElse { e ->
-        when (e) {
-          is ScriptException -> {
-            logger.info { "Caught exception comparing $this and $correctAnswer: ${e.message} in: $compareExpr" }
-            false to deriveHint()
-          }
+    /**
+     * Compares two Python list literals for equality without invoking the script engine.
+     *
+     * The previous implementation interpolated the raw user response into a Python expression
+     * and evaluated it via the Jython pool, which let a crafted answer execute arbitrary code on
+     * the server. This parses both sides into elements and compares them with Python's lenient
+     * list-equality semantics: whitespace-insensitive, single/double quotes interchangeable
+     * (`'a' == "a"`), and numeric values compared by value (`1 == 1.0`).
+     *
+     * A list answer must be bracketed: an unbracketed response (e.g. `False, False`) is malformed
+     * and never matches, consistent with the "Answer should be bracketed" hint.
+     */
+    internal fun pythonListEquals(userResponse: String, correctAnswer: String): Boolean {
+      val lhs = userResponse.trim()
+      val rhs = correctAnswer.trim()
+      if (lhs.isNotBracketed()) return false
+      val lho = lhs.removeSurrounding("[", "]")
+      val rho = if (rhs.isBracketed()) rhs.removeSurrounding("[", "]") else rhs
+      val lhElements = parseListElements(lho)
+      val rhElements = parseListElements(rho)
+      return lhElements.size == rhElements.size &&
+        lhElements.zip(rhElements).all { (lh, rh) -> pythonElementEquals(lh, rh) }
+    }
 
-          else -> {
-            false to deriveHint()
-          }
-        }
-      }
+    private fun pythonElementEquals(lhs: String, rhs: String): Boolean {
+      if (lhs == rhs) return true
+      // Numbers compare by value so 1 == 1.0 and 1.0 == 1.00, matching Python.
+      val lhsNum = lhs.toDoubleOrNull()
+      val rhsNum = rhs.toDoubleOrNull()
+      if (lhsNum != null && rhsNum != null) return lhsNum == rhsNum
+      // Strings: single and double quotes are interchangeable in Python.
+      return lhs.normalizeQuotes() == rhs.normalizeQuotes()
+    }
+
+    private fun String.normalizeQuotes() = if (isSingleQuoted()) singleToDoubleQuoted() else this
+
+    private fun String.equalsAsPythonList(correctAnswer: String): Pair<Boolean, String> {
+      fun deriveHint() = if (isNotBracketed()) "Answer should be bracketed" else ""
+      val result = pythonListEquals(this, correctAnswer)
+      logger.debug { "Check Python answers list comparison: $this == $correctAnswer -> $result" }
+      return result to (if (result) "" else deriveHint())
     }
 
     private fun String.equalsAsJvmScalar(
