@@ -82,6 +82,7 @@ import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.th
 import kotlinx.html.tr
+import org.apache.commons.text.StringEscapeUtils.escapeEcmaScript
 
 /**
  * Generates the individual student summary page at `/studentsummary`.
@@ -166,11 +167,21 @@ internal object StudentSummaryPage {
       }
   }
 
+  /**
+   * Builds the inline `onSubmit` confirmation handler for the remove-from-class button.
+   *
+   * The student name is user-controlled and is embedded inside a single-quoted JS string literal,
+   * so it is escaped with [escapeEcmaScript] to neutralize quotes and other JS metacharacters and
+   * prevent script injection into the teacher's page.
+   */
+  internal fun confirmRemovalScript(studentName: String): String =
+    "return confirm('Are you sure you want to remove ${escapeEcmaScript(studentName)} from the class?')"
+
   internal fun BODY.removeFromClassButton(student: User, studentName: String) {
     form(classes = "m-0") {
       action = TEACHER_PREFS_ENDPOINT
       method = post
-      onSubmit = "return confirm('Are you sure you want to remove $studentName from the class?')"
+      onSubmit = confirmRemovalScript(studentName)
       hiddenInput {
         name = USER_ID_PARAM
         value = student.userId
