@@ -291,11 +291,15 @@ class FunctionInfo(
      * the server. This parses both sides into elements and compares them with Python's lenient
      * list-equality semantics: whitespace-insensitive, single/double quotes interchangeable
      * (`'a' == "a"`), and numeric values compared by value (`1 == 1.0`).
+     *
+     * A list answer must be bracketed: an unbracketed response (e.g. `False, False`) is malformed
+     * and never matches, consistent with the "Answer should be bracketed" hint.
      */
     internal fun pythonListEquals(userResponse: String, correctAnswer: String): Boolean {
       val lhs = userResponse.trim()
       val rhs = correctAnswer.trim()
-      val lho = if (lhs.isBracketed()) lhs.removeSurrounding("[", "]") else lhs
+      if (lhs.isNotBracketed()) return false
+      val lho = lhs.removeSurrounding("[", "]")
       val rho = if (rhs.isBracketed()) rhs.removeSurrounding("[", "]") else rhs
       val lhElements = parseListElements(lho)
       val rhElements = parseListElements(rho)

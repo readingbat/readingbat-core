@@ -74,6 +74,16 @@ class PythonListComparisonTest : StringSpec() {
       pythonListEquals("[]", "[1]") shouldBe false
     }
 
+    // A list answer must be bracketed; otherwise it is malformed and incorrect, even if its
+    // comma-separated contents would match. The old eval-based path rejected these for free.
+    "an unbracketed answer is not equal to a bracketed list" {
+      pythonListEquals("False, False", "[False, False]") shouldBe false
+    }
+
+    "an unbracketed single value is not equal to a bracketed list" {
+      pythonListEquals("1", "[1]") shouldBe false
+    }
+
     // Security: a code-injection payload must be treated as inert data, never evaluated,
     // and must not match a legitimate answer.
     "code injection payload is inert and returns false" {
