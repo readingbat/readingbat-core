@@ -62,6 +62,7 @@ import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
 import io.ktor.server.plugins.forwardedheaders.XForwardedHeaders
 import io.ktor.server.plugins.origin
 import io.ktor.server.plugins.ratelimit.RateLimit
+import io.ktor.server.plugins.ratelimit.RateLimitConfig
 import io.ktor.server.plugins.statuspages.StatusPages
 import io.ktor.server.request.path
 import io.ktor.server.request.uri
@@ -86,6 +87,26 @@ import kotlin.time.Duration.Companion.seconds
 object Installs {
   private val logger = KotlinLogging.logger {}
   private val excludedEndpoints = listOf("/$STATIC/", "$WS_ROOT/")
+
+  /**
+   * Paths excluded from rate limiting: static assets, WebSocket upgrades, and health pings.
+   * These are high-volume legitimate traffic that should not consume a client's request budget.
+   */
+  internal fun isRateLimitExcluded(path: String): Boolean =
+    path == PING_ENDPOINT || excludedEndpoints.any { path.startsWith(it) }
+
+  /**
+   * Configures a global rate limiter keyed per client IP, so that every request (not just routes
+   * wrapped in `rateLimit { }`) is throttled. Requests to [isRateLimitExcluded] paths are given a
+   * weight of 0 so they never consume tokens, leaving normal browsing of static assets unaffected.
+   */
+  internal fun RateLimitConfig.configureGlobalRateLimit(limit: Int, refillSeconds: Int) {
+    global {
+      rateLimiter(limit = limit, refillPeriod = refillSeconds.seconds)
+      requestKey { call -> call.request.origin.remoteHost }
+      requestWeight { call, _ -> if (isRateLimitExcluded(call.request.path())) 0 else 1 }
+    }
+  }
 
   /** Installs all Ktor plugins. OAuth providers are auto-configured when credentials are present; [production] controls cookie security and HTTPS redirect. */
   fun Application.installs(production: Boolean) {
@@ -149,13 +170,19 @@ object Installs {
       }
     }
 
-    install(RateLimit) {
-      register {
-        rateLimiter(
+    // Rate limiting is enforced in production only, mirroring the other production-gated
+    // hardening here (HSTS, secure cookies, HTTPS redirect). The limiter is global and keyed per
+    // client IP; static/WebSocket/ping traffic is excluded so normal browsing is not throttled.
+    if (production) {
+      logger.info { "Installing global rate limiter" }
+      install(RateLimit) {
+        configureGlobalRateLimit(
           limit = EnvVar.RATE_LIMIT_COUNT.getEnv(10),
-          refillPeriod = EnvVar.RATE_LIMIT_SECS.getEnv(1).seconds,
+          refillSeconds = EnvVar.RATE_LIMIT_SECS.getEnv(1),
         )
       }
+    } else {
+      logger.info { "Not installing rate limiter (non-production)" }
     }
 
     fun String.startsWithList(prefixes: Iterable<String>) = prefixes.any { startsWith(it) }
