@@ -29,6 +29,7 @@ import com.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.LIKE_DISLIKE
 import com.readingbat.server.ws.PubSubCommandsWs.PubSubTopic.USER_ANSWERS
 import com.readingbat.utils.toJson
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.apache.commons.text.StringEscapeUtils.escapeHtml4
 
 /**
  * Publishes real-time answer updates and like/dislike events to teacher dashboards via WebSocket.
@@ -41,6 +42,16 @@ internal object AnswerPublisher {
   private val logger = KotlinLogging.logger {}
 
   private val wsFlow get() = if (isMultiServerEnabled()) multiServerWsWriteFlow else singleServerWsFlow
+
+  /**
+   * Builds the answer-history string sent to the teacher dashboard, most-recent first.
+   *
+   * The dashboard renders this value via `innerHTML` on a live WebSocket update, so each student
+   * answer is HTML-escaped to prevent stored XSS. Only the `<br>` separators between answers remain
+   * live markup, mirroring the (already-escaped) server-side initial render.
+   */
+  internal fun formatDashboardAnswers(answers: List<String>, maxHistoryLength: Int): String =
+    answers.asReversed().take(maxHistoryLength).joinToString("<br>") { escapeHtml4(it) }
 
   /** Publishes a student's answer update for a specific challenge invocation to the teacher's dashboard. */
   suspend fun publishAnswers(
@@ -56,7 +67,7 @@ internal object AnswerPublisher {
       DashboardHistory(
         history.invocation.value,
         history.correct,
-        history.answers.asReversed().take(maxHistoryLength).joinToString("<br>"),
+        formatDashboardAnswers(history.answers, maxHistoryLength),
       )
     val targetName = classTargetName(user.enrolledClassCode, challengeMd5)
     val dashboardInfo = DashboardInfo(user.userId, complete, numCorrect, dashboardHistory)
