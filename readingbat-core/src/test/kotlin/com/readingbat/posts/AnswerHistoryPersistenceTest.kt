@@ -18,6 +18,7 @@
 package com.readingbat.posts
 
 import com.pambrose.common.email.Email
+import com.pambrose.common.exposed.upsert
 import com.readingbat.common.OAuthProvider
 import com.readingbat.common.User
 import com.readingbat.common.nowInstant
@@ -25,7 +26,6 @@ import com.readingbat.server.FullName
 import com.readingbat.server.Invocation
 import com.readingbat.server.UserAnswerHistoryTable
 import com.readingbat.server.UserChallengeInfoTable
-import com.readingbat.server.upsert
 import com.readingbat.server.userAnswerHistoryIndex
 import com.readingbat.server.userChallengeInfoIndex
 import com.readingbat.withTestApp

@@ -19,6 +19,7 @@ package com.readingbat.common
 
 import com.pambrose.common.email.Email
 import com.pambrose.common.exposed.readonlyTx
+import com.pambrose.common.exposed.upsert
 import com.readingbat.common.ClassCode.Companion.DISABLED_CLASS_CODE
 import com.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.readingbat.common.User.Companion.emailCache
@@ -33,7 +34,6 @@ import com.readingbat.server.FullName
 import com.readingbat.server.UserAnswerHistoryTable
 import com.readingbat.server.UserChallengeInfoTable
 import com.readingbat.server.UsersTable
-import com.readingbat.server.upsert
 import com.readingbat.server.userAnswerHistoryIndex
 import com.readingbat.server.userChallengeInfoIndex
 import com.readingbat.withTestApp

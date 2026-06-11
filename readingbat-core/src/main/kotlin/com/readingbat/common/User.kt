@@ -22,6 +22,7 @@ import com.pambrose.common.email.Email.Companion.EMPTY_EMAIL
 import com.pambrose.common.email.Email.Companion.UNKNOWN_EMAIL
 import com.pambrose.common.exposed.get
 import com.pambrose.common.exposed.readonlyTx
+import com.pambrose.common.exposed.upsert
 import com.pambrose.common.util.maxLength
 import com.pambrose.common.util.md5Of
 import com.pambrose.common.util.randomId
@@ -62,7 +63,6 @@ import com.readingbat.server.UserAnswerHistoryTable
 import com.readingbat.server.UserChallengeInfoTable
 import com.readingbat.server.UserSessionsTable
 import com.readingbat.server.UsersTable
-import com.readingbat.server.upsert
 import com.readingbat.server.userAnswerHistoryIndex
 import com.readingbat.server.userSessionIndex
 import io.github.oshai.kotlinlogging.KotlinLogging
