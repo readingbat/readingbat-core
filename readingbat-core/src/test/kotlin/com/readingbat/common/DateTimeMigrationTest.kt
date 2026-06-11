@@ -19,12 +19,12 @@ package com.readingbat.common
 
 import com.pambrose.common.email.Email
 import com.pambrose.common.exposed.readonlyTx
+import com.pambrose.common.exposed.upsert
 import com.readingbat.server.FullName
 import com.readingbat.server.OAuthLinksTable
 import com.readingbat.server.UserAnswerHistoryTable
 import com.readingbat.server.UserChallengeInfoTable
 import com.readingbat.server.UsersTable
-import com.readingbat.server.upsert
 import com.readingbat.server.userAnswerHistoryIndex
 import com.readingbat.server.userChallengeInfoIndex
 import com.readingbat.withTestApp

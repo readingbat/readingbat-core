@@ -17,6 +17,7 @@
 
 package com.readingbat.posts
 
+import com.pambrose.common.exposed.upsert
 import com.pambrose.common.util.encode
 import com.pambrose.common.util.maxLength
 import com.pambrose.common.util.md5Of
@@ -62,7 +63,6 @@ import com.readingbat.server.PageResult
 import com.readingbat.server.ServerUtils.paramMap
 import com.readingbat.server.UserAnswerHistoryTable
 import com.readingbat.server.UserChallengeInfoTable
-import com.readingbat.server.upsert
 import com.readingbat.server.userAnswerHistoryIndex
 import com.readingbat.server.userChallengeInfoIndex
 import io.github.oshai.kotlinlogging.KotlinLogging

@@ -18,6 +18,7 @@
 package com.readingbat.server
 
 import com.pambrose.common.email.Email
+import com.pambrose.common.exposed.upsert
 import com.readingbat.common.OAuthProvider
 import com.readingbat.common.User
 import com.readingbat.common.nowInstant
