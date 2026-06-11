@@ -223,5 +223,59 @@ class ClassManagementTest : StringSpec() {
         DISABLED_CLASS_CODE.fetchEnrollees().shouldBeEmpty()
       }
     }
+
+    "ownsClass returns true for a class the teacher created" {
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("Owner Teacher"),
+            emailVal = Email("owner-teacher@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "owner-teacher-001",
+          )
+        val classCode = ClassCode.newClassCode()
+        teacher.addClassCode(classCode, "Owned Class")
+
+        teacher.ownsClass(classCode) shouldBe true
+      }
+    }
+
+    "ownsClass returns false for a class owned by another teacher" {
+      withTestApp {
+        val owner =
+          User.createOAuthUser(
+            name = FullName("Real Owner"),
+            emailVal = Email("real-owner@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "real-owner-001",
+          )
+        val attacker =
+          User.createOAuthUser(
+            name = FullName("Attacker Teacher"),
+            emailVal = Email("attacker-teacher@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "attacker-teacher-001",
+          )
+        val classCode = ClassCode.newClassCode()
+        owner.addClassCode(classCode, "Owner's Class")
+
+        attacker.ownsClass(classCode) shouldBe false
+      }
+    }
+
+    "ownsClass returns false for a disabled or nonexistent class" {
+      withTestApp {
+        val teacher =
+          User.createOAuthUser(
+            name = FullName("No Class Teacher"),
+            emailVal = Email("no-class-teacher@test.com"),
+            provider = OAuthProvider.GITHUB,
+            providerId = "no-class-teacher-001",
+          )
+
+        teacher.ownsClass(DISABLED_CLASS_CODE) shouldBe false
+        teacher.ownsClass(ClassCode("nonexistent-class-code")) shouldBe false
+      }
+    }
   }
 }

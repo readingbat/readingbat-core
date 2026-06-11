@@ -47,6 +47,7 @@ import com.readingbat.common.User.Companion.queryActiveTeachingClassCode
 import com.readingbat.common.User.Companion.queryPreviousTeacherClassCode
 import com.readingbat.common.User.Companion.toUser
 import com.readingbat.common.isValidUser
+import com.readingbat.dsl.InvalidRequestException
 import com.readingbat.dsl.ReadingBatContent
 import com.readingbat.pages.ClassSummaryPage.classSummaryPage
 import com.readingbat.pages.TeacherPrefsPage.teacherPrefsPage
@@ -96,6 +97,9 @@ internal object TeacherPrefsPost {
           val studentId = params[USER_ID_PARAM] ?: error("Missing: $USER_ID_PARAM")
           val student = studentId.toUser()
           val classCode = student.enrolledClassCode
+          // Only the teacher who owns the student's class may remove the student from it.
+          if (!user.ownsClass(classCode))
+            throw InvalidRequestException("User ${user.userId} does not own class $classCode")
           student.withdrawFromClass(classCode)
           val msg = "${student.fullName} removed from class ${classCode.toDisplayString()}"
           logger.info { msg }
@@ -165,6 +169,11 @@ internal object TeacherPrefsPost {
 
   private fun updateActiveClass(user: User, classCode: ClassCode) =
     when {
+      // A teacher may only make their own class active; disabling (student mode) is always allowed.
+      classCode.isEnabled && !user.ownsClass(classCode) -> {
+        throw InvalidRequestException("User ${user.userId} does not own class $classCode")
+      }
+
       // Do not allow this for classCode.isStudentMode because turns off the
       // student/teacher toggle mode
       queryActiveTeachingClassCode(user) == classCode && classCode.isEnabled -> {
@@ -194,6 +203,10 @@ internal object TeacherPrefsPost {
           user,
           Message("Invalid class code: $classCode", true),
         )
+      }
+
+      !user.ownsClass(classCode) -> {
+        throw InvalidRequestException("User ${user.userId} does not own class $classCode")
       }
 
       else -> {

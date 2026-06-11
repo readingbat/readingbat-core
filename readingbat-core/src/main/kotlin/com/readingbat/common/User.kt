@@ -265,6 +265,9 @@ class User {
       }
     }
 
+  /** Returns true if [classCode] is a valid class taught (owned) by this user. */
+  fun ownsClass(classCode: ClassCode) = classCode.isEnabled && classCode.fetchClassTeacherId() == userId
+
   fun isInDbms() =
     readonlyTx {
       with(UsersTable) {
