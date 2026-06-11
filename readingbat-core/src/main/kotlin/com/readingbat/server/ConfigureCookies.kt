@@ -21,8 +21,10 @@ import com.readingbat.common.AuthName.AUTH_COOKIE
 import com.readingbat.common.BrowserSession
 import com.readingbat.common.OAuthReturnUrl
 import com.readingbat.common.UserPrincipal
+import io.ktor.server.sessions.SessionTransportTransformerEncrypt
 import io.ktor.server.sessions.SessionsConfig
 import io.ktor.server.sessions.cookie
+import java.security.MessageDigest
 import kotlin.time.Duration.Companion.days
 
 /**
@@ -34,8 +36,45 @@ import kotlin.time.Duration.Companion.days
  * SameSite=Lax for CSRF protection and are marked httpOnly and secure in production.
  */
 internal object ConfigureCookies {
+  /**
+   * Insecure placeholder secret used only for local development and tests. Production must override
+   * it via the `SESSION_SECRET` environment variable; [resolveSessionSecret] refuses to start
+   * otherwise.
+   */
+  internal const val DEV_SESSION_SECRET = "readingbat-insecure-dev-session-secret-change-me"
+
+  /**
+   * Returns the session secret to key cookie signing/encryption with. In production an unset
+   * (blank) secret aborts startup, since running with no key would let anyone forge an
+   * authentication cookie. Outside production a blank secret falls back to [DEV_SESSION_SECRET].
+   */
+  internal fun resolveSessionSecret(production: Boolean, configured: String): String =
+    when {
+      configured.isNotBlank() -> configured
+      production -> error("SESSION_SECRET must be set in production: session cookies cannot be secured without a key")
+      else -> DEV_SESSION_SECRET
+    }
+
+  /**
+   * Derives a fixed-size key from [secret] for a given [purpose] via SHA-256. Distinct purposes
+   * (and cookie names) yield independent keys, so a token minted for one cookie cannot be replayed
+   * as another.
+   */
+  internal fun deriveKey(secret: String, purpose: String, size: Int): ByteArray =
+    MessageDigest.getInstance("SHA-256").digest("$secret:$purpose".toByteArray()).copyOf(size)
+
+  /**
+   * Builds the transformer that encrypts (AES-128) and then signs (HMAC-SHA256) a cookie's
+   * contents, using keys derived from [secret] and bound to [cookieName].
+   */
+  internal fun sessionTransformer(secret: String, cookieName: String): SessionTransportTransformerEncrypt =
+    SessionTransportTransformerEncrypt(
+      deriveKey(secret, "encrypt:$cookieName", 16),
+      deriveKey(secret, "sign:$cookieName", 32),
+    )
+
   /** Configures the anonymous browser session ID cookie used for tracking sessions before login. */
-  fun SessionsConfig.configureSessionIdCookie(production: Boolean) {
+  fun SessionsConfig.configureSessionIdCookie(production: Boolean, secret: String) {
     cookie<BrowserSession>("readingbat_session_id") {
       // storage = RedisSessionStorage(redis = pool.resource)) {
       // storage = directorySessionStorage(File("server-sessions"), cached = true)) {
@@ -47,11 +86,13 @@ internal object ConfigureCookies {
       // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.
       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#SameSite_cookies
       cookie.extensions["SameSite"] = "lax"
+
+      transform(sessionTransformer(secret, "readingbat_session_id"))
     }
   }
 
   /** Configures the authentication cookie that persists the [UserPrincipal] across requests. */
-  fun SessionsConfig.configureAuthCookie(production: Boolean) {
+  fun SessionsConfig.configureAuthCookie(production: Boolean, secret: String) {
     cookie<UserPrincipal>(name = AUTH_COOKIE) {
       cookie.path = "/" // CHALLENGE_ROOT + "/"
       cookie.httpOnly = true
@@ -63,17 +104,21 @@ internal object ConfigureCookies {
       // uploads, and changing settings, use "unsafe" HTTP verbs like POST and PUT, not GET or HEAD.
       // https://developer.mozilla.org/en-US/docs/Web/HTTP/Cookies#SameSite_cookies
       cookie.extensions["SameSite"] = "lax"
+
+      transform(sessionTransformer(secret, AUTH_COOKIE))
     }
   }
 
   /** Configures a short-lived cookie to preserve the return URL across the OAuth redirect flow. */
-  fun SessionsConfig.configureOAuthReturnUrlCookie(production: Boolean) {
+  fun SessionsConfig.configureOAuthReturnUrlCookie(production: Boolean, secret: String) {
     cookie<OAuthReturnUrl>("readingbat_oauth_return") {
       cookie.path = "/"
       cookie.httpOnly = true
       if (production) cookie.secure = true
       cookie.maxAgeInSeconds = 600 // 10 min — survives OAuth round-trip
       cookie.extensions["SameSite"] = "lax"
+
+      transform(sessionTransformer(secret, "readingbat_oauth_return"))
     }
   }
 }

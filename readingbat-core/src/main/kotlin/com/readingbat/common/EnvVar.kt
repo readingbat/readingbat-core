@@ -54,6 +54,7 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   XFORWARDED_ENABLED,
   RATE_LIMIT_COUNT,
   RATE_LIMIT_SECS,
+  SESSION_SECRET({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
   ;
 
   /** Returns true if this environment variable is set. */

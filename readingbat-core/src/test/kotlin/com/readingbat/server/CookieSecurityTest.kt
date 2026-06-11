@@ -32,11 +32,14 @@ class CookieSecurityTest : StringSpec() {
   init {
     afterEach {
       Property.IS_PRODUCTION.setProperty("false")
+      Property.SESSION_SECRET.setProperty("")
     }
 
     "Cookies have Secure flag in production mode" {
       initTestProperties()
       Property.IS_PRODUCTION.setProperty("true")
+      // Production refuses to start without a session secret, so provide one for the test.
+      Property.SESSION_SECRET.setProperty("test-session-secret")
 
       TestData.readTestContent()
         .also { testContent ->
