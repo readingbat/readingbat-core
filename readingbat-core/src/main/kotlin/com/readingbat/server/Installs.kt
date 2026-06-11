@@ -37,6 +37,7 @@ import com.readingbat.pages.NotFoundPage.notFoundPage
 import com.readingbat.server.ConfigureCookies.configureAuthCookie
 import com.readingbat.server.ConfigureCookies.configureOAuthReturnUrlCookie
 import com.readingbat.server.ConfigureCookies.configureSessionIdCookie
+import com.readingbat.server.ConfigureCookies.resolveSessionSecret
 import com.readingbat.server.ConfigureOAuth.configureGitHubOAuth
 import com.readingbat.server.ConfigureOAuth.configureGoogleOAuth
 import com.readingbat.server.ReadingBatServer.serverSessionId
@@ -112,10 +113,12 @@ object Installs {
   fun Application.installs(production: Boolean) {
     install(Resources)
 
+    val sessionSecret =
+      resolveSessionSecret(production, Property.SESSION_SECRET.getProperty("", errorOnNonInit = false))
     install(Sessions) {
-      configureSessionIdCookie(production)
-      configureAuthCookie(production)
-      configureOAuthReturnUrlCookie(production)
+      configureSessionIdCookie(production, sessionSecret)
+      configureAuthCookie(production, sessionSecret)
+      configureOAuthReturnUrlCookie(production, sessionSecret)
     }
 
     install(Authentication) {

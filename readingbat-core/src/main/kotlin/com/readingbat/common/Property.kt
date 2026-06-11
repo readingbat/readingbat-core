@@ -430,6 +430,14 @@ sealed class Property(
       maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
     )
 
+  /** Secret used to sign and encrypt session cookies. Required in production; see ConfigureCookies. */
+  object SESSION_SECRET :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.sessionSecret",
+      initFunc = { setProperty(EnvVar.SESSION_SECRET.getEnv(configValue(it, ""))) },
+      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+    )
+
   companion object {
     val envResendApiKey: String by lazy { RESEND_API_KEY.getRequiredProperty() }
     val envResendSender: Email by lazy { RESEND_SENDER_EMAIL.getRequiredProperty().toResendEmail() }
@@ -472,6 +480,7 @@ sealed class Property(
         GITHUB_OAUTH_CLIENT_SECRET,
         GOOGLE_OAUTH_CLIENT_ID,
         GOOGLE_OAUTH_CLIENT_SECRET,
+        SESSION_SECRET,
       )
   }
 }
