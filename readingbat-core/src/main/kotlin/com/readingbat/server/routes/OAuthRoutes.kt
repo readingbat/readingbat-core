@@ -19,7 +19,9 @@ package com.readingbat.server.routes
 
 import com.pambrose.common.email.Email
 import com.pambrose.common.exposed.readonlyTx
+import com.pambrose.common.util.randomId
 import com.readingbat.common.AuthName
+import com.readingbat.common.BrowserSession
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
@@ -70,21 +72,35 @@ private data class GitHubUser(
 )
 
 @Serializable
-private data class GitHubEmail(
+internal data class GitHubEmail(
   val email: String,
   val primary: Boolean = false,
   val verified: Boolean = false,
 )
 
+/**
+ * Resolves a usable GitHub email: the public profile email if set, otherwise the primary verified
+ * address, otherwise any verified address. Returns null when none is available so the caller can
+ * reject the login instead of creating an account with a blank email.
+ */
+internal fun resolveGitHubEmail(profileEmail: String?, emails: List<GitHubEmail>): String? =
+  profileEmail?.takeIf { it.isNotBlank() }
+    ?: emails.firstOrNull { it.primary && it.verified }?.email
+    ?: emails.firstOrNull { it.verified }?.email
+
 @Serializable
-private data class GoogleUser(
+internal data class GoogleUser(
   val id: String = "",
   val name: String? = null,
   val email: String? = null,
+  @SerialName("verified_email") val verifiedEmail: Boolean = false,
   @SerialName("given_name") val givenName: String? = null,
   @SerialName("family_name") val familyName: String? = null,
   val picture: String? = null,
 )
+
+/** Returns the Google account email only if it is present and Google reports it as verified. */
+internal fun GoogleUser.verifiedEmailOrNull(): String? = email?.takeIf { it.isNotBlank() && verifiedEmail }
 
 private val json = Json { ignoreUnknownKeys = true }
 
@@ -123,17 +139,24 @@ fun Routing.oauthRoutes() {
           }
         val ghUser = json.decodeFromString<GitHubUser>(userResponse.body<String>())
 
-        // Fetch primary email (handles private emails)
-        val email =
-          ghUser.email ?: run {
+        // Fetch the verified emails only when the profile email is missing (handles private emails).
+        val emails =
+          if (ghUser.email.isNullOrBlank()) {
             val emailsResponse =
               ConfigureOAuth.httpClient.get("https://api.github.com/user/emails") {
                 bearerAuth(accessToken)
               }
-            val emails = json.decodeFromString<List<GitHubEmail>>(emailsResponse.body<String>())
-            emails.firstOrNull { it.primary && it.verified }?.email
-              ?: emails.firstOrNull { it.verified }?.email
-              ?: ""
+            json.decodeFromString<List<GitHubEmail>>(emailsResponse.body<String>())
+          } else {
+            emptyList()
+          }
+
+        // Reject the login rather than create an account with a blank email.
+        val email =
+          resolveGitHubEmail(ghUser.email, emails) ?: run {
+            logger.warn { "GitHub OAuth rejected: no verified email for login=${ghUser.login}" }
+            call.respondRedirect("/")
+            return@get
           }
 
         val name = ghUser.name ?: ghUser.login
@@ -170,7 +193,14 @@ fun Routing.oauthRoutes() {
           }
         val googleUser = json.decodeFromString<GoogleUser>(userResponse.body<String>())
 
-        val email = googleUser.email ?: ""
+        // Reject logins without a Google-verified email to prevent account takeover via an
+        // unverified address that matches an existing ReadingBat user.
+        val email =
+          googleUser.verifiedEmailOrNull() ?: run {
+            logger.warn { "Google OAuth rejected: unverified or missing email for providerId=${googleUser.id}" }
+            call.respondRedirect("/")
+            return@get
+          }
         val name = googleUser.name ?: "${googleUser.givenName ?: ""} ${googleUser.familyName ?: ""}".trim()
         val providerId = googleUser.id
         val avatarUrl = googleUser.picture
@@ -193,10 +223,22 @@ private suspend fun RoutingContext.completeOAuthLogin(
   avatarUrl: String?,
 ) {
   val user = findOrCreateOAuthUser(provider, providerId, email, name, avatarUrl)
-  call.sessions.set(UserPrincipal(userId = user.userId))
+  establishAuthenticatedSession(user.userId)
   val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
   call.sessions.clear<OAuthReturnUrl>()
   call.respondRedirect(returnUrl)
+}
+
+/**
+ * Establishes the authenticated session after a successful login.
+ *
+ * Rotates the anonymous browser session to a fresh id before setting the principal, so any
+ * pre-login browser-session id (which an attacker may have fixed in the victim's browser) is
+ * discarded — closing the session-fixation vector.
+ */
+internal fun RoutingContext.establishAuthenticatedSession(userId: String) {
+  call.sessions.set(BrowserSession(id = randomId(15)))
+  call.sessions.set(UserPrincipal(userId = userId))
 }
 
 private fun findOrCreateOAuthUser(
