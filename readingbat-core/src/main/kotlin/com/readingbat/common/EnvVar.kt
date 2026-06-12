@@ -19,6 +19,21 @@ package com.readingbat.common
 
 import com.pambrose.common.util.obfuscate
 import com.readingbat.common.Constants.UNASSIGNED
+import io.github.oshai.kotlinlogging.KotlinLogging
+
+private val envVarLogger = KotlinLogging.logger {}
+
+/**
+ * Parses an environment variable [raw] value as an Int, falling back to [default] when it is unset
+ * or not a valid integer. A malformed value is logged and ignored rather than crashing startup
+ * (the previous `toInt()` threw `NumberFormatException`).
+ */
+internal fun parseIntEnv(name: String, raw: String?, default: Int): Int {
+  if (raw == null) return default
+  return raw.toIntOrNull() ?: default.also {
+    envVarLogger.warn { "Invalid integer for env var $name: '$raw'; using default $default" }
+  }
+}
 
 /**
  * Masks a secret for safe display in logs and the admin config page, revealing at most the last
@@ -81,9 +96,9 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   /** Returns the environment variable value as a Boolean, or [default] if not set. */
   fun getEnv(default: Boolean) = System.getenv(name)?.toBoolean() ?: default
 
-  /** Returns the environment variable value as an Int, or [default] if not set. */
+  /** Returns the environment variable value as an Int, or [default] if unset or not a valid integer. */
   @Suppress("unused")
-  fun getEnv(default: Int) = System.getenv(name)?.toInt() ?: default
+  fun getEnv(default: Int) = parseIntEnv(name, System.getenv(name), default)
 
   /** Returns the environment variable value, throwing an error if not set. */
   fun getRequiredEnv() = getEnvOrNull() ?: error("Missing $name value")
