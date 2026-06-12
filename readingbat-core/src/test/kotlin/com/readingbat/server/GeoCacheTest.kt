@@ -19,8 +19,12 @@ package com.readingbat.server
 
 import com.readingbat.withTestApp
 import io.kotest.core.spec.style.StringSpec
+import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.longs.shouldBeGreaterThan
 import io.kotest.matchers.shouldBe
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -45,6 +49,21 @@ class GeoCacheTest : StringSpec() {
 
         geo.requireDbmsLookUp shouldBe false
         geo.dbmsId shouldBeGreaterThan 0
+        GeoInfo.geoInfoMap[ip]?.requireDbmsLookUp shouldBe false
+      }
+    }
+
+    "concurrent lookups for the same IP coalesce into one consistent result" {
+      withTestApp {
+        val ip = "203.0.113.55"
+        GeoInfo.geoInfoMap.remove(ip)
+        transaction { GeoInfosTable.deleteWhere { GeoInfosTable.ip eq ip } }
+
+        val results = coroutineScope { (1..50).map { async { GeoInfo.lookupGeoInfo(ip) } }.awaitAll() }
+
+        // All concurrent lookups resolve to the same persisted entry without deadlock or error.
+        results.map { it.dbmsId }.toSet() shouldHaveSize 1
+        results.all { !it.requireDbmsLookUp } shouldBe true
         GeoInfo.geoInfoMap[ip]?.requireDbmsLookUp shouldBe false
       }
     }

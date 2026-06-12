@@ -27,9 +27,13 @@ import com.readingbat.common.EnvVar
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.statement.bodyAsText
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.async
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -137,8 +141,19 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
   companion object {
     private val logger = KotlinLogging.logger {}
     val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
-    private val mutex = Mutex()
-    private val httpClient = HttpClient(CIO)
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    // Per-IP in-flight lookups: concurrent requests for the same IP share one Deferred.
+    private val inflight = ConcurrentHashMap<String, Deferred<GeoInfo>>()
+    private val httpClient =
+      HttpClient(CIO) {
+        // A hung ipgeolocation.io endpoint must not stall the request-logging path indefinitely.
+        install(HttpTimeout) {
+          requestTimeoutMillis = 10_000
+          connectTimeoutMillis = 5_000
+          socketTimeoutMillis = 10_000
+        }
+      }
 
     private suspend fun callGeoInfoApi(ipAddress: String) =
       withHttpClient(httpClient) {
@@ -161,28 +176,42 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
         }
       }
 
+    /** Resolves geo info from Postgres, else the ipgeolocation.io API (or a failure placeholder), persisting it. */
+    private suspend fun resolveGeoInfo(ipAddress: String): GeoInfo =
+      queryGeoInfo(ipAddress)?.apply {
+        logger.debug { "Postgres GEO info for $ipAddress: ${summary()}" }
+      }
+        ?: runCatching {
+          callGeoInfoApi(ipAddress)
+        }.getOrElse { e ->
+          GeoInfo(true, -1, ipAddress, "")
+            .also {
+              logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" }
+            }
+        }.also { it.insert() }
+          // Re-read after insert so the cached entry carries the persisted id and
+          // requireDbmsLookUp=false, eliminating the per-request queryGeoInfo SELECT the
+          // request-logging path would otherwise run for every API/failure-sourced entry.
+          .let { built -> queryGeoInfo(ipAddress) ?: built }
+
     /**
-     * Looks up geolocation for [ipAddress], checking the in-memory cache first, then
-     * PostgreSQL, and finally calling the ipgeolocation.io API as a last resort.
+     * Looks up geolocation for [ipAddress], checking the in-memory cache first, then PostgreSQL,
+     * and finally the ipgeolocation.io API as a last resort.
+     *
+     * Concurrent lookups for the same IP share one in-flight request (per-IP coalescing) while
+     * different IPs resolve in parallel, so a slow/hung API call for one IP no longer head-of-line
+     * blocks geo resolution for every other request — unlike the previous single process-wide lock.
      */
     suspend fun lookupGeoInfo(ipAddress: String): GeoInfo =
-      geoInfoMap[ipAddress] ?: mutex.withLock {
-        geoInfoMap.getOrPut(ipAddress) {
-          queryGeoInfo(ipAddress)?.apply {
-            logger.debug { "Postgres GEO info for $ipAddress: ${summary()}" }
+      geoInfoMap[ipAddress] ?: run {
+        val deferred =
+          inflight.computeIfAbsent(ipAddress) {
+            scope.async { resolveGeoInfo(ipAddress).also { geoInfoMap[ipAddress] = it } }
           }
-            ?: runCatching {
-              callGeoInfoApi(ipAddress)
-            }.getOrElse { e ->
-              GeoInfo(true, -1, ipAddress, "")
-                .also {
-                  logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" }
-                }
-            }.also { it.insert() }
-              // Re-read after insert so the cached entry carries the persisted id and
-              // requireDbmsLookUp=false, eliminating the per-request queryGeoInfo SELECT the
-              // request-logging path would otherwise run for every API/failure-sourced entry.
-              .let { built -> queryGeoInfo(ipAddress) ?: built }
+        try {
+          deferred.await()
+        } finally {
+          inflight.remove(ipAddress, deferred)
         }
       }
   }
