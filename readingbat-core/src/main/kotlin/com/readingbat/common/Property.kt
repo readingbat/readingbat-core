@@ -221,7 +221,7 @@ sealed class Property(
     Property(
       propertyValue = "$READINGBAT.$SITE.resendApiKey",
       initFunc = { setProperty(EnvVar.RESEND_API_KEY.getEnv(configValue(it, ""))) },
-      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+      maskFunc = { getPropertyOrNull(false)?.maskSecret() ?: UNASSIGNED },
     )
 
   object RESEND_SENDER_EMAIL :
@@ -414,7 +414,7 @@ sealed class Property(
     Property(
       propertyValue = "$READINGBAT.$SITE.githubOAuthClientSecret",
       initFunc = { setProperty(EnvVar.GITHUB_OAUTH_CLIENT_SECRET.getEnv(configValue(it, ""))) },
-      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+      maskFunc = { getPropertyOrNull(false)?.maskSecret() ?: UNASSIGNED },
     )
 
   object GOOGLE_OAUTH_CLIENT_ID :
@@ -427,7 +427,7 @@ sealed class Property(
     Property(
       propertyValue = "$READINGBAT.$SITE.googleOAuthClientSecret",
       initFunc = { setProperty(EnvVar.GOOGLE_OAUTH_CLIENT_SECRET.getEnv(configValue(it, ""))) },
-      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+      maskFunc = { getPropertyOrNull(false)?.maskSecret() ?: UNASSIGNED },
     )
 
   /** Secret used to sign and encrypt session cookies. Required in production; see ConfigureCookies. */
@@ -435,7 +435,7 @@ sealed class Property(
     Property(
       propertyValue = "$READINGBAT.$SITE.sessionSecret",
       initFunc = { setProperty(EnvVar.SESSION_SECRET.getEnv(configValue(it, ""))) },
-      maskFunc = { getPropertyOrNull(false)?.obfuscate(4) ?: UNASSIGNED },
+      maskFunc = { getPropertyOrNull(false)?.maskSecret() ?: UNASSIGNED },
     )
 
   companion object {
