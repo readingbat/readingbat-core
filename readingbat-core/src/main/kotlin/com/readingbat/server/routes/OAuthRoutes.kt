@@ -70,11 +70,21 @@ private data class GitHubUser(
 )
 
 @Serializable
-private data class GitHubEmail(
+internal data class GitHubEmail(
   val email: String,
   val primary: Boolean = false,
   val verified: Boolean = false,
 )
+
+/**
+ * Resolves a usable GitHub email: the public profile email if set, otherwise the primary verified
+ * address, otherwise any verified address. Returns null when none is available so the caller can
+ * reject the login instead of creating an account with a blank email.
+ */
+internal fun resolveGitHubEmail(profileEmail: String?, emails: List<GitHubEmail>): String? =
+  profileEmail?.takeIf { it.isNotBlank() }
+    ?: emails.firstOrNull { it.primary && it.verified }?.email
+    ?: emails.firstOrNull { it.verified }?.email
 
 @Serializable
 private data class GoogleUser(
@@ -123,17 +133,24 @@ fun Routing.oauthRoutes() {
           }
         val ghUser = json.decodeFromString<GitHubUser>(userResponse.body<String>())
 
-        // Fetch primary email (handles private emails)
-        val email =
-          ghUser.email ?: run {
+        // Fetch the verified emails only when the profile email is missing (handles private emails).
+        val emails =
+          if (ghUser.email.isNullOrBlank()) {
             val emailsResponse =
               ConfigureOAuth.httpClient.get("https://api.github.com/user/emails") {
                 bearerAuth(accessToken)
               }
-            val emails = json.decodeFromString<List<GitHubEmail>>(emailsResponse.body<String>())
-            emails.firstOrNull { it.primary && it.verified }?.email
-              ?: emails.firstOrNull { it.verified }?.email
-              ?: ""
+            json.decodeFromString<List<GitHubEmail>>(emailsResponse.body<String>())
+          } else {
+            emptyList()
+          }
+
+        // Reject the login rather than create an account with a blank email.
+        val email =
+          resolveGitHubEmail(ghUser.email, emails) ?: run {
+            logger.warn { "GitHub OAuth rejected: no verified email for login=${ghUser.login}" }
+            call.respondRedirect("/")
+            return@get
           }
 
         val name = ghUser.name ?: ghUser.login
