@@ -74,7 +74,9 @@ internal object ClockWs {
     scope.launch(CoroutineName("clock-pinger")) {
       while (isActive) {
         delay(1.seconds)
-        for (sessionContext in wsConnections) {
+        // Iterate a snapshot under the set's monitor to avoid a ConcurrentModificationException
+        // (from concurrent add/remove) terminating the pinger coroutine.
+        for (sessionContext in wsConnections.snapshotUnderMonitor()) {
           runCatching {
             val elapsed = sessionContext.start.elapsedNow().format()
             val json = PingMessage("$elapsed [${wsConnections.size}/$maxWsConnections]").toJson()

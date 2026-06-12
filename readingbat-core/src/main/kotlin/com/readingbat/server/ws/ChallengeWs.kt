@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -88,6 +89,7 @@ internal object ChallengeWs {
     MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)
   }
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+  private val slowConsumerTimeout = 5.seconds
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
   var maxAnswerWsConnections = 0
 
@@ -116,7 +118,9 @@ internal object ChallengeWs {
     scope.launch(CoroutineName("pinger")) {
       while (isActive) {
         delay(1.seconds)
-        for (sessionContext in answerWsConnections) {
+        // Iterate a snapshot taken under the set's monitor so a concurrent add/remove can't throw
+        // a ConcurrentModificationException and kill the pinger coroutine.
+        for (sessionContext in answerWsConnections.snapshotUnderMonitor()) {
           if (sessionContext.enabled) {
             runCatching {
               val json = PingMessage(sessionContext.start.elapsedNow().format()).toJson()
@@ -154,12 +158,21 @@ internal object ChallengeWs {
             .onStart { logger.info { "Starting to read challenge ws channel values" } }
             .onCompletion { logger.info { "Finished reading challenge ws channel values" } }
             .collect { data ->
-              answerWsConnections
+              answerWsConnections.snapshotUnderMonitor()
                 .filter { it.targetName == data.target }
-                .forEach {
-                  it.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
-                  it.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
-                  logger.debug { "Sent $data ${answerWsConnections.size}" }
+                .forEach { ctx ->
+                  // Deliver to each recipient in its own child coroutine so one slow consumer can't
+                  // stall delivery to the others; close a session that stays blocked past the timeout.
+                  scope.launch {
+                    runCatching {
+                      withTimeoutOrNull(slowConsumerTimeout) {
+                        ctx.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
+                        ctx.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
+                      } ?: ctx.wsSession.close(CloseReason(GOING_AWAY, "Slow consumer"))
+                    }.onFailure { e ->
+                      logger.error { "Exception sending to ws client: ${e.simpleClassName} ${e.message}" }
+                    }
+                  }
                 }
             }
         }.onFailure { e ->
