@@ -95,10 +95,21 @@ export DBMS_URL="jdbc:pgsql://localhost:5432/readingbat"
 export DBMS_USERNAME="postgres"
 export DBMS_PASSWORD="docker"
 
+# Security: secret used to sign and encrypt session cookies.
+# Required in production (the server refuses to start without it); optional in local
+# development, where an insecure built-in default is used. Generate a strong random value with:
+#   openssl rand -hex 32
+export SESSION_SECRET="$(openssl rand -hex 32)"
+
 # Optional: OAuth (auto-configured when credentials are present)
 export GITHUB_OAUTH="your_github_token"
 export IPGEOLOCATION_KEY="your_geo_key"
 ```
+
+> **`SESSION_SECRET`** keys the HMAC signature and AES encryption applied to the authentication and
+> session cookies. In production it must be set or startup is aborted; in a multi-server deployment
+> every node must share the **same** value. Changing it invalidates all existing cookies, so users
+> are signed out once after a rotation.
 
 ## 🛠️ Development Commands
 
@@ -184,6 +195,9 @@ ReadingBat Core supports multiple deployment targets:
 Required environment variables for production:
 
 - `DBMS_URL`, `DBMS_USERNAME`, `DBMS_PASSWORD`
+- `SESSION_SECRET` — **required**; signs and encrypts session cookies. Generate with
+  `openssl rand -hex 32` and use the **same value across all nodes**. The server will not start
+  without it, and rotating it invalidates existing sessions (users are logged out once).
 - `AGENT_ENABLED=true` (for monitoring)
 - `RESEND_API_KEY` (for email notifications)
 
