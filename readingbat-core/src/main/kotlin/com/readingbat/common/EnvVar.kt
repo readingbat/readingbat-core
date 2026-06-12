@@ -21,6 +21,18 @@ import com.pambrose.common.util.obfuscate
 import com.readingbat.common.Constants.UNASSIGNED
 
 /**
+ * Masks a secret for safe display in logs and the admin config page, revealing at most the last
+ * four characters (and only for sufficiently long values). Replaces `obfuscate(4)`, which left
+ * ~75% of the secret visible.
+ */
+internal fun String.maskSecret(): String =
+  when {
+    isBlank() -> this
+    length < 12 -> "****"
+    else -> "****" + takeLast(4)
+  }
+
+/**
  * Environment variables that can override HOCON [Property] values.
  *
  * Each entry corresponds to a system environment variable. Sensitive values (API keys, passwords,
@@ -35,26 +47,26 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   CLOUD_SQL_CONNECTION_NAME,
   FILTER_LOG,
   GITHUB_OAUTH_CLIENT_ID,
-  GITHUB_OAUTH_CLIENT_SECRET({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
+  GITHUB_OAUTH_CLIENT_SECRET({ getEnvOrNull()?.maskSecret() ?: UNASSIGNED }),
   GOOGLE_OAUTH_CLIENT_ID,
-  GOOGLE_OAUTH_CLIENT_SECRET({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
+  GOOGLE_OAUTH_CLIENT_SECRET({ getEnvOrNull()?.maskSecret() ?: UNASSIGNED }),
   PAPERTRAIL_PORT,
-  IPGEOLOCATION_KEY({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
+  IPGEOLOCATION_KEY({ getEnvOrNull()?.maskSecret() ?: UNASSIGNED }),
   SCRIPT_CLASSPATH,
   OAUTH_CALLBACK_URL_PREFIX,
-  RESEND_API_KEY({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
+  RESEND_API_KEY({ getEnvOrNull()?.maskSecret() ?: UNASSIGNED }),
   RESEND_SENDER_EMAIL,
   REDIRECT_HOSTNAME,
   JAVA_TOOL_OPTIONS,
   DBMS_DRIVER_CLASSNAME,
-  DBMS_URL({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
+  DBMS_URL({ getEnvOrNull()?.maskSecret() ?: UNASSIGNED }),
   DBMS_USERNAME,
   DBMS_PASSWORD({ getEnvOrNull()?.obfuscate(1) ?: UNASSIGNED }),
   FORWARDED_ENABLED,
   XFORWARDED_ENABLED,
   RATE_LIMIT_COUNT,
   RATE_LIMIT_SECS,
-  SESSION_SECRET({ getEnvOrNull()?.obfuscate(4) ?: UNASSIGNED }),
+  SESSION_SECRET({ getEnvOrNull()?.maskSecret() ?: UNASSIGNED }),
   ;
 
   /** Returns true if this environment variable is set. */
