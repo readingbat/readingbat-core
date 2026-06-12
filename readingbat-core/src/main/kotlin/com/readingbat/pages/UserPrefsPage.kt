@@ -78,6 +78,7 @@ import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.textInput
 import kotlinx.html.tr
+import org.apache.commons.text.StringEscapeUtils.escapeEcmaScript
 
 /**
  * Generates the user preferences page at `/userprefs`.
@@ -89,6 +90,20 @@ import kotlinx.html.tr
 internal object UserPrefsPage {
   private val logger = KotlinLogging.logger {}
   private const val JOIN_CLASS_BUTTON = "JoinClassButton"
+
+  /**
+   * Builds the inline `onSubmit` confirmation for account deletion. The email is user-controlled
+   * and embedded in a single-quoted JS string, so it is escaped with [escapeEcmaScript].
+   */
+  internal fun deleteAccountConfirmJs(email: String): String =
+    "return confirm('Are you sure you want to permanently delete the account for ${escapeEcmaScript(email)} ?')"
+
+  /**
+   * Builds the inline `onSubmit` confirmation for withdrawing from a class. The class display
+   * string includes the teacher-set description, so it is escaped with [escapeEcmaScript].
+   */
+  internal fun withdrawConfirmJs(displayStr: String): String =
+    "return confirm('Are you sure you want to withdraw from class ${escapeEcmaScript(displayStr)}?')"
 
   fun RoutingContext.userPrefsPage(
     content: ReadingBatContent,
@@ -197,7 +212,7 @@ internal object UserPrefsPage {
           form {
             action = USER_PREFS_ENDPOINT
             method = FormMethod.post
-            onSubmit = "return confirm('Are you sure you want to withdraw from class $displayStr?')"
+            onSubmit = withdrawConfirmJs(displayStr)
             submitInput {
               style = "font-size:12px"
               name = PREFS_ACTION_PARAM
@@ -299,7 +314,7 @@ internal object UserPrefsPage {
         form {
           action = USER_PREFS_ENDPOINT
           method = FormMethod.post
-          onSubmit = "return confirm('Are you sure you want to permanently delete the account for $email ?')"
+          onSubmit = deleteAccountConfirmJs(email.toString())
           submitInput {
             style = "font-size:12px"
             name = PREFS_ACTION_PARAM
