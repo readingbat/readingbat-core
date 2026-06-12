@@ -84,11 +84,9 @@ class ChallengeGroup<T : Challenge>(
   // Do not use lazy for groupName because namePrefix is assigned late in the process of includes
   val groupName get() = GroupName("${namePrefix.ifBlank { "" }}${groupNameSuffix.value}")
 
-  private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
-
   private fun fetchDirContentsFromDirCache(path: String) =
     if (isContentCachingEnabled()) {
-      dirCache[path]?.toList().apply { logger.debug { """Retrieved "$path" from dir cache""" } }
+      readDirCache(path).apply { logger.debug { """Retrieved "$path" from dir cache""" } }
     } else {
       null
     }
@@ -101,12 +99,8 @@ class ChallengeGroup<T : Challenge>(
         root.organizationDirectoryContents(branchName, path, metrics)
       ).also {
         if (isContentCachingEnabled()) {
-          synchronized(dirCache) {
-            val dirContentsKey = dirContentsKey(path)
-            dirCache.computeIfAbsent(dirContentsKey) { mutableListOf() }
-            dirCache[dirContentsKey]!!.addAll(it)
-            logger.info { "Saved to dir cache: ${path.toDoubleQuoted()}" }
-          }
+          writeDirCache(path, it)
+          logger.info { "Saved to dir cache: ${path.toDoubleQuoted()}" }
         }
       }
 
@@ -278,5 +272,15 @@ class ChallengeGroup<T : Challenge>(
 
   companion object {
     private val logger = KotlinLogging.logger {}
+
+    private fun dirContentsKey(path: String) = keyOf(DIR_CONTENTS_KEY, md5Of(path))
+
+    /** Reads a cached directory listing using the same composite key the write uses. */
+    internal fun readDirCache(path: String): List<String>? = dirCache[dirContentsKey(path)]?.toList()
+
+    /** Overwrites the cached directory listing so repeated loads don't accumulate duplicates. */
+    internal fun writeDirCache(path: String, files: List<String>) {
+      dirCache[dirContentsKey(path)] = files.toMutableList()
+    }
   }
 }

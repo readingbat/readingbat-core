@@ -179,6 +179,10 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
                   logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" }
                 }
             }.also { it.insert() }
+              // Re-read after insert so the cached entry carries the persisted id and
+              // requireDbmsLookUp=false, eliminating the per-request queryGeoInfo SELECT the
+              // request-logging path would otherwise run for every API/failure-sourced entry.
+              .let { built -> queryGeoInfo(ipAddress) ?: built }
         }
       }
   }
