@@ -19,7 +19,9 @@ package com.readingbat.server.routes
 
 import com.pambrose.common.email.Email
 import com.pambrose.common.exposed.readonlyTx
+import com.pambrose.common.util.randomId
 import com.readingbat.common.AuthName
+import com.readingbat.common.BrowserSession
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_LOGIN_GITHUB_ENDPOINT
@@ -204,10 +206,22 @@ private suspend fun RoutingContext.completeOAuthLogin(
   avatarUrl: String?,
 ) {
   val user = findOrCreateOAuthUser(provider, providerId, email, name, avatarUrl)
-  call.sessions.set(UserPrincipal(userId = user.userId))
+  establishAuthenticatedSession(user.userId)
   val returnUrl = safeRedirectPath(call.sessions.get<OAuthReturnUrl>()?.url ?: "/")
   call.sessions.clear<OAuthReturnUrl>()
   call.respondRedirect(returnUrl)
+}
+
+/**
+ * Establishes the authenticated session after a successful login.
+ *
+ * Rotates the anonymous browser session to a fresh id before setting the principal, so any
+ * pre-login browser-session id (which an attacker may have fixed in the victim's browser) is
+ * discarded — closing the session-fixation vector.
+ */
+internal fun RoutingContext.establishAuthenticatedSession(userId: String) {
+  call.sessions.set(BrowserSession(id = randomId(15)))
+  call.sessions.set(UserPrincipal(userId = userId))
 }
 
 private fun findOrCreateOAuthUser(
