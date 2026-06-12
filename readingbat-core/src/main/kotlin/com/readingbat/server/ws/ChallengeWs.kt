@@ -50,6 +50,7 @@ import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.consumeAsFlow
@@ -68,6 +69,15 @@ import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeSource
 
 /**
+ * Builds a dashboard flow that drops the oldest buffered update on overflow instead of suspending
+ * the producer. The dashboard publish runs inline in the student answer-submit request, so a
+ * slow/absent teacher collector must never apply backpressure to it; a dropped intermediate update
+ * is acceptable since the next update supersedes it.
+ */
+internal fun <T> dashboardFlow(): MutableSharedFlow<T> =
+  MutableSharedFlow(extraBufferCapacity = FLOW_BUFFER_CAPACITY, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
+/**
  * WebSocket endpoint for real-time challenge answer updates.
  *
  * Teachers connect to this endpoint to receive live notifications when students
@@ -79,15 +89,10 @@ import kotlin.time.TimeSource
 internal object ChallengeWs {
   private val logger = KotlinLogging.logger {}
   private val clock = TimeSource.Monotonic
-  val singleServerWsFlow by lazy {
-    MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)
-  }
-  val multiServerWsWriteFlow by lazy {
-    MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)
-  }
-  val multiServerWsReadFlow by lazy {
-    MutableSharedFlow<ChallengeAnswerData>(extraBufferCapacity = FLOW_BUFFER_CAPACITY)
-  }
+
+  val singleServerWsFlow by lazy { dashboardFlow<ChallengeAnswerData>() }
+  val multiServerWsWriteFlow by lazy { dashboardFlow<ChallengeAnswerData>() }
+  val multiServerWsReadFlow by lazy { dashboardFlow<ChallengeAnswerData>() }
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
   private val slowConsumerTimeout = 5.seconds
   val answerWsConnections: MutableSet<AnswerSessionContext> = synchronizedSet(LinkedHashSet<AnswerSessionContext>())
