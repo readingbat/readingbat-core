@@ -98,12 +98,13 @@ internal object JavaParse {
    * inner expression as an [Invocation].
    */
   fun extractJavaInvocations(code: List<String>, start: Regex, end: Regex): List<Invocation> =
-    prefixes.flatMap { prefix ->
-      code.linesBetween(start, end)
-        .map { it.trimStart() }
-        .filter { it.startsWith("$prefix(") }
-        .map { Invocation(it.extractBalancedContent("$prefix(")) }
-    }
+    code.linesBetween(start, end)
+      .map { it.trimStart() }
+      .mapNotNull { line ->
+        // Detect the prefix per line and keep source-line order, rather than grouping by prefix.
+        val prefix = prefixes.firstOrNull { line.startsWith("$it(") } ?: return@mapNotNull null
+        Invocation(line.extractBalancedContent("$prefix("))
+      }
 
   /**
    * Converts Java challenge source code into an evaluable script.

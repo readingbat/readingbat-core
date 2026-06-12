@@ -127,15 +127,21 @@ internal object ChallengeGroupWs {
                   var likes = 0
                   var dislikes = 0
 
+                  // Batch the per-invocation history into a single query per enrollee instead of
+                  // two transactions per invocation (historyExists + answerHistory).
+                  val challengeMd5s =
+                    funcInfo.invocations.map { md5Of(languageName, groupName, challengeName, it) }
+
                   for (enrollee in enrollees) {
                     var attempted = 0
                     var numCorrect = 0
 
+                    val historyMap = enrollee.answerHistoryBulk(challengeMd5s)
                     for (invocation in funcInfo.invocations) {
                       val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
-                      if (enrollee.historyExists(historyMd5, invocation)) {
+                      val history = historyMap[historyMd5]
+                      if (history != null) {
                         attempted++
-                        val history = enrollee.answerHistory(historyMd5, invocation)
                         if (history.correct)
                           numCorrect++
 
