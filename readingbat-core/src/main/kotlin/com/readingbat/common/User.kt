@@ -278,12 +278,13 @@ class User {
       }
     }
 
+  // Only issues the UPDATE; the in-memory field is assigned by the caller after the surrounding
+  // transaction commits, so a rollback can't leave the object out of sync with the database.
   private fun assignEnrolledClassCode(classCode: ClassCode) =
     with(UsersTable) {
       update({ id eq userDbmsId }) { row ->
         row[updated] = nowInstant()
         row[enrolledClassCode] = classCode.classCode
-        this@User.enrolledClassCode = classCode
       }
     }
 
@@ -428,6 +429,7 @@ class User {
           assignEnrolledClassCode(classCode)
           classCode.addEnrollee(this@User)
         }
+        enrolledClassCode = classCode
       }
     }
   }
@@ -444,6 +446,7 @@ class User {
       if (enrolled)
         classCode.removeEnrollee(this@User)
     }
+    enrolledClassCode = DISABLED_CLASS_CODE
   }
 
   fun unenrollEnrolleesClassCode(classCode: ClassCode, enrollees: List<User>) {

@@ -19,6 +19,7 @@ package com.readingbat.server.routes
 
 import com.pambrose.common.email.Email
 import com.pambrose.common.exposed.readonlyTx
+import com.pambrose.common.exposed.upsert
 import com.pambrose.common.util.randomId
 import com.readingbat.common.AuthName
 import com.readingbat.common.BrowserSession
@@ -37,6 +38,7 @@ import com.readingbat.server.FullName
 import com.readingbat.server.OAuthLinksTable
 import com.readingbat.server.ServerUtils.safeRedirectPath
 import com.readingbat.server.UsersTable
+import com.readingbat.server.oauthLinksProviderIndex
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.call.body
 import io.ktor.client.request.bearerAuth
@@ -57,7 +59,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import org.jetbrains.exposed.v1.core.and
 import org.jetbrains.exposed.v1.core.eq
-import org.jetbrains.exposed.v1.jdbc.insert
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
@@ -241,7 +242,7 @@ internal fun RoutingContext.establishAuthenticatedSession(userId: String) {
   call.sessions.set(UserPrincipal(userId = userId))
 }
 
-private fun findOrCreateOAuthUser(
+internal fun findOrCreateOAuthUser(
   provider: OAuthProvider,
   providerId: String,
   email: Email,
@@ -307,9 +308,11 @@ private fun findOrCreateOAuthUser(
       // This is safe because both GitHub and Google only return verified emails.
       oauthLogger.info { "OAuth login: auto-linking $provider to existing user ${existingUser.email}" }
       transaction {
-        // Link OAuth provider to existing user
+        // Link OAuth provider to existing user. Upsert against the (provider, providerId) unique
+        // index so concurrent first-login callbacks for the same provider account converge to one
+        // link (same userRef) instead of throwing a duplicate-key exception.
         with(OAuthLinksTable) {
-          insert { row ->
+          upsert(conflictIndex = oauthLinksProviderIndex) { row ->
             row[userRef] = existingUser.userDbmsId
             row[OAuthLinksTable.provider] = provider.providerName
             row[OAuthLinksTable.providerId] = providerId

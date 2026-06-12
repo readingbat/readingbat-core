@@ -153,25 +153,27 @@ sealed class Challenge(
    */
   fun functionInfo() =
     if (repo.remote) {
-      content.functionInfoMap
-        .computeIfAbsent(challengeId) {
-          val timer = metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
-          val code =
-            fetchSourceCodeFromCache() ?: try {
-              val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
-              val (text, dur) = measureTimedValue { URL(path).readText() }
-              logger.debug { """Fetched "${pathOf(groupName, fileName)}" in: $dur from: $path""" }
+      // Compute outside computeIfAbsent's bin lock: the blocking network fetch + script eval must
+      // not hold the ConcurrentHashMap lock. A rare race may compute twice, but putIfAbsent keeps one.
+      content.functionInfoMap[challengeId] ?: run {
+        val timer = metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
+        val code =
+          fetchSourceCodeFromCache() ?: try {
+            val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
+            val (text, dur) = measureTimedValue { URL(path).readText() }
+            logger.debug { """Fetched "${pathOf(groupName, fileName)}" in: $dur from: $path""" }
 
-              if (isContentCachingEnabled()) {
-                sourceCache[sourceCodeKey] = text
-                logger.debug { """Saved "${pathOf(groupName, fileName)}" to content cache""" }
-              }
-              text
-            } finally {
-              timer.observeDuration()
+            if (isContentCachingEnabled()) {
+              sourceCache[sourceCodeKey] = text
+              logger.debug { """Saved "${pathOf(groupName, fileName)}" to content cache""" }
             }
-          measureParsing(code)
-        }
+            text
+          } finally {
+            timer.observeDuration()
+          }
+        val funcInfo = measureParsing(code)
+        content.functionInfoMap.putIfAbsent(challengeId, funcInfo) ?: funcInfo
+      }
     } else {
       fun parseCode(): FunctionInfo {
         val fs = repo as FileSystemSource
@@ -181,7 +183,10 @@ sealed class Challenge(
       }
 
       if (content.cacheChallenges)
-        content.functionInfoMap.computeIfAbsent(challengeId) { parseCode() }
+        content.functionInfoMap[challengeId] ?: run {
+          val funcInfo = parseCode()
+          content.functionInfoMap.putIfAbsent(challengeId, funcInfo) ?: funcInfo
+        }
       else
         parseCode()
     }
