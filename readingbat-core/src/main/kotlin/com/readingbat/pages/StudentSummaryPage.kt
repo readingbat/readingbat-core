@@ -109,14 +109,12 @@ internal object StudentSummaryPage {
         throw InvalidRequestException("Invalid user")
       }
 
-      // classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
-      classCode.fetchClassTeacherId() != user.userId -> {
-        val teacherId = classCode.fetchClassTeacherId()
-        throw InvalidRequestException("User id ${user.userId} does not match class code's teacher Id $teacherId")
-      }
-
       else -> {
-        // Do nothing
+        // classCode != activeClassCode -> throw InvalidRequestException("Class code mismatch")
+        // Look up the teacher id once and reuse it for both the check and the message.
+        val teacherId = classCode.fetchClassTeacherId()
+        if (teacherId != user.userId)
+          throw InvalidRequestException("User id ${user.userId} does not match class code's teacher Id $teacherId")
       }
     }
 

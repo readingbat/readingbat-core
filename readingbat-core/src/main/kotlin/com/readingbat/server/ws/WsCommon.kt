@@ -104,13 +104,13 @@ object WsCommon {
         false to "Invalid user id: ${user.userId}"
       }
 
-      classCode.fetchClassTeacherId() != user.userId -> {
-        val teacherId = classCode.fetchClassTeacherId()
-        false to "User id ${user.userId} does not match class code's teacher Id $teacherId"
-      }
-
       else -> {
-        true to ""
+        // Look up the teacher id once and reuse it for both the check and the message.
+        val teacherId = classCode.fetchClassTeacherId()
+        if (teacherId != user.userId)
+          false to "User id ${user.userId} does not match class code's teacher Id $teacherId"
+        else
+          true to ""
       }
     }.also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
