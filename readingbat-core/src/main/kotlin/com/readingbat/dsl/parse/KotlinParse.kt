@@ -120,11 +120,13 @@ internal object KotlinParse {
   fun convertToKotlinScript(code: List<String>) =
     buildString {
       var insideMain = false
+      var braceDepth = 0
 
       code.forEach { line ->
         when {
-          line.contains(funMainRegex) -> {
+          !insideMain && line.contains(funMainRegex) -> {
             insideMain = true
+            braceDepth = line.netBraceCount()
           }
 
           insideMain && line.trimStart().startsWith(PRINT_PREFIX) -> {
@@ -132,8 +134,14 @@ internal object KotlinParse {
             appendLine("$VAR_NAME.add($expr)")
           }
 
-          insideMain && line.trimStart().startsWith("}") -> {
-            insideMain = false
+          insideMain -> {
+            braceDepth += line.netBraceCount()
+            // Only main's own closing brace (depth back to 0) ends the body; a nested closing
+            // brace stays part of the body so later println calls are still converted.
+            if (braceDepth <= 0)
+              insideMain = false
+            else
+              appendLine(line)
           }
 
           else -> {
@@ -143,4 +151,6 @@ internal object KotlinParse {
       }
       appendLine("")
     }
+
+  private fun String.netBraceCount() = count { it == '{' } - count { it == '}' }
 }
