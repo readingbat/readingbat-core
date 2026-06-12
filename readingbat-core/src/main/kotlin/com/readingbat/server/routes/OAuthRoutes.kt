@@ -77,14 +77,18 @@ private data class GitHubEmail(
 )
 
 @Serializable
-private data class GoogleUser(
+internal data class GoogleUser(
   val id: String = "",
   val name: String? = null,
   val email: String? = null,
+  @SerialName("verified_email") val verifiedEmail: Boolean = false,
   @SerialName("given_name") val givenName: String? = null,
   @SerialName("family_name") val familyName: String? = null,
   val picture: String? = null,
 )
+
+/** Returns the Google account email only if it is present and Google reports it as verified. */
+internal fun GoogleUser.verifiedEmailOrNull(): String? = email?.takeIf { it.isNotBlank() && verifiedEmail }
 
 private val json = Json { ignoreUnknownKeys = true }
 
@@ -170,7 +174,14 @@ fun Routing.oauthRoutes() {
           }
         val googleUser = json.decodeFromString<GoogleUser>(userResponse.body<String>())
 
-        val email = googleUser.email ?: ""
+        // Reject logins without a Google-verified email to prevent account takeover via an
+        // unverified address that matches an existing ReadingBat user.
+        val email =
+          googleUser.verifiedEmailOrNull() ?: run {
+            logger.warn { "Google OAuth rejected: unverified or missing email for providerId=${googleUser.id}" }
+            call.respondRedirect("/")
+            return@get
+          }
         val name = googleUser.name ?: "${googleUser.givenName ?: ""} ${googleUser.familyName ?: ""}".trim()
         val providerId = googleUser.id
         val avatarUrl = googleUser.picture
