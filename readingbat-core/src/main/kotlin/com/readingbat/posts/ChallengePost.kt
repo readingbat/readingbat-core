@@ -193,6 +193,16 @@ internal class ChallengeNames(paramMap: Map<String, String>) {
 internal object ChallengePost {
   private val logger = KotlinLogging.logger {}
 
+  /**
+   * Builds the list of user responses for a challenge, one per invocation, bounded by
+   * [invocationCount]. The number of `response*` form params is client-controlled, while a
+   * challenge has a fixed number of invocations; iterating by the request would let an oversized
+   * submission index the answer arrays out of bounds. Extra/non-numeric `response*` params are
+   * ignored and a missing one is treated as an empty (unanswered) response.
+   */
+  internal fun boundedResponses(invocationCount: Int, paramMap: Map<String, String>): List<String> =
+    (0 until invocationCount).map { paramMap[RESP + it]?.trim() ?: "" }
+
   /** Validates user-submitted answers against correct answers and returns JSON results. */
   suspend fun RoutingContext.checkAnswers(content: ReadingBatContent, user: User?) {
     val params = call.receiveParameters()
@@ -200,18 +210,18 @@ internal object ChallengePost {
     val names = ChallengeNames(paramMap)
     val challenge = content.findChallenge(names.languageName, names.groupName, names.challengeName)
     val funcInfo = challenge.functionInfo()
-    val userResponses = params.entries().filter { it.key.startsWith(RESP) }
+    // Bound by the challenge's invocation count, not the client-supplied response* param count.
+    val userResponses = boundedResponses(funcInfo.invocationCount, paramMap)
 
     logger.debug { "Found ${userResponses.size} user responses in $paramMap" }
 
     val results =
-      userResponses.indices.map { i ->
-        val userResponse = paramMap[RESP + i]?.trim() ?: error("Missing user response")
+      userResponses.mapIndexed { i, userResponse ->
         funcInfo.checkResponse(i, userResponse)
       }
 
     if (isDbmsEnabled())
-      saveChallengeAnswers(user, content, names, paramMap, funcInfo, userResponses, results)
+      saveChallengeAnswers(user, content, names, funcInfo, userResponses, results)
 
     val answerMapping =
       buildJsonArray {
@@ -371,18 +381,15 @@ internal object ChallengePost {
     user: User?,
     content: ReadingBatContent,
     names: ChallengeNames,
-    paramMap: Map<String, String>,
     funcInfo: FunctionInfo,
-    userResponses: List<Map.Entry<String, List<String>>>,
+    userResponses: List<String>,
     results: List<ChallengeResults>,
   ) {
-    // Save the last answers given
+    // Save the last answers given (already bounded to the invocation count by boundedResponses).
     val invokeList =
-      userResponses.indices
-        .map { i ->
-          val userResponse = paramMap[RESP + i]?.trim()?.maxLength(256) ?: error("Missing user response")
-          funcInfo.invocations[i] to userResponse
-        }
+      userResponses.mapIndexed { i, userResponse ->
+        funcInfo.invocations[i] to userResponse.maxLength(256)
+      }
 
     val challengeMd5 = names.md5()
     val shouldPublish = user?.shouldPublish() ?: false
