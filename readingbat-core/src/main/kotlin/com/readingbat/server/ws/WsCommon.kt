@@ -22,6 +22,7 @@ import com.readingbat.common.ClassCodeRepository.fetchClassTeacherId
 import com.readingbat.common.ClassCodeRepository.isNotValid
 import com.readingbat.common.Metrics
 import com.readingbat.common.User
+import com.readingbat.common.isNotAdminUser
 import com.readingbat.common.isNotValidUser
 import com.readingbat.dsl.InvalidRequestException
 import com.readingbat.dsl.ReadingBatContent
@@ -116,6 +117,10 @@ object WsCommon {
   fun validateLogContext(user: User) =
     when {
       user.isNotValidUser() -> false to "Invalid user id: ${user.userId}"
+
+      // The logging WebSocket streams admin operational logs, so require admin access.
+      user.isNotAdminUser() -> false to "Admin access required"
+
       else -> true to ""
     }.also { (valid, msg) -> if (!valid) throw InvalidRequestException(msg) }
 
