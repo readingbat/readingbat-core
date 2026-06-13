@@ -107,8 +107,14 @@ fun readingBatContent(block: ReadingBatContent.() -> Unit) =
 /** Returns true if the server is running in production mode. Accessible from Content.kt DSL files. */
 fun isProduction() = IS_PRODUCTION.getProperty(false)
 
-/** Returns true if the server is running in test mode. Accessible from Content.kt DSL files. */
-fun isTesting() = IS_TESTING.getProperty(false)
+/**
+ * Returns true if the server is running in test mode. Accessible from Content.kt DSL files.
+ *
+ * IS_TESTING is not part of [initProperties] (it is set directly via setProperty in tests and
+ * defaults to false in production), so it is read with errorOnNonInit = false: the single global
+ * init guard can never meaningfully flag this specific property anyway.
+ */
+fun isTesting() = IS_TESTING.getProperty(false, errorOnNonInit = false)
 
 internal fun isDbmsEnabled() = DBMS_ENABLED.getProperty(false)
 

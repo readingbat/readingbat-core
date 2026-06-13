@@ -18,7 +18,6 @@
 package com.readingbat.dsl
 
 import com.pambrose.common.util.ContentRoot
-import com.pambrose.common.util.ContentSource
 import com.pambrose.common.util.asRegex
 import com.pambrose.common.util.decode
 import com.pambrose.common.util.pathOf
@@ -52,15 +51,10 @@ class LanguageGroup<T : Challenge>(
   val challengeGroups = mutableListOf<ChallengeGroup<T>>()
 
   /**
-   * The content source for this language's challenge files. Defaults to the parent
-   * [ReadingBatContent.repo] value. Must be set to a valid source before challenges are loaded.
+   * The content source for this language's challenge files. Inherits the parent
+   * [ReadingBatContent.repo] value unless overridden in the DSL.
    */
   var repo: ContentRoot = content.repo           // Defaults to outer-level value
-    get() =
-      if (field == defaultContentRoot)
-        error("$languageName section is missing a repo value")
-      else
-        field
 
   /** Git branch name for remote content. Defaults to the parent [ReadingBatContent.branchName]. */
   var branchName = content.branchName    // Defaults to outer-level value
@@ -145,18 +139,5 @@ class LanguageGroup<T : Challenge>(
   companion object {
     private val logger = KotlinLogging.logger {}
     private val excludes = Regex("^__.*__.*$")
-
-    internal val defaultContentRoot =
-      object : ContentRoot {
-        override val sourcePrefix = ""
-        override val remote = false
-
-        override fun file(path: String) =
-          object : ContentSource {
-            override val content = ""
-            override val remote = false
-            override val source = ""
-          }
-      }
   }
 }
