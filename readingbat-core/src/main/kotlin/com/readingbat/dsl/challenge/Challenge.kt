@@ -247,7 +247,7 @@ class JavaChallenge(
       code.lines()
         .filterNot { it.startsWith("//") && it.contains(DESC) }
         .filterNot { it.trimStart().startsWith("package") }
-    val funcCode = JavaParse.extractJavaFunction(lines)
+    val funcCode = JavaParse.extractJavaFunction(challengeName, lines)
     val invocations = extractJavaInvocations(lines, JavaParse.svmRegex, JavaParse.javaEndRegex)
     val returnType = deriveJavaReturnType(challengeName, lines)
     val script = convertToScript(lines)

@@ -40,6 +40,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -140,7 +141,24 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
 
   companion object {
     private val logger = KotlinLogging.logger {}
-    val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
+
+    /**
+     * Upper bound on the number of cached IP geolocation entries. The client-IP key space on a
+     * public-facing server is unbounded, so the cache is capped to avoid unbounded memory growth.
+     */
+    const val MAX_GEO_CACHE_SIZE = 10_000
+
+    /**
+     * In-memory geo cache keyed by client IP, bounded to [MAX_GEO_CACHE_SIZE] with LRU eviction
+     * (access-ordered [LinkedHashMap]). Wrapped in a synchronized map because it is read and
+     * written from concurrent request-handling coroutines.
+     */
+    val geoInfoMap: MutableMap<String, GeoInfo> =
+      Collections.synchronizedMap(
+        object : LinkedHashMap<String, GeoInfo>(16, 0.75f, true) {
+          override fun removeEldestEntry(eldest: Map.Entry<String, GeoInfo>) = size > MAX_GEO_CACHE_SIZE
+        },
+      )
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // Per-IP in-flight lookups: concurrent requests for the same IP share one Deferred.
@@ -176,23 +194,31 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
         }
       }
 
-    /** Resolves geo info from Postgres, else the ipgeolocation.io API (or a failure placeholder), persisting it. */
+    /**
+     * Resolves geo info from Postgres, else the ipgeolocation.io API. A successful API result is
+     * persisted and re-read so the returned entry carries the persisted id and
+     * requireDbmsLookUp=false (eliminating the per-request queryGeoInfo SELECT the request-logging
+     * path would otherwise run for every API-sourced entry).
+     *
+     * A transient API failure returns an Unknown placeholder that is **not** persisted and keeps
+     * requireDbmsLookUp=true, so [lookupGeoInfo] does not cache it — the next request retries the
+     * API rather than being permanently poisoned with a blank/Unknown entry for that IP.
+     */
     private suspend fun resolveGeoInfo(ipAddress: String): GeoInfo =
       queryGeoInfo(ipAddress)?.apply {
         logger.debug { "Postgres GEO info for $ipAddress: ${summary()}" }
       }
         ?: runCatching {
           callGeoInfoApi(ipAddress)
+        }.map { built ->
+          built.insert()
+          queryGeoInfo(ipAddress) ?: built
         }.getOrElse { e ->
           GeoInfo(true, -1, ipAddress, "")
             .also {
               logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" }
             }
-        }.also { it.insert() }
-          // Re-read after insert so the cached entry carries the persisted id and
-          // requireDbmsLookUp=false, eliminating the per-request queryGeoInfo SELECT the
-          // request-logging path would otherwise run for every API/failure-sourced entry.
-          .let { built -> queryGeoInfo(ipAddress) ?: built }
+        }
 
     /**
      * Looks up geolocation for [ipAddress], checking the in-memory cache first, then PostgreSQL,
@@ -206,7 +232,13 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
       geoInfoMap[ipAddress] ?: run {
         val deferred =
           inflight.computeIfAbsent(ipAddress) {
-            scope.async { resolveGeoInfo(ipAddress).also { geoInfoMap[ipAddress] = it } }
+            scope.async {
+              resolveGeoInfo(ipAddress).also {
+                // Cache only durable, DB-backed entries. A transient failure placeholder keeps
+                // requireDbmsLookUp=true and is left uncached so the next request retries.
+                if (!it.requireDbmsLookUp) geoInfoMap[ipAddress] = it
+              }
+            }
           }
         try {
           deferred.await()

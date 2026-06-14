@@ -19,6 +19,7 @@ package com.readingbat.dsl
 
 import com.readingbat.dsl.parse.JavaParse.extractJavaFunction
 import com.readingbat.dsl.parse.PythonParse.extractPythonFunction
+import com.readingbat.server.ChallengeName
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.shouldBe
 import io.kotest.matchers.string.shouldContain
@@ -41,7 +42,7 @@ class IndicesFilterTest : StringSpec() {
           "  }",
           "}",
         )
-      val result = extractJavaFunction(code)
+      val result = extractJavaFunction(ChallengeName("sleepIn"), code)
       result shouldContain "sleepIn"
       result shouldContain "return !weekday || vacation"
       result shouldNotContain "main"
