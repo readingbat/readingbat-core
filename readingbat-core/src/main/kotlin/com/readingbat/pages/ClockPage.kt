@@ -49,11 +49,7 @@ internal object ClockPage {
           script {
             rawHtml(
               """
-                var wshost = location.origin;
-                if (wshost.startsWith('https:'))
-                  wshost = wshost.replace(/^https:/, 'wss:');
-                else
-                  wshost = wshost.replace(/^http:/, 'ws:');
+                ${PageUtils.wsHostRewriteJs()}
 
                 var wsurl = wshost + '$WS_ROOT$CLOCK_ENDPOINT';
                 var ws = new WebSocket(wsurl);

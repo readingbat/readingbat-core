@@ -52,7 +52,8 @@ import java.util.concurrent.ConcurrentHashMap
  * geographic fields are lazily delegated from the parsed JSON map.
  */
 class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: String, val json: String) {
-  private val valid = json.isNotBlank()
+  /** True when the entry carries real geo data; false for an Unknown/failure placeholder (blank json). */
+  val valid = json.isNotBlank()
 
   private val map: Map<String, Any?> =
     if (valid)
@@ -195,30 +196,36 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
       }
 
     /**
-     * Resolves geo info from Postgres, else the ipgeolocation.io API. A successful API result is
-     * persisted and re-read so the returned entry carries the persisted id and
-     * requireDbmsLookUp=false (eliminating the per-request queryGeoInfo SELECT the request-logging
-     * path would otherwise run for every API-sourced entry).
+     * Resolves geo info for [ipAddress] from Postgres, else the ipgeolocation.io API, always
+     * leaving a persisted row behind so the request-logging foreign key (`server_requests.geo_ref`)
+     * can resolve.
      *
-     * A transient API failure returns an Unknown placeholder that is **not** persisted and keeps
-     * requireDbmsLookUp=true, so [lookupGeoInfo] does not cache it — the next request retries the
-     * API rather than being permanently poisoned with a blank/Unknown entry for that IP.
+     * - An existing **valid** Postgres row is authoritative and returned as-is.
+     * - Otherwise (no row, or only a prior blank/failure placeholder) the API is (re)tried. On
+     *   success the row is upserted and re-read (carrying the persisted id, requireDbmsLookUp=false).
+     * - On API failure a blank Unknown placeholder is persisted (so the FK resolves) but is left
+     *   **invalid** (blank json); [lookupGeoInfo] only caches valid entries, so the failure is not
+     *   poisoned into the in-memory cache and the next request retries the API to upgrade the row.
      */
-    private suspend fun resolveGeoInfo(ipAddress: String): GeoInfo =
-      queryGeoInfo(ipAddress)?.apply {
-        logger.debug { "Postgres GEO info for $ipAddress: ${summary()}" }
+    private suspend fun resolveGeoInfo(ipAddress: String): GeoInfo {
+      val existing = queryGeoInfo(ipAddress)
+      if (existing != null && existing.valid) {
+        logger.debug { "Postgres GEO info for $ipAddress: ${existing.summary()}" }
+        return existing
       }
-        ?: runCatching {
-          callGeoInfoApi(ipAddress)
-        }.map { built ->
+
+      return runCatching { callGeoInfoApi(ipAddress) }
+        .map { built ->
           built.insert()
           queryGeoInfo(ipAddress) ?: built
-        }.getOrElse { e ->
-          GeoInfo(true, -1, ipAddress, "")
-            .also {
-              logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" }
-            }
         }
+        .getOrElse { e ->
+          logger.info { "Unable to determine IP geolocation data for $ipAddress (${e.message})" }
+          // Reuse a prior placeholder row if present; otherwise persist one so the geo_ref FK can
+          // resolve. Either way the returned entry is invalid (blank), so it is not cached.
+          existing ?: GeoInfo(true, -1, ipAddress, "").also { it.insert() }.let { queryGeoInfo(ipAddress) ?: it }
+        }
+    }
 
     /**
      * Looks up geolocation for [ipAddress], checking the in-memory cache first, then PostgreSQL,
@@ -234,9 +241,9 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
           inflight.computeIfAbsent(ipAddress) {
             scope.async {
               resolveGeoInfo(ipAddress).also {
-                // Cache only durable, DB-backed entries. A transient failure placeholder keeps
-                // requireDbmsLookUp=true and is left uncached so the next request retries.
-                if (!it.requireDbmsLookUp) geoInfoMap[ipAddress] = it
+                // Cache only valid entries. A blank Unknown placeholder (failure) is left uncached
+                // so the next request retries the API and can upgrade the persisted row.
+                if (it.valid) geoInfoMap[ipAddress] = it
               }
             }
           }

@@ -36,6 +36,7 @@ import com.readingbat.server.ws.PubSubCommandsWs.publishShim
 import com.readingbat.server.ws.WsCommon.CHALLENGE_MD5
 import com.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.readingbat.server.ws.WsCommon.closeChannels
+import com.readingbat.server.ws.WsCommon.rejectInvalidWsRequest
 import com.readingbat.server.ws.WsCommon.validateContext
 import com.readingbat.utils.toJson
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -224,6 +225,8 @@ internal object ChallengeWs {
                 answerWsContext.targetName = classTargetName(classCode, challengeMd5)
             }
         }
+      } catch (e: InvalidRequestException) {
+        rejectInvalidWsRequest("/websocket_student_answers", e)
       } finally {
         answerWsConnections -= answerWsContext
         closeChannels()

@@ -263,11 +263,7 @@ internal object StudentSummaryPage {
     script {
       rawHtml(
         """
-          var wshost = location.origin;
-          if (wshost.startsWith('https:'))
-            wshost = wshost.replace(/^https:/, 'wss:');
-          else
-            wshost = wshost.replace(/^http:/, 'ws:');
+          ${PageUtils.wsHostRewriteJs()}
 
           var wsurl = wshost + '$WS_ROOT$STUDENT_SUMMARY_ENDPOINT/' + ${encodeUriElems(langName, studentId, classCode)};
           var ws = new WebSocket(wsurl);
@@ -276,21 +272,7 @@ internal object StudentSummaryPage {
             ws.send("$classCode");
           };
 
-          ws.onmessage = function (event) {
-            console.log(event.data);
-            var obj = JSON.parse(event.data)
-            var results = obj["${WsProtocol.RESULTS_FIELD}"]
-            var i;
-            for (i = 0; i < results.length; i++) {
-              var prefix = obj["${WsProtocol.GROUP_NAME_FIELD}"] + '-' + obj["${WsProtocol.CHALLENGE_NAME_FIELD}"]
-              var answers = document.getElementById(prefix + '-' + i)
-              answers.style.backgroundColor = results[i] == '$YES' ? '$CORRECT_COLOR'
-                                                                    : (results[i] == '$NO' ? '$WRONG_COLOR'
-                                                                                             : '$INCOMPLETE_COLOR');
-              document.getElementById(prefix + '$STATS').innerText = obj["${WsProtocol.STATS_FIELD}"];
-              document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj["${WsProtocol.LIKE_DISLIKE_FIELD}"];
-   }
-          };
+          ${PageUtils.summaryOnMessageJs(WsProtocol.GROUP_NAME_FIELD)}
         """.trimIndent(),
       )
     }

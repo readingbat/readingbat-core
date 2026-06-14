@@ -74,6 +74,7 @@ import com.readingbat.common.correctAnswersKey
 import com.readingbat.dsl.ReadingBatContent
 import com.readingbat.dsl.challenge.Challenge
 import com.readingbat.dsl.isDbmsEnabled
+import com.readingbat.pages.ChallengePage.enableWebSockets
 import com.readingbat.pages.PageUtils.addLink
 import com.readingbat.pages.PageUtils.backLink
 import com.readingbat.pages.PageUtils.bodyHeader
@@ -85,6 +86,7 @@ import com.readingbat.pages.js.CheckAnswersJs.checkAnswersScript
 import com.readingbat.pages.js.LikeDislikeJs.likeDislikeScript
 import com.readingbat.posts.ChallengeHistory
 import com.readingbat.server.ChallengeMd5
+import com.readingbat.server.Invocation
 import com.readingbat.server.ServerUtils.queryParam
 import com.readingbat.server.UserChallengeInfoTable
 import io.ktor.http.ContentType.Text.CSS
@@ -357,11 +359,7 @@ internal object ChallengePage {
         var firstTime = true;
         var connected = false;
         function connect() {
-          var wshost = location.origin;
-          if (wshost.startsWith('https:'))
-            wshost = wshost.replace(/^https:/, 'wss:');
-          else
-            wshost = wshost.replace(/^http:/, 'ws:');
+          ${PageUtils.wsHostRewriteJs()}
 
           var wsurl = wshost + '$WS_ROOT$CHALLENGE_ENDPOINT/'+encodeURIComponent('$classCode')+'/'+encodeURIComponent('$challengeMd5');
           var ws = new WebSocket(wsurl);
@@ -436,17 +434,62 @@ internal object ChallengePage {
     }
   }
 
+  /** A per-enrollee progress row, computed once in the data pass and rendered in the render pass. */
+  private data class EnrolleeProgress(
+    val enrollee: User,
+    val numCorrect: Int,
+    val numCalls: Int,
+    val allCorrect: Boolean,
+    val results: List<Pair<Invocation, ChallengeHistory>>,
+  )
+
+  /**
+   * Server-side background color for a single answer cell. Kept in one place here; the equivalent
+   * client-side rule lives in the WS `onmessage` ternary in [enableWebSockets] (and the summary
+   * pages' [PageUtils.summaryOnMessageJs]) — keep the two in sync.
+   */
+  private fun answerCellColor(history: ChallengeHistory) =
+    when {
+      history.correct -> CORRECT_COLOR
+      history.answers.isNotEmpty() -> WRONG_COLOR
+      else -> INCOMPLETE_COLOR
+    }
+
+  /** Server-side background color for a student's name cell. Mirrors the WS `completeField` ternary. */
+  private fun nameCellColor(allCorrect: Boolean) = if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR
+
   private fun BODY.displayStudentProgress(
     challenge: Challenge,
     maxHistoryLength: Int,
     funcInfo: FunctionInfo,
     classCode: ClassCode,
     enrollees: List<User>,
-  ) =
-    div(classes = "mt-8") {
-      val languageName = challenge.languageType.languageName
-      val groupName = challenge.groupName
+  ) {
+    val languageName = challenge.languageType.languageName
+    val groupName = challenge.groupName
 
+    // Data pass: fetch each enrollee's answer history once and compute the view-model rows up front,
+    // so the render pass below performs no DB-style fetches inside the table loop.
+    val challengeMd5s = funcInfo.invocations.map { challenge.md5(it) }
+    val progressRows =
+      enrollees.map { enrollee ->
+        val historyMap = enrollee.answerHistoryBulk(challengeMd5s)
+        val results =
+          funcInfo.invocations.map { invocation ->
+            invocation to (historyMap[challenge.md5(invocation)] ?: ChallengeHistory(invocation))
+          }
+        val numCorrect = results.count { (_, history) -> history.correct }
+        EnrolleeProgress(
+          enrollee,
+          numCorrect,
+          funcInfo.invocationCount,
+          numCorrect == funcInfo.invocationCount,
+          results,
+        )
+      }
+
+    // Render pass: pure markup over the precomputed rows.
+    div(classes = "mt-8") {
       h3(classes = "ml-1 text-rb-header") {
         style = "margin-left: 5px; color: $HEADER_COLOR"
         a(classes = TwClasses.UNDERLINE) {
@@ -472,37 +515,18 @@ internal object ChallengePage {
               }
           }
 
-          val challengeMd5s = funcInfo.invocations.map { challenge.md5(it) }
-
-          enrollees
-            .forEach { enrollee ->
-              val numCalls = funcInfo.invocationCount
-              var numCorrect = 0
-              val historyMap = enrollee.answerHistoryBulk(challengeMd5s)
-              val results =
-                funcInfo.invocations
-                  .map { invocation ->
-                    val historyMd5 = challenge.md5(invocation)
-                    val history = historyMap[historyMd5] ?: ChallengeHistory(invocation)
-
-                    if (history.correct)
-                      numCorrect++
-
-                    invocation to history
-                  }
-
-              val allCorrect = numCorrect == numCalls
-
+          progressRows
+            .forEach { row ->
+              val enrollee = row.enrollee
               tr(classes = TwClasses.DASHBOARD) {
                 td(classes = TwClasses.DASHBOARD) {
                   id = "${enrollee.userId}-$NAME_TD"
-                  val color = if (allCorrect) CORRECT_COLOR else INCOMPLETE_COLOR
-                  style = "width:15%;white-space:nowrap; background-color:$color"
+                  style = "width:15%;white-space:nowrap; background-color:${nameCellColor(row.allCorrect)}"
                   span {
                     id = "${enrollee.userId}-$NUM_CORRECTION_SPAN"
-                    +numCorrect.toString()
+                    +row.numCorrect.toString()
                   }
-                  +"/$numCalls"
+                  +"/${row.numCalls}"
                   rawHtml(nbsp.text)
                   +enrollee.fullName.value
                   rawHtml(nbsp.text)
@@ -512,17 +536,11 @@ internal object ChallengePage {
                   }
                 }
 
-                results
+                row.results
                   .forEach { (invocation, history) ->
                     td(classes = TwClasses.DASHBOARD) {
                       id = "${enrollee.userId}-$invocation-$ANSWER_TD"
-                      val color =
-                        if (history.correct) {
-                          CORRECT_COLOR
-                        } else {
-                          if (history.answers.isNotEmpty()) WRONG_COLOR else INCOMPLETE_COLOR
-                        }
-                      style = "background-color:$color"
+                      style = "background-color:${answerCellColor(history)}"
                       span {
                         id = "${enrollee.userId}-$invocation-$ANSWER_SPAN"
                         history.answers.asReversed().take(maxHistoryLength).forEach { answer ->
@@ -537,6 +555,7 @@ internal object ChallengePage {
         }
       }
     }
+  }
 
   private fun BODY.processAnswers(funcInfo: FunctionInfo, challenge: Challenge) {
     div(classes = "mt-8") {

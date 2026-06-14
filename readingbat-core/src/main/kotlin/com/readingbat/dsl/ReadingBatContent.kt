@@ -257,7 +257,7 @@ class ReadingBatContent {
         evalContentDsl(src, variableName, dslCode)
       }
     }.getOrElse { e ->
-      logger.error(e) { "While evaluating: $this" }
+      logger.error(e) { "While evaluating content source: ${contentSource.source.ifEmpty { "<local>" }}" }
       ReadingBatContent()
     }
 

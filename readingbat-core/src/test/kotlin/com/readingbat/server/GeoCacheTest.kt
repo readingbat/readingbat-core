@@ -17,6 +17,7 @@
 
 package com.readingbat.server
 
+import com.readingbat.common.Constants
 import com.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.readingbat.server.GeoInfo.Companion.queryGeoInfo
@@ -37,8 +38,9 @@ import org.jetbrains.exposed.v1.jdbc.transactions.transaction
  * Tests the geo-cache resolution semantics:
  *  - A DB-resolved entry is cached with requireDbmsLookUp = false (the persisted id), so the
  *    request-logging path does not re-run queryGeoInfo against Postgres on every request.
- *  - A transient API failure returns an Unknown placeholder that is neither persisted nor cached,
- *    so the failure is not permanently poisoned into the cache and the next request retries.
+ *  - A transient API failure persists a blank Unknown placeholder row (so the request-logging
+ *    geo_ref FK can resolve) but is left out of the in-memory cache, so the failure is not
+ *    permanently poisoned and the next request retries the API to upgrade the row.
  *
  * The failure tests rely on the API call failing in CI (no working IPGEOLOCATION_KEY / blocked
  * network egress), the same assumption the previous version of this test depended on.
@@ -64,7 +66,7 @@ class GeoCacheTest : StringSpec() {
       }
     }
 
-    "a transient API failure is neither persisted nor cached, so it can be retried" {
+    "a transient API failure persists a placeholder for the FK but is not cached, so it can be retried" {
       withTestApp {
         val ip = "203.0.113.55"
         geoInfoMap.remove(ip)
@@ -72,10 +74,11 @@ class GeoCacheTest : StringSpec() {
 
         val geo = lookupGeoInfo(ip)
 
-        // The API call failed: an Unknown placeholder, not written to Postgres and not cached.
-        geo.requireDbmsLookUp shouldBe true
+        // The API call failed: an Unknown placeholder is persisted so server_requests.geo_ref can
+        // resolve, but it is left out of the in-memory cache so the next request retries the API.
+        geo.summary() shouldBe Constants.UNKNOWN
         geoInfoMap[ip].shouldBeNull()
-        queryGeoInfo(ip).shouldBeNull()
+        queryGeoInfo(ip)?.summary() shouldBe Constants.UNKNOWN
       }
     }
 
