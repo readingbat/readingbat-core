@@ -25,13 +25,8 @@ import com.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.readingbat.common.ClassCodeRepository.isNotValid
 import com.readingbat.common.ClassCodeRepository.toDisplayString
 import com.readingbat.common.Constants.CLASS_CODE_QP
-import com.readingbat.common.Constants.CORRECT_COLOR
 import com.readingbat.common.Constants.GROUP_NAME_QP
-import com.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.readingbat.common.Constants.LANG_TYPE_QP
-import com.readingbat.common.Constants.NO
-import com.readingbat.common.Constants.WRONG_COLOR
-import com.readingbat.common.Constants.YES
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.readingbat.common.Endpoints.CLASS_SUMMARY_ENDPOINT
 import com.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -64,6 +59,7 @@ import com.readingbat.pages.PageUtils.headDefault
 import com.readingbat.pages.PageUtils.loadPingdomScript
 import com.readingbat.pages.PageUtils.rawHtml
 import com.readingbat.pages.StudentSummaryPage.removeFromClassButton
+import com.readingbat.server.ChallengeName
 import com.readingbat.server.GroupName
 import com.readingbat.server.GroupName.Companion.EMPTY_GROUP
 import com.readingbat.server.LanguageName
@@ -108,7 +104,7 @@ internal object ClassSummaryPage {
   internal const val LIKE_DISLIKE = "-likeDislike"
   private const val BTN_SIZE = "130%"
 
-  fun RoutingContext.classSummaryPage(content: ReadingBatContent, user: User?): String {
+  suspend fun RoutingContext.classSummaryPage(content: ReadingBatContent, user: User?): String {
     val p = call.parameters
     val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: EMPTY_LANGUAGE
     val groupName = p[GROUP_NAME_QP]?.let { GroupName(it) } ?: EMPTY_GROUP
@@ -116,7 +112,7 @@ internal object ClassSummaryPage {
     return classSummaryPage(content, user, classCode, languageName, groupName)
   }
 
-  fun RoutingContext.classSummaryPage(
+  suspend fun RoutingContext.classSummaryPage(
     content: ReadingBatContent,
     user: User?,
     classCode: ClassCode,
@@ -140,6 +136,15 @@ internal object ClassSummaryPage {
           throw InvalidRequestException("User id ${user.userId} does not match class code's teacher id $teacherId")
       }
     }
+
+    // Pre-compute each challenge's invocation count before the (non-suspend) kotlinx.html builder,
+    // since functionInfo() suspends. Only the per-group detail view needs these.
+    val invocationCounts: Map<ChallengeName, Int> =
+      if (groupName.isDefined(content, languageName))
+        content.findGroup(languageName, groupName).challenges
+          .associate { it.challengeName to it.functionInfo().invocationCount }
+      else
+        emptyMap()
 
     return createHTML()
       .html {
@@ -179,7 +184,16 @@ internal object ClassSummaryPage {
           if (hasGroupName)
             displayGroupInfo(classCode, activeTeachingClassCode, languageName, groupName)
 
-          displayStudents(content, enrollees, classCode, activeTeachingClassCode, hasGroupName, languageName, groupName)
+          displayStudents(
+            content,
+            enrollees,
+            classCode,
+            activeTeachingClassCode,
+            hasGroupName,
+            languageName,
+            groupName,
+            invocationCounts,
+          )
 
           if (enrollees.isNotEmpty() && languageName.isValid() && groupName.isValid())
             enableWebSockets(languageName, groupName, classCode)
@@ -337,6 +351,7 @@ internal object ClassSummaryPage {
     hasGroup: Boolean,
     languageName: LanguageName,
     groupName: GroupName,
+    invocationCounts: Map<ChallengeName, Int>,
   ) =
     div(classes = TwClasses.INDENT_2EM) {
       val showDetail = hasGroup && classCode == activeClassCode
@@ -406,16 +421,15 @@ internal object ClassSummaryPage {
                           val encodedName = challenge.challengeName.encode()
                           tr {
                             style = "height:15px"
-                            challenge.functionInfo().invocations
-                              .forEachIndexed { i, _ ->
-                                td {
-                                  style = "padding:0; border:none"
-                                  div {
-                                    style = "width:7px; height:15px; border:1px solid black; background-color:#F1F1F1"
-                                    id = "${student.userId}-$encodedName-$i"
-                                  }
+                            repeat(invocationCounts[challenge.challengeName] ?: 0) { i ->
+                              td {
+                                style = "padding:0; border:none"
+                                div {
+                                  style = "width:7px; height:15px; border:1px solid black; background-color:#F1F1F1"
+                                  id = "${student.userId}-$encodedName-$i"
                                 }
                               }
+                            }
                             td(classes = TwClasses.INVOC_STAT) {
                               id = "${student.userId}-$encodedName$STATS"
                               +""

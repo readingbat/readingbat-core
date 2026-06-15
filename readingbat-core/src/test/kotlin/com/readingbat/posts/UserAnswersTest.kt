@@ -79,8 +79,10 @@ class UserAnswersTest : StringSpec() {
           .forEachLanguage {
             forEachGroup {
               forEachChallenge {
+                // Compute in the suspend forEachChallenge scope; forEachAnswer's block is not suspend.
+                val answers = correctAnswers()
                 forEachAnswer {
-                  it shouldHaveAnswer correctAnswers[it.index]
+                  it shouldHaveAnswer answers[it.index]
                 }
               }
             }

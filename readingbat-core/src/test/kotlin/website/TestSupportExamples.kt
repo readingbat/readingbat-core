@@ -78,7 +78,7 @@ fun iterateContentExample() {
 // --8<-- [end:iterate_content]
 
 // --8<-- [start:access_challenges]
-fun accessChallengesExample() {
+suspend fun accessChallengesExample() {
   initTestProperties()
   val content = testContent
 

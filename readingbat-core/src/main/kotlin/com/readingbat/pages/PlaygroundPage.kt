@@ -56,18 +56,19 @@ import org.apache.commons.text.StringEscapeUtils.escapeHtml4
  * allowing users to edit and run Kotlin code directly in the browser.
  */
 internal object PlaygroundPage {
-  fun playgroundPage(
+  suspend fun playgroundPage(
     content: ReadingBatContent,
     user: User?,
     challenge: Challenge,
-  ) =
-    createHTML()
+  ): String {
+    // Computed before the (non-suspend) kotlinx.html builder, since functionInfo() suspends.
+    val funcInfo = challenge.functionInfo()
+    return createHTML()
       .html {
         val languageType = challenge.languageType
         val languageName = languageType.languageName
         val groupName = challenge.groupName
         val challengeName = challenge.challengeName
-        val funcInfo = challenge.functionInfo()
         val loginPath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
         val activeTeachingClassCode = queryActiveTeachingClassCode(user)
 
@@ -124,4 +125,5 @@ internal object PlaygroundPage {
           loadPingdomScript()
         }
       }
+  }
 }

@@ -56,7 +56,8 @@ import com.readingbat.server.Invocation
 import com.readingbat.server.ScriptPools
 import com.readingbat.utils.toCapitalized
 import io.github.oshai.kotlinlogging.KotlinLogging
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.net.URL
 import java.nio.file.Paths
 import kotlin.concurrent.atomics.AtomicInt
@@ -110,7 +111,7 @@ sealed class Challenge(
   private val content get() = challengeGroup.languageGroup.content
 
   /** The list of correct answers for each invocation, computed by evaluating the challenge source code. */
-  val correctAnswers get() = functionInfo().correctAnswers
+  suspend fun correctAnswers() = functionInfo().correctAnswers
 
   /** Source file name. Defaults to `challengeName.suffix` but can be overridden in the DSL. */
   var fileName = "$challengeName.${languageType.suffix}"
@@ -133,11 +134,14 @@ sealed class Challenge(
   /** Computes an MD5 hash uniquely identifying a specific invocation of this challenge. */
   fun md5(invocation: Invocation) = md5Of(languageName, groupName, challengeName, invocation)
 
-  private fun measureParsing(code: String) =
+  // computeFunctionInfo is suspend (the script-pool engine borrow suspends), so this awaits it
+  // directly instead of bridging through runBlocking. The blocking, CPU-bound script eval runs on
+  // Dispatchers.IO so it does not block a request-serving dispatcher thread.
+  private suspend fun measureParsing(code: String) =
     metrics.challengeParseDuration.labels(agentLaunchId(), languageType.toString()).startTimer()
       .let {
         try {
-          runBlocking { computeFunctionInfo(code) }
+          withContext(Dispatchers.IO) { computeFunctionInfo(code) }
         } finally {
           it.observeDuration()
         }
@@ -151,7 +155,7 @@ sealed class Challenge(
    * Retrieves or computes the [FunctionInfo] for this challenge. Results are cached when running
    * in production or test mode. Source code is fetched from the configured repo (local or remote).
    */
-  fun functionInfo() =
+  suspend fun functionInfo(): FunctionInfo =
     if (repo.remote) {
       // Compute outside computeIfAbsent's bin lock: the blocking network fetch + script eval must
       // not hold the ConcurrentHashMap lock. A rare race may compute twice, but putIfAbsent keeps one.
@@ -160,7 +164,7 @@ sealed class Challenge(
         val code =
           fetchSourceCodeFromCache() ?: try {
             val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
-            val (text, dur) = measureTimedValue { URL(path).readText() }
+            val (text, dur) = measureTimedValue { withContext(Dispatchers.IO) { URL(path).readText() } }
             logger.debug { """Fetched "${pathOf(groupName, fileName)}" in: $dur from: $path""" }
 
             if (isContentCachingEnabled()) {
@@ -175,7 +179,7 @@ sealed class Challenge(
         content.functionInfoMap.putIfAbsent(challengeId, funcInfo) ?: funcInfo
       }
     } else {
-      fun parseCode(): FunctionInfo {
+      suspend fun parseCode(): FunctionInfo {
         val fs = repo as FileSystemSource
         val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageNameAsPath, fileName))
         logger.info { """Fetching "${file.fileName}" from "${Paths.get("").toAbsolutePath()}""" }
