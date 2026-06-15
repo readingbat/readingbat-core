@@ -98,7 +98,7 @@ object TestSupport {
       CHALLENGE_SRC to challengeName.value,
     )
 
-  private fun Challenge.parseChallengeResults(content: String): List<ChallengeResult> {
+  private suspend fun Challenge.parseChallengeResults(content: String): List<ChallengeResult> {
     var cnt = 0
     return Json.decodeFromString<JsonArray>(content)
       .map { v ->
@@ -141,14 +141,23 @@ object TestSupport {
     parseChallengeResults(content).forAll { it.block() }
   }
 
-  fun ReadingBatContent.pythonChallenge(groupName: String, challengeName: String, block: FunctionInfo.() -> Unit) =
-    pythonGroup(groupName).functionInfo(challengeName).apply(block)
+  suspend fun ReadingBatContent.pythonChallenge(
+    groupName: String,
+    challengeName: String,
+    block: FunctionInfo.() -> Unit,
+  ) = pythonGroup(groupName).functionInfo(challengeName).apply(block)
 
-  fun ReadingBatContent.javaChallenge(groupName: String, challengeName: String, block: FunctionInfo.() -> Unit) =
-    javaGroup(groupName).functionInfo(challengeName).apply(block)
+  suspend fun ReadingBatContent.javaChallenge(
+    groupName: String,
+    challengeName: String,
+    block: FunctionInfo.() -> Unit,
+  ) = javaGroup(groupName).functionInfo(challengeName).apply(block)
 
-  fun ReadingBatContent.kotlinChallenge(groupName: String, challengeName: String, block: FunctionInfo.() -> Unit) =
-    kotlinGroup(groupName).functionInfo(challengeName).apply(block)
+  suspend fun ReadingBatContent.kotlinChallenge(
+    groupName: String,
+    challengeName: String,
+    block: FunctionInfo.() -> Unit,
+  ) = kotlinGroup(groupName).functionInfo(challengeName).apply(block)
 
   fun ReadingBatContent.pythonGroup(name: String) = python[name]
 
@@ -159,7 +168,7 @@ object TestSupport {
   fun <T : Challenge> ChallengeGroup<T>.challengeByName(name: String) =
     challenges.firstOrNull { it.challengeName.value == name } ?: error("Missing challenge $name")
 
-  fun <T : Challenge> ChallengeGroup<T>.functionInfo(name: String) = challengeByName(name).functionInfo()
+  suspend fun <T : Challenge> ChallengeGroup<T>.functionInfo(name: String) = challengeByName(name).functionInfo()
 
   fun FunctionInfo.checkAnswer(index: Int, userResponse: String) =
     runBlocking {
@@ -168,7 +177,7 @@ object TestSupport {
 
   fun FunctionInfo.answerFor(index: Int) = ChallengeAnswer(this, index)
 
-  fun Challenge.forEachAnswer(block: (ChallengeAnswer) -> Unit) =
+  suspend fun Challenge.forEachAnswer(block: (ChallengeAnswer) -> Unit) =
     functionInfo().apply {
       (0 until questionCount).toList().forAll { i -> block(ChallengeAnswer(this, i)) }
     }

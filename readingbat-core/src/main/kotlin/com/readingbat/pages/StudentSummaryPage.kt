@@ -23,13 +23,8 @@ import com.readingbat.common.ClassCodeRepository.fetchClassTeacherId
 import com.readingbat.common.ClassCodeRepository.isNotValid
 import com.readingbat.common.ClassCodeRepository.toDisplayString
 import com.readingbat.common.Constants.CLASS_CODE_QP
-import com.readingbat.common.Constants.CORRECT_COLOR
-import com.readingbat.common.Constants.INCOMPLETE_COLOR
 import com.readingbat.common.Constants.LANG_TYPE_QP
-import com.readingbat.common.Constants.NO
 import com.readingbat.common.Constants.USER_ID_QP
-import com.readingbat.common.Constants.WRONG_COLOR
-import com.readingbat.common.Constants.YES
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
@@ -47,6 +42,7 @@ import com.readingbat.common.WsProtocol
 import com.readingbat.common.isNotValidUser
 import com.readingbat.dsl.InvalidRequestException
 import com.readingbat.dsl.ReadingBatContent
+import com.readingbat.dsl.challenge.Challenge
 import com.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.readingbat.pages.ClassSummaryPage.LIKE_DISLIKE
 import com.readingbat.pages.ClassSummaryPage.STATS
@@ -93,7 +89,7 @@ import org.apache.commons.text.StringEscapeUtils.escapeEcmaScript
 internal object StudentSummaryPage {
   private val logger = KotlinLogging.logger {}
 
-  fun RoutingContext.studentSummaryPage(content: ReadingBatContent, user: User?): String {
+  suspend fun RoutingContext.studentSummaryPage(content: ReadingBatContent, user: User?): String {
     val p = call.parameters
     val languageName = p[LANG_TYPE_QP]?.let { LanguageName(it) } ?: throw InvalidRequestException("Missing language")
     val student = p[USER_ID_QP]?.toUser() ?: throw InvalidRequestException("Missing user id")
@@ -117,6 +113,13 @@ internal object StudentSummaryPage {
           throw InvalidRequestException("User id ${user.userId} does not match class code's teacher Id $teacherId")
       }
     }
+
+    // Pre-compute each challenge's invocation count before the (non-suspend) kotlinx.html builder,
+    // since functionInfo() suspends. Keyed by Challenge identity to avoid cross-group name clashes.
+    val invocationCounts: Map<Challenge, Int> =
+      content.findLanguage(languageName).challengeGroups
+        .flatMap { it.challenges }
+        .associateWith { it.functionInfo().invocationCount }
 
     return createHTML()
       .html {
@@ -157,7 +160,7 @@ internal object StudentSummaryPage {
             this@body.removeFromClassButton(student, studentName)
           }
 
-          displayChallengeGroups(content, classCode, languageName)
+          displayChallengeGroups(content, classCode, languageName, invocationCounts)
           enableWebSockets(languageName, student, classCode)
           backLink(returnPath)
           loadPingdomScript()
@@ -195,6 +198,7 @@ internal object StudentSummaryPage {
     content: ReadingBatContent,
     @Suppress("UNUSED_PARAMETER") classCode: ClassCode,
     languageName: LanguageName,
+    invocationCounts: Map<Challenge, Int>,
   ) =
     div(classes = TwClasses.INDENT_2EM) {
       table(classes = TwClasses.INVOC_TABLE) {
@@ -231,13 +235,12 @@ internal object StudentSummaryPage {
                             val encodedGroup = group.groupName.encode()
                             val encodedName = challenge.challengeName.encode()
                             tr {
-                              challenge.functionInfo().invocations
-                                .forEachIndexed { i, _ ->
-                                  td(classes = TwClasses.INVOC_TD) {
-                                    id = "$encodedGroup-$encodedName-$i"
-                                    +""
-                                  }
+                              repeat(invocationCounts[challenge] ?: 0) { i ->
+                                td(classes = TwClasses.INVOC_TD) {
+                                  id = "$encodedGroup-$encodedName-$i"
+                                  +""
                                 }
+                              }
                               td(classes = TwClasses.INVOC_STAT) {
                                 id = "$encodedGroup-$encodedName$STATS"
                                 +""
