@@ -105,8 +105,8 @@ class FunctionInfo(
       fun Any?.pythonAdjust(quoteIt: Boolean) =
         toString().trim()
           .removeSurrounding("[", "]").trim()
-          .let { if (it.isEmpty()) emptyList() else it.split(",") }
-          .map { it.trim().removeSurrounding("'") }
+          .let { splitTopLevelCommas(it) }
+          .map { it.trim().removeSurrounding("'").removeSurrounding("\"") }
           .joinToString { if (quoteIt) it.toDoubleQuoted() else it }
           .asBracketed()
 
@@ -278,9 +278,44 @@ class FunctionInfo(
       return result to (if (result) "" else deriveHint())
     }
 
-    private fun parseListElements(csv: String): List<String> {
+    private fun parseListElements(csv: String): List<String> = splitTopLevelCommas(csv).map { it.trim() }
+
+    /**
+     * Splits a comma-separated list body into top-level elements, respecting quoted strings so
+     * that commas inside a quoted element (e.g. `'a,b'` or `"a,b"`) do not split it. Tracks an
+     * in-quote state for single and double quotes; a comma only separates elements when it
+     * appears outside any quoted span. Replaces the naive `split(",")` that silently corrupted
+     * answers for list elements containing commas. Returns an empty list for blank input.
+     */
+    internal fun splitTopLevelCommas(csv: String): List<String> {
       if (csv.isBlank()) return emptyList()
-      return csv.split(",").map { it.trim() }
+      val elements = mutableListOf<String>()
+      val current = StringBuilder()
+      var quoteChar: Char? = null
+      for (c in csv) {
+        when {
+          quoteChar != null -> {
+            current.append(c)
+            if (c == quoteChar) quoteChar = null
+          }
+
+          c == '\'' || c == '"' -> {
+            quoteChar = c
+            current.append(c)
+          }
+
+          c == ',' -> {
+            elements.add(current.toString())
+            current.clear()
+          }
+
+          else -> {
+            current.append(c)
+          }
+        }
+      }
+      elements.add(current.toString())
+      return elements
     }
 
     /**

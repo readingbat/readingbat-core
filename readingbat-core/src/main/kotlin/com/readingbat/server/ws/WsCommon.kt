@@ -36,6 +36,8 @@ import com.readingbat.server.ws.StudentSummaryWs.studentSummaryWsEndpoint
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.routing.Routing
 import io.ktor.server.websocket.DefaultWebSocketServerSession
+import io.ktor.websocket.CloseReason
+import io.ktor.websocket.close
 
 /**
  * Shared WebSocket utilities and parameter constants.
@@ -127,5 +129,20 @@ object WsCommon {
   fun DefaultWebSocketServerSession.closeChannels() {
     outgoing.close()
     incoming.cancel()
+  }
+
+  /**
+   * Translates an [InvalidRequestException] thrown while validating a teacher-facing WebSocket
+   * request (missing/invalid params, unknown language/group, failed class-ownership authorization)
+   * into a logged rejection and a distinct [VIOLATED_POLICY][CloseReason.Codes.VIOLATED_POLICY]
+   * close, instead of letting it unwind into the generic `GOING_AWAY` teardown that tells neither
+   * the operator nor the client why the socket closed.
+   */
+  internal suspend fun DefaultWebSocketServerSession.rejectInvalidWsRequest(
+    endpoint: String,
+    e: InvalidRequestException,
+  ) {
+    logger.info { "Rejected $endpoint websocket: ${e.message}" }
+    close(CloseReason(CloseReason.Codes.VIOLATED_POLICY, e.message ?: "Invalid request"))
   }
 }

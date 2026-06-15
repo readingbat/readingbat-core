@@ -208,11 +208,7 @@ internal object ChallengeGroupPage {
     script {
       rawHtml(
         """
-          var wshost = location.origin;
-          if (wshost.startsWith('https:'))
-            wshost = wshost.replace(/^https:/, 'wss:');
-          else
-            wshost = wshost.replace(/^http:/, 'ws:');
+          ${PageUtils.wsHostRewriteJs()}
 
           var wsurl = wshost + '$WS_ROOT$CHALLENGE_GROUP_ENDPOINT/' + ${encodeUriElems(langName, groupName, classCode)};
           var ws = new WebSocket(wsurl);

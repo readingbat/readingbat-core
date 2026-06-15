@@ -17,10 +17,15 @@
 
 package com.readingbat.server
 
+import com.readingbat.common.Constants
+import com.readingbat.server.GeoInfo.Companion.geoInfoMap
+import com.readingbat.server.GeoInfo.Companion.lookupGeoInfo
+import com.readingbat.server.GeoInfo.Companion.queryGeoInfo
 import com.readingbat.withTestApp
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldHaveSize
 import io.kotest.matchers.longs.shouldBeGreaterThan
+import io.kotest.matchers.nulls.shouldBeNull
 import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -30,41 +35,63 @@ import org.jetbrains.exposed.v1.jdbc.deleteWhere
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 
 /**
- * Tests that lookupGeoInfo caches an entry that no longer requires a per-request DB lookup.
- * Previously the API and failure branches cached `GeoInfo(requireDbmsLookUp = true, dbmsId = -1)`,
- * so the request-logging path re-ran queryGeoInfo against Postgres on every subsequent request for
- * that IP. After inserting, the entry must be re-read so the cached value carries the persisted id
- * and requireDbmsLookUp = false.
+ * Tests the geo-cache resolution semantics:
+ *  - A DB-resolved entry is cached with requireDbmsLookUp = false (the persisted id), so the
+ *    request-logging path does not re-run queryGeoInfo against Postgres on every request.
+ *  - A transient API failure persists a blank Unknown placeholder row (so the request-logging
+ *    geo_ref FK can resolve) but is left out of the in-memory cache, so the failure is not
+ *    permanently poisoned and the next request retries the API to upgrade the row.
+ *
+ * The failure tests rely on the API call failing in CI (no working IPGEOLOCATION_KEY / blocked
+ * network egress), the same assumption the previous version of this test depended on.
  */
 class GeoCacheTest : StringSpec() {
   init {
-    "lookupGeoInfo caches an entry that no longer requires a DB lookup" {
+    "lookupGeoInfo caches a DB-resolved entry that no longer requires a DB lookup" {
       withTestApp {
         val ip = "198.51.100.77"
-        // Force the API/failure branch by clearing any cached or persisted entry for this IP.
-        GeoInfo.geoInfoMap.remove(ip)
+        geoInfoMap.remove(ip)
         transaction { GeoInfosTable.deleteWhere { GeoInfosTable.ip eq ip } }
 
-        val geo = GeoInfo.lookupGeoInfo(ip)
+        // Seed a valid persisted entry, as if a prior successful API lookup stored it.
+        val json =
+          """{"ip":"$ip","city":"Testville","state_prov":"TS","country_name":"Testland","organization":"Test Org"}"""
+        GeoInfo(true, -1, ip, json).insert()
+
+        val geo = lookupGeoInfo(ip)
 
         geo.requireDbmsLookUp shouldBe false
         geo.dbmsId shouldBeGreaterThan 0
-        GeoInfo.geoInfoMap[ip]?.requireDbmsLookUp shouldBe false
+        geoInfoMap[ip]?.requireDbmsLookUp shouldBe false
+      }
+    }
+
+    "a transient API failure persists a placeholder for the FK but is not cached, so it can be retried" {
+      withTestApp {
+        val ip = "203.0.113.55"
+        geoInfoMap.remove(ip)
+        transaction { GeoInfosTable.deleteWhere { GeoInfosTable.ip eq ip } }
+
+        val geo = lookupGeoInfo(ip)
+
+        // The API call failed: an Unknown placeholder is persisted so server_requests.geo_ref can
+        // resolve, but it is left out of the in-memory cache so the next request retries the API.
+        geo.summary() shouldBe Constants.UNKNOWN
+        geoInfoMap[ip].shouldBeNull()
+        queryGeoInfo(ip)?.summary() shouldBe Constants.UNKNOWN
       }
     }
 
     "concurrent lookups for the same IP coalesce into one consistent result" {
       withTestApp {
-        val ip = "203.0.113.55"
-        GeoInfo.geoInfoMap.remove(ip)
+        val ip = "203.0.113.56"
+        geoInfoMap.remove(ip)
         transaction { GeoInfosTable.deleteWhere { GeoInfosTable.ip eq ip } }
 
-        val results = coroutineScope { (1..50).map { async { GeoInfo.lookupGeoInfo(ip) } }.awaitAll() }
+        val results = coroutineScope { (1..50).map { async { lookupGeoInfo(ip) } }.awaitAll() }
 
-        // All concurrent lookups resolve to the same persisted entry without deadlock or error.
-        results.map { it.dbmsId }.toSet() shouldHaveSize 1
-        results.all { !it.requireDbmsLookUp } shouldBe true
-        GeoInfo.geoInfoMap[ip]?.requireDbmsLookUp shouldBe false
+        // All concurrent lookups resolve to the same (coalesced) outcome without deadlock or error.
+        results.map { it.requireDbmsLookUp }.toSet() shouldHaveSize 1
       }
     }
   }

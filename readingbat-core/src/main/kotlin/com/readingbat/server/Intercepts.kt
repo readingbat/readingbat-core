@@ -234,7 +234,6 @@ internal fun Application.intercepts() {
         if (isSaveRequestsEnabled() && browserSession != null) {
           val request = call.request
           val ipAddress = request.origin.remoteHost
-          val sessionDbmsId = transaction { findOrCreateSessionDbmsId(browserSession.id, true) }
           val userDbmsId =
             call.fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: fetchUserDbmsIdFromCache(UNKNOWN_USER_ID)
           val verbVal = request.httpMethod.value
@@ -243,16 +242,24 @@ internal fun Application.intercepts() {
           // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
           val userAgentVal = request.headers[UserAgent] ?: ""
 
+          // lookupGeoInfo() performs a (suspending) HTTP call, so it must run OUTSIDE the blocking
+          // JDBC transaction below.
           val geoInfo = lookupGeoInfo(ipAddress)
-          val geoDbmsId =
-            if (geoInfo.requireDbmsLookUp)
-              queryGeoInfo(ipAddress)?.dbmsId ?: error("Missing ip address: $ipAddress")
-            else
-              geoInfo.dbmsId
 
           val s = call.callId
-          logger.debug { "Saving request: $s $ipAddress $userDbmsId $verbVal $pathVal $queryStringVal $geoDbmsId" }
+          // Coalesce the session lookup, geo-id resolution, and the insert into a single
+          // transaction so request logging checks out one pooled connection per request instead of
+          // 3-4. findOrCreateSessionDbmsId/queryGeoInfo use readonlyTx, which nests into this outer
+          // transaction and reuses its connection.
           transaction {
+            val sessionDbmsId = findOrCreateSessionDbmsId(browserSession.id, true)
+            val geoDbmsId =
+              if (geoInfo.requireDbmsLookUp)
+                queryGeoInfo(ipAddress)?.dbmsId ?: error("Missing ip address: $ipAddress")
+              else
+                geoInfo.dbmsId
+
+            logger.debug { "Saving request: $s $ipAddress $userDbmsId $verbVal $pathVal $queryStringVal $geoDbmsId" }
             with(ServerRequestsTable) {
               insert { row ->
                 row[requestId] = call.callId ?: "None"

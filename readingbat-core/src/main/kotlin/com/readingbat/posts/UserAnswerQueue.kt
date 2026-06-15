@@ -25,7 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
-import java.util.concurrent.ConcurrentHashMap
 
 /**
  * Per-user coroutine-based answer processing queue that serializes database writes
@@ -37,8 +36,26 @@ import java.util.concurrent.ConcurrentHashMap
 internal object UserAnswerQueue {
   private val logger = KotlinLogging.logger {}
   private const val MAX_QUEUE_SIZE = 50
+
+  /** Number of worker coroutines/channels in the fixed pool. */
+  const val WORKER_COUNT = 16
   private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-  private val userChannels = ConcurrentHashMap<Long, Channel<AnswerJob<*>>>()
+
+  // A fixed-size pool of worker channels, each drained by one long-lived consumer coroutine.
+  // Replaces the previous unbounded ConcurrentHashMap<userDbmsId, Channel> that retained one
+  // channel + coroutine per distinct user forever. Each user is mapped to exactly one worker by
+  // workerIndex(userDbmsId), so all of a given user's jobs are serialized on a single worker
+  // (preserving per-user write ordering) while total channels/coroutines stay bounded at WORKER_COUNT.
+  private val workers: List<Channel<AnswerJob<*>>> =
+    List(WORKER_COUNT) { i ->
+      Channel<AnswerJob<*>>(MAX_QUEUE_SIZE).also { ch ->
+        scope.launch(CoroutineName("answer-queue-worker-$i")) {
+          for (job in ch) {
+            job.run()
+          }
+        }
+      }
+    }
 
   private class AnswerJob<T>(
     val block: () -> T,
@@ -51,18 +68,12 @@ internal object UserAnswerQueue {
 
   class QueueFullException : Exception("Answer queue is full, request dropped")
 
-  /** Submits a block of work to the user's dedicated answer queue and suspends until it completes. */
+  /** The pool worker that owns a given user's serialized work. Stable per user, always in range. */
+  internal fun workerIndex(userDbmsId: Long) = userDbmsId.mod(WORKER_COUNT)
+
+  /** Submits a block of work to the user's assigned worker and suspends until it completes. */
   suspend fun <T> submitForUser(userDbmsId: Long, block: () -> T): T {
-    val channel =
-      userChannels.computeIfAbsent(userDbmsId) { id ->
-        Channel<AnswerJob<*>>(MAX_QUEUE_SIZE).also { ch ->
-          scope.launch(CoroutineName("answer-queue-user-$id")) {
-            for (job in ch) {
-              job.run()
-            }
-          }
-        }
-      }
+    val channel = workers[workerIndex(userDbmsId)]
     val job = AnswerJob(block)
     if (channel.trySend(job).isFailure) {
       logger.warn { "Answer queue full for user $userDbmsId, dropping request" }

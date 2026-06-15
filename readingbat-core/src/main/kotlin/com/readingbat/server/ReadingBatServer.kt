@@ -259,6 +259,23 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
 }
 
 /**
+ * Runs the initial (background) content [load], catching and logging any failure with its stack
+ * trace. Without this guard a load exception kills the launching coroutine, [markContentLoaded] is
+ * never reached, and the server is left permanently "not ready" — serving the loading page forever
+ * while the poll loop logs "Content not loaded after Ns" with no explanation. Returns true if the
+ * load succeeded, false if it threw.
+ */
+internal fun runInitialContentLoad(load: () -> Unit): Boolean =
+  runCatching { load() }
+    .onFailure { e ->
+      logger.error(e) {
+        "Initial content load failed; user-facing routes will keep serving the loading page " +
+          "until a successful reload"
+      }
+    }
+    .isSuccess
+
+/**
  * Ktor application module entry point. Initializes HOCON properties, the database,
  * Prometheus agent, metrics, DSL content, plugin installations, request intercepts,
  * and all route registrations (user, admin, OAuth, WebSocket, static resources).
@@ -303,7 +320,7 @@ fun Application.module() {
   // Intercepts.kt serves a "loading" page on user-facing routes until isContentReady is true.
   // Use Dispatchers.IO so the (blocking) DSL read + script eval cannot be starved by — or
   // starve — request-handling threads on the default dispatcher.
-  launch(Dispatchers.IO) { readContentDsl(dslFileName, dslVariableName) }
+  launch(Dispatchers.IO) { runInitialContentLoad { readContentDsl(dslFileName, dslVariableName) } }
 
   // Poll every 10 seconds and keep warning until the content has finished loading.
   launch {

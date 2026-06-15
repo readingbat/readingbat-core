@@ -23,7 +23,12 @@ import com.pambrose.common.util.toDoubleQuoted
 import com.pambrose.common.util.toRootPath
 import com.readingbat.common.ClassCode
 import com.readingbat.common.Constants.ADMIN_FUNC
+import com.readingbat.common.Constants.CORRECT_COLOR
 import com.readingbat.common.Constants.ICONS
+import com.readingbat.common.Constants.INCOMPLETE_COLOR
+import com.readingbat.common.Constants.NO
+import com.readingbat.common.Constants.WRONG_COLOR
+import com.readingbat.common.Constants.YES
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
 import com.readingbat.common.Endpoints.STATIC_ROOT
@@ -36,6 +41,7 @@ import com.readingbat.common.Property
 import com.readingbat.common.Property.ANALYTICS_ID
 import com.readingbat.common.TwClasses
 import com.readingbat.common.User
+import com.readingbat.common.WsProtocol
 import com.readingbat.dsl.LanguageType
 import com.readingbat.dsl.LanguageType.Companion.languageTypeList
 import com.readingbat.dsl.LanguageType.Java
@@ -43,6 +49,8 @@ import com.readingbat.dsl.LanguageType.Kotlin
 import com.readingbat.dsl.LanguageType.Python
 import com.readingbat.dsl.ReadingBatContent
 import com.readingbat.dsl.isProduction
+import com.readingbat.pages.ClassSummaryPage.LIKE_DISLIKE
+import com.readingbat.pages.ClassSummaryPage.STATS
 import com.readingbat.pages.HelpAndLogin.helpAndLogin
 import io.ktor.http.ContentType.Text.CSS
 import io.ktor.server.routing.Route
@@ -82,6 +90,45 @@ import kotlinx.html.unsafe
  */
 internal object PageUtils {
   private const val READING_BAT = "ReadingBat"
+
+  /**
+   * The verbatim JS that rewrites the page origin to a WebSocket scheme (https->wss, http->ws),
+   * leaving the result in a local `wshost` variable. Emitted from one place here instead of being
+   * copy-pasted into every page's WebSocket bootstrap script.
+   */
+  fun wsHostRewriteJs() =
+    """
+    var wshost = location.origin;
+    if (wshost.startsWith('https:'))
+      wshost = wshost.replace(/^https:/, 'wss:');
+    else
+      wshost = wshost.replace(/^http:/, 'ws:');
+    """.trimIndent()
+
+  /**
+   * The summary-page `onmessage` handler that colors each invocation cell from the WS results and
+   * updates the per-challenge stats / like-dislike cells. Shared by [ClassSummaryPage] and
+   * [StudentSummaryPage], which differ only in the id-prefix's first field ([prefixField] =
+   * [WsProtocol.USER_ID_FIELD] vs [WsProtocol.GROUP_NAME_FIELD]).
+   */
+  fun summaryOnMessageJs(prefixField: String) =
+    """
+    ws.onmessage = function (event) {
+      console.log(event.data);
+      var obj = JSON.parse(event.data)
+      var results = obj["${WsProtocol.RESULTS_FIELD}"]
+      var i;
+      for (i = 0; i < results.length; i++) {
+        var prefix = obj["$prefixField"] + '-' + obj["${WsProtocol.CHALLENGE_NAME_FIELD}"]
+        var answers = document.getElementById(prefix + '-' + i)
+        answers.style.backgroundColor = results[i] == '$YES' ? '$CORRECT_COLOR'
+                                                              : (results[i] == '$NO' ? '$WRONG_COLOR'
+                                                                                       : '$INCOMPLETE_COLOR');
+        document.getElementById(prefix + '$STATS').innerText = obj["${WsProtocol.STATS_FIELD}"];
+        document.getElementById(prefix + '$LIKE_DISLIKE').innerHTML = obj["${WsProtocol.LIKE_DISLIKE_FIELD}"];
+      }
+    };
+    """.trimIndent()
 
   /** Sets up the default HTML head with favicons, Tailwind CSS, page title, and Google Analytics. */
   fun HEAD.headDefault() {

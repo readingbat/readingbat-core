@@ -80,9 +80,18 @@ internal object JavaParse {
    *
    * Returns the lines between the first and last `static` method declarations (exclusive of the
    * `main` method), which represents the user-visible function displayed on the challenge page.
+   *
+   * @throws IllegalStateException with a [challengeName]-qualified message if the source contains
+   * fewer than two `static` declarations (the challenge function plus `main`), rather than letting
+   * `lineNums.first()` / `subList(n, n - 1)` raise an opaque crash during content load.
    */
-  fun extractJavaFunction(code: List<String>): String {
+  fun extractJavaFunction(challengeName: ChallengeName, code: List<String>): String {
     val lineNums = code.indices.filter { code[it].contains(staticRegex) }
+    if (lineNums.size < 2)
+      error(
+        "In $challengeName: expected at least two 'static' method declarations " +
+          "(challenge function and main), found ${lineNums.size}",
+      )
     return code.subList(lineNums.first(), lineNums.last() - 1).joinToString("\n").trimIndent()
   }
 

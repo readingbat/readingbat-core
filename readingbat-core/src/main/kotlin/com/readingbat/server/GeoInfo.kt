@@ -40,6 +40,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -51,7 +52,8 @@ import java.util.concurrent.ConcurrentHashMap
  * geographic fields are lazily delegated from the parsed JSON map.
  */
 class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: String, val json: String) {
-  private val valid = json.isNotBlank()
+  /** True when the entry carries real geo data; false for an Unknown/failure placeholder (blank json). */
+  val valid = json.isNotBlank()
 
   private val map: Map<String, Any?> =
     if (valid)
@@ -140,7 +142,24 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
 
   companion object {
     private val logger = KotlinLogging.logger {}
-    val geoInfoMap = ConcurrentHashMap<String, GeoInfo>()
+
+    /**
+     * Upper bound on the number of cached IP geolocation entries. The client-IP key space on a
+     * public-facing server is unbounded, so the cache is capped to avoid unbounded memory growth.
+     */
+    const val MAX_GEO_CACHE_SIZE = 10_000
+
+    /**
+     * In-memory geo cache keyed by client IP, bounded to [MAX_GEO_CACHE_SIZE] with LRU eviction
+     * (access-ordered [LinkedHashMap]). Wrapped in a synchronized map because it is read and
+     * written from concurrent request-handling coroutines.
+     */
+    val geoInfoMap: MutableMap<String, GeoInfo> =
+      Collections.synchronizedMap(
+        object : LinkedHashMap<String, GeoInfo>(16, 0.75f, true) {
+          override fun removeEldestEntry(eldest: Map.Entry<String, GeoInfo>) = size > MAX_GEO_CACHE_SIZE
+        },
+      )
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     // Per-IP in-flight lookups: concurrent requests for the same IP share one Deferred.
@@ -176,23 +195,37 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
         }
       }
 
-    /** Resolves geo info from Postgres, else the ipgeolocation.io API (or a failure placeholder), persisting it. */
-    private suspend fun resolveGeoInfo(ipAddress: String): GeoInfo =
-      queryGeoInfo(ipAddress)?.apply {
-        logger.debug { "Postgres GEO info for $ipAddress: ${summary()}" }
+    /**
+     * Resolves geo info for [ipAddress] from Postgres, else the ipgeolocation.io API, always
+     * leaving a persisted row behind so the request-logging foreign key (`server_requests.geo_ref`)
+     * can resolve.
+     *
+     * - An existing **valid** Postgres row is authoritative and returned as-is.
+     * - Otherwise (no row, or only a prior blank/failure placeholder) the API is (re)tried. On
+     *   success the row is upserted and re-read (carrying the persisted id, requireDbmsLookUp=false).
+     * - On API failure a blank Unknown placeholder is persisted (so the FK resolves) but is left
+     *   **invalid** (blank json); [lookupGeoInfo] only caches valid entries, so the failure is not
+     *   poisoned into the in-memory cache and the next request retries the API to upgrade the row.
+     */
+    private suspend fun resolveGeoInfo(ipAddress: String): GeoInfo {
+      val existing = queryGeoInfo(ipAddress)
+      if (existing != null && existing.valid) {
+        logger.debug { "Postgres GEO info for $ipAddress: ${existing.summary()}" }
+        return existing
       }
-        ?: runCatching {
-          callGeoInfoApi(ipAddress)
-        }.getOrElse { e ->
-          GeoInfo(true, -1, ipAddress, "")
-            .also {
-              logger.info { "Unable to determine IP geolocation data for ${it.remoteHost} (${e.message})" }
-            }
-        }.also { it.insert() }
-          // Re-read after insert so the cached entry carries the persisted id and
-          // requireDbmsLookUp=false, eliminating the per-request queryGeoInfo SELECT the
-          // request-logging path would otherwise run for every API/failure-sourced entry.
-          .let { built -> queryGeoInfo(ipAddress) ?: built }
+
+      return runCatching { callGeoInfoApi(ipAddress) }
+        .map { built ->
+          built.insert()
+          queryGeoInfo(ipAddress) ?: built
+        }
+        .getOrElse { e ->
+          logger.info { "Unable to determine IP geolocation data for $ipAddress (${e.message})" }
+          // Reuse a prior placeholder row if present; otherwise persist one so the geo_ref FK can
+          // resolve. Either way the returned entry is invalid (blank), so it is not cached.
+          existing ?: GeoInfo(true, -1, ipAddress, "").also { it.insert() }.let { queryGeoInfo(ipAddress) ?: it }
+        }
+    }
 
     /**
      * Looks up geolocation for [ipAddress], checking the in-memory cache first, then PostgreSQL,
@@ -206,7 +239,13 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
       geoInfoMap[ipAddress] ?: run {
         val deferred =
           inflight.computeIfAbsent(ipAddress) {
-            scope.async { resolveGeoInfo(ipAddress).also { geoInfoMap[ipAddress] = it } }
+            scope.async {
+              resolveGeoInfo(ipAddress).also {
+                // Cache only valid entries. A blank Unknown placeholder (failure) is left uncached
+                // so the next request retries the API and can upgrade the persisted row.
+                if (it.valid) geoInfoMap[ipAddress] = it
+              }
+            }
           }
         try {
           deferred.await()

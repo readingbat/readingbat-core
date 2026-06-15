@@ -36,6 +36,7 @@ import com.readingbat.server.ws.WsCommon.CLASS_CODE
 import com.readingbat.server.ws.WsCommon.GROUP_NAME
 import com.readingbat.server.ws.WsCommon.LANGUAGE_NAME
 import com.readingbat.server.ws.WsCommon.closeChannels
+import com.readingbat.server.ws.WsCommon.rejectInvalidWsRequest
 import com.readingbat.server.ws.WsCommon.validateContext
 import com.readingbat.utils.toJson
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -162,6 +163,8 @@ internal object ClassSummaryWs {
               incoming.cancel()
             }
         }
+      } catch (e: InvalidRequestException) {
+        rejectInvalidWsRequest("/websocket_class_summary", e)
       } finally {
         // In case exited early
         closeChannels()

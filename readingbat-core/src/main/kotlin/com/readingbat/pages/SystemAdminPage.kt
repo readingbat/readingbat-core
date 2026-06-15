@@ -213,11 +213,7 @@ internal object SystemAdminPage {
         var firstTime = true;
         var connected = false;
         function connect() {
-          var wshost = location.origin;
-          if (wshost.startsWith('https:'))
-            wshost = wshost.replace(/^https:/, 'wss:');
-          else
-            wshost = wshost.replace(/^http:/, 'ws:');
+          ${PageUtils.wsHostRewriteJs()}
 
           var wsurl = wshost + '$WS_ROOT$LOGGING_ENDPOINT/$logId';
           var ws = new WebSocket(wsurl);

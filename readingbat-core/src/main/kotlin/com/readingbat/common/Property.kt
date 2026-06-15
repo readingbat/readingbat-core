@@ -80,35 +80,44 @@ open class KtorProperty(
   /** Returns this property's stored value as a String, or [default] if not set. */
   fun getProperty(default: String, errorOnNonInit: Boolean = true) =
     (configStore[propertyName] ?: default).also {
-      if (errorOnNonInit && !initialized.load())
+      if (errorOnNonInit && !isInitialized())
         error(notInitialized(this))
     }
 
   fun getProperty(default: Boolean, errorOnNonInit: Boolean = true) =
     (configStore[propertyName]?.toBoolean() ?: default).also {
-      if (errorOnNonInit && !initialized.load())
+      if (errorOnNonInit && !isInitialized())
         error(notInitialized(this))
     }
 
   fun getProperty(default: Int, errorOnNonInit: Boolean = true) =
     (configStore[propertyName]?.toIntOrNull() ?: default).also {
-      if (errorOnNonInit && !initialized.load())
+      if (errorOnNonInit && !isInitialized())
         error(notInitialized(this))
     }
 
   fun getPropertyOrNull(errorOnNonInit: Boolean = true): String? =
-    configStore[propertyName].also { if (errorOnNonInit && !initialized.load()) error(notInitialized(this)) }
+    configStore[propertyName].also { if (errorOnNonInit && !isInitialized()) error(notInitialized(this)) }
 
   fun getRequiredProperty() =
     (
       getPropertyOrNull() ?: error("Missing $propertyName value")
-      ).also { if (!initialized.load()) error(notInitialized(this)) }
+      ).also { if (!isInitialized()) error(notInitialized(this)) }
 
   /** Stores a value for this property and logs the assignment. */
   fun setProperty(value: String) {
     configStore[propertyName] = value
+    markPropertyInitialized(propertyName)
     logger.info { "$this" }
   }
+
+  /**
+   * True once this specific property has been initialized — either the whole property system has
+   * been initialized via [assignProperties], or this individual property has had a value assigned
+   * via [setProperty]. The read guards use this (rather than only the global flag) so the
+   * "not initialized" error reflects this property.
+   */
+  fun isInitialized() = isPropertyInitialized(propertyName)
 
   fun setPropertyFromConfig(application: Application, default: String) {
     if (!isADefinedProperty())
@@ -127,12 +136,25 @@ open class KtorProperty(
     private val instances = mutableListOf<KtorProperty>()
     internal val configStore = java.util.concurrent.ConcurrentHashMap<String, String>()
 
+    // Names of properties that have individually had a value assigned via setProperty. Lets the
+    // read guards recognize a specific property as initialized even before the whole system has
+    // been initialized, so the "not initialized" error reflects this property rather than only the
+    // global flag.
+    private val initializedNames: MutableSet<String> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
     fun assignInitialized() = initialized.store(true)
 
     fun resetForTesting() {
       configStore.clear()
+      initializedNames.clear()
       initialized.store(false)
     }
+
+    internal fun markPropertyInitialized(propertyName: String) {
+      initializedNames += propertyName
+    }
+
+    internal fun isPropertyInitialized(propertyName: String) = initialized.load() || propertyName in initializedNames
 
     private fun notInitialized(prop: KtorProperty) = "Property ${prop.name} not initialized"
 

@@ -27,10 +27,8 @@ import io.kotest.matchers.string.shouldNotContain
 import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
-import io.ktor.server.application.install
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
 import io.ktor.server.sessions.Sessions
 import io.ktor.server.sessions.cookie
 import io.ktor.server.sessions.sessions
@@ -73,13 +71,13 @@ class OAuthSessionRotationTest : StringSpec() {
         val seeded = client.get("/seed").cookiePair(SESSION_COOKIE)
         seeded.shouldNotBeNull()
 
-        val response = client.get("/sim-login") { header("Cookie", seeded!!) }
+        val response = client.get("/sim-login") { header("Cookie", seeded) }
         val setCookies = response.headers.getAll("Set-Cookie") ?: emptyList()
 
         // Login must issue a fresh browser session cookie that no longer carries the fixed id.
         val rotated = setCookies.firstOrNull { it.startsWith("$SESSION_COOKIE=") }
         rotated.shouldNotBeNull()
-        rotated!! shouldNotContain SEED_ID
+        rotated shouldNotContain SEED_ID
         // The authentication principal cookie must be set.
         setCookies.any { it.startsWith("$AUTH_COOKIE=") } shouldBe true
       }
