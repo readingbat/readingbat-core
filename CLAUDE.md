@@ -101,8 +101,14 @@ The app uses a two-layer configuration pattern where most settings can come from
 ### Authentication
 
 - Form-based auth with salted password hashes and session cookies
+- Session cookies are signed and encrypted (`SessionTransportTransformerEncrypt`, AES-128 + HMAC-SHA256) in
+  `ConfigureCookies.kt`. This requires a `SESSION_SECRET` (env var) that is **mandatory in production** — the server
+  will not start without it. It must be identical on every node (so cookies validate across instances), and rotating it
+  invalidates all existing sessions. Generate one with `openssl rand -hex 32`.
+- The browser session is rotated on login to prevent session fixation.
 - OAuth (GitHub, Google) via `ConfigureOAuth` — providers are auto-configured when credentials are present in env vars,
   not gated on production mode. The `OAuthProvider` enum in `OAuthRoutes.kt` provides type-safe provider identification.
+  OAuth logins require a verified email from the provider.
 
 ### Page Generation
 
@@ -153,9 +159,9 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
 
 ### Key Dependencies
 
-- **common-utils** 2.8.2 (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
-  exposed-utils, ktor-client/server-utils, script-utils, etc.
-- **prometheus-proxy** 3.1.1: metrics collection
-- **Kover** 0.9.1: code coverage, applied to every subproject and aggregated at the root; CI uploads
+- **common-utils** 2.9.2 (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
+  exposed-utils, ktor-client/server-utils, script-utils, etc. (`respondWith`/`redirectTo` take a `suspend` block as of 2.9.2)
+- **prometheus-proxy** 3.2.0: metrics collection
+- **Kover** 0.9.8: code coverage, applied to every subproject and aggregated at the root; CI uploads
   `build/reports/kover/report.xml` to Codecov via `codecov-action@v5`
 - Dependency versions managed in `gradle/libs.versions.toml`

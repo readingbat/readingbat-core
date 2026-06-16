@@ -6,12 +6,13 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 
 ## Key Technologies
 
-- Kotlin 2.3.21, Ktor 3.4.3 (CIO engine), Exposed ORM 1.2.0 with kotlinx-datetime, PostgreSQL
+- Kotlin 2.4.0, Ktor 3.5.0 (CIO engine), Exposed ORM 1.3.0 with kotlinx-datetime, PostgreSQL
 - Kotlinx.html for server-side HTML generation (no templates)
-- Kotest for testing, Playwright for E2E tests
-- Gradle 9.5.0 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle`, `jvm`) versions; parallel project execution and configuration cache enabled
-- Kover 0.9.1 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
+- Kotest 6.2.0 for testing, Playwright for E2E tests
+- Gradle 9.5.1 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle`, `jvm`) versions; parallel project execution and configuration cache enabled
+- Kover 0.9.8 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
 - Detekt 2.0 alpha (`dev.detekt` plugin) for static analysis; Kotlinter for ktlint style
+- common-utils 2.9.2 (shared utility BOM from `com.github.pambrose`)
 - Java 17 toolchain
 
 ## Project Structure
@@ -60,7 +61,11 @@ Type-safe routing via Ktor `@Resource` annotations in `Locations.kt`: Language -
 
 ## Authentication
 
-OAuth (GitHub, Google) with session management. OAuth providers are auto-configured when credentials are present (not gated on production mode). Provider identification uses the `OAuthProvider` enum in `common/` for type safety.
+OAuth (GitHub, Google) with session management. OAuth providers are auto-configured when credentials are present (not gated on production mode). Provider identification uses the `OAuthProvider` enum in `common/` for type safety. OAuth logins require a verified email; the browser session is rotated on login to prevent fixation.
+
+## Security
+
+Session cookies are signed and encrypted (`SessionTransportTransformerEncrypt`, AES-128 + HMAC-SHA256). This requires a `SESSION_SECRET` (env var), which is **mandatory in production** — the server will not start without it. It must be shared across all nodes, and rotating it invalidates existing sessions. Generate one with `openssl rand -hex 32`. Answer checking parses and compares values directly (no script-engine eval of user input); user-controlled strings are HTML/JS-escaped before rendering; rate limiting is enforced per-IP; secrets are masked in logs. As of 3.2.0 a multi-agent security review of 48 findings (auth, IDOR, RCE, XSS, reliability) was fully addressed.
 
 ## Value Types
 
@@ -82,5 +87,6 @@ Project version, group, and `releaseDate` are defined in `gradle.properties`. Ov
 
 ## Links
 
+- [Documentation](https://readingbat.github.io/readingbat-core/)
 - [Source](https://github.com/readingbat/readingbat-core)
 - [Template Repository](https://github.com/readingbat/readingbat-template)

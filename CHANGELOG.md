@@ -4,10 +4,46 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [3.2.0] - Unreleased
+## [3.2.0] - 2026-06-15
+
+A security-hardening release. A multi-agent security review surfaced 48 confirmed findings (7 high, 19 medium, 22 low); all 48 are addressed here, alongside the build/tooling cleanup below.
+
+### Security
+
+- Signed and encrypted all three session cookies (browser session, auth principal, OAuth return URL) with `SessionTransportTransformerEncrypt` (AES-128 + HMAC-SHA256). Previously the cookies were unsigned plaintext, so the `userId` could be forged for a trivial authentication bypass and full admin takeover
+- Introduced a required `SESSION_SECRET` in production: the server refuses to start without it. It must be shared across all nodes; rotating it invalidates existing cookies. Generate with `openssl rand -hex 32`
+- Enforced class-ownership authorization on teacher class-management actions via `ownsClass()`, closing an IDOR that let any teacher modify any class (including remove-from-class)
+- Eliminated server-side code injection (RCE): Python/Kotlin answer comparison no longer interpolates the user response into an evaluated script — list/array answers are parsed and compared directly
+- Fixed stored XSS in the teacher dashboard: student answers streamed over WebSockets are now HTML-escaped before rendering
+- Fixed JS injection via the student full name in the remove-from-class `confirm()` handler and the other user-prefs `onSubmit` handlers (escaped with `escapeEcmaScript`)
+- Enforced rate limiting with a global per-IP limiter (the RateLimit plugin was installed but never applied)
+- Rotate the browser session cookie on login to prevent session fixation
+- Require a verified email for both Google and GitHub OAuth logins; GitHub no longer creates blank-email user accounts
+- Mask secrets in logs instead of revealing 75% of their characters
+- Require admin access to subscribe to the operational logging WebSocket
+
+### Fixed
+
+- Bounded the answer-check loop by the challenge's invocation count, so an attacker-supplied response count can no longer trigger an `IndexOutOfBoundsException`
+- Startup no longer crashes when an integer environment variable holds a non-numeric value
+- WebSocket reliability: fixed concurrent-modification crashes in the ping/clock pinger loops, replaced the single shared dispatcher that head-of-line-blocked all clients, and collapsed N+1 blocking JDBC calls in WS coroutines; the answer-dashboard flow now drops the oldest message under backpressure instead of suspending the answer-submit handler
+- DSL parser fixes: nested-brace handling in `convertToKotlinScript`, and source-line ordering in `extractJavaInvocations` (invocations now align with computed answers)
+- `extractJavaFunction` reports a named "malformed challenge" error instead of an opaque crash when source has fewer than two `static` declarations
+- Geo cache: short-circuits the DB on a cached hit, no longer serializes all lookups behind a global mutex, no longer caches transient failures permanently, and is now size-bounded (LRU)
+- Fixed a dir-contents cache key mismatch that caused a permanent miss plus a leak
+- Fixed an enrollment-rollback desync, an OAuth-link insert race (now an upsert), and a blocking fetch performed under a `computeIfAbsent` lock
+- Quote-aware parsing of Python list answers so elements containing commas are no longer split and corrupted
+- Background content-load failures are logged (with the failing source) instead of leaving the server permanently "not ready"
+- Coalesced the request-logging path into a single transaction (was 3–4 transactions per request)
 
 ### Changed
 
+- `Challenge.functionInfo()` is now `suspend`: the blocking JSR-223 script eval no longer bridges through `runBlocking` inside request/WS coroutines and runs on `Dispatchers.IO` (depends on the suspend-block `respondWith` in common-utils 2.9.2)
+- Bounded the per-user answer-queue channels with a fixed-size worker pool keyed by user id (was an unbounded map of channels/coroutines)
+- Per-property initialization tracking so the config "not initialized" error reflects the specific property
+- Converted `upsert()` calls to Exposed's native `upsert()` and dropped the local upsert overload
+- Deduplicated repeated `fetchClassTeacherId()` lookups in the class/student authorization paths and removed dead code (the `repo` getter guard, an unused content-root sentinel)
+- Extracted shared WebSocket client JS (origin rewrite + summary `onmessage`) into `PageUtils`, and split `displayStudentProgress` into a data pass and a render pass
 - Deduplicated the `/oauth` URL literal: introduced `Endpoints.OAUTH_PREFIX` and derived `OAUTH_LOGIN_*` / `OAUTH_CALLBACK_*` from it; `Intercepts.publicPrefixes` now references `OAUTH_PREFIX` instead of a duplicated string
 - Trimmed redundant `"/static/"` entries from `publicPrefixes` and `readinessAllowedPrefixes` (already covered by `"/$STATIC/"`)
 - Removed the unused `"/css.css"` entry from `Intercepts.publicPaths`
@@ -25,6 +61,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Self-documenting `make help` target that lists all public targets with their `## description` annotations; `default` now invokes `help` so a bare `make` prints the index
 - `scripts/coverage_packages.py` — extracted the inline Python in `make coverage-packages` into a standalone script for readability and reuse
 - Makefile private helper targets (`_check-gpg-env`, `_require-version`, `_require-gradle-version`) replacing inline `ifeq` error guards; publish targets now declare them as prerequisites
+
+### Dependencies
+
+- common-utils → 2.9.2 (suspend-block `respondWith`/`redirectTo`, native Exposed `upsert`, fixed upsert conflict indexes)
+- detekt 2.0.0-alpha.3 → 2.0.0-alpha.4
+- HikariCP 7.0.2 → 7.1.0
+- Kotest 6.1.11 → 6.2.0
+- prometheus-proxy 3.1.1 → 3.2.0
 
 ## [3.1.8] - 2026-05-04
 

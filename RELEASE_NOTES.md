@@ -1,10 +1,36 @@
 # Release Notes
 
-## v3.2.0 — Unreleased
+## v3.2.0 — 2026-06-15
 
-Cleanup release: dedupes the `/oauth` URL literal, trims redundant entries from the auth/readiness allowlists, adds a Codecov configuration, centralizes toolchain versions in the version catalog, migrates detekt to the 2.0 alpha line, and tightens the Makefile.
+Security-hardening release. A multi-agent security review surfaced 48 confirmed findings (7 high, 19 medium, 22 low); all 48 are addressed here. The headline items close an authentication bypass, an RCE, two IDOR/authorization gaps, and stored/reflected XSS, plus a batch of WebSocket and caching reliability fixes. The 3.1.9-era build/tooling cleanup ships in the same release.
 
-### Highlights
+### ⚠️ Upgrade note — `SESSION_SECRET` is now required in production
+
+Session cookies are now signed and encrypted, which means the server **will not start in production without a `SESSION_SECRET`**. Generate one with:
+
+```
+openssl rand -hex 32
+```
+
+Set it via the `SESSION_SECRET` environment variable. It must be the **same value on every node** (so cookies validate across instances), and **rotating it invalidates all existing sessions** (users must log in again).
+
+### Security highlights
+
+- **Signed + encrypted session cookies.** All three session cookies use `SessionTransportTransformerEncrypt` (AES-128 + HMAC-SHA256). The cookies were previously unsigned plaintext, so the `userId` could be hand-edited for a trivial authentication bypass and full admin/sysadmin takeover.
+- **Server-side code injection (RCE) removed.** Python/Kotlin answer checking no longer interpolates the user's response into an evaluated script; list/array answers are parsed and compared directly.
+- **Teacher IDOR closed.** Class-management actions (including remove-from-class) now verify class ownership via `ownsClass()`.
+- **XSS fixes.** Student answers streamed over WebSockets are HTML-escaped before rendering, and user-controlled names in `confirm()` / `onSubmit` handlers are escaped with `escapeEcmaScript`.
+- **OAuth hardening.** Google and GitHub logins require a verified email; GitHub no longer creates blank-email accounts. Login rotates the browser session to prevent fixation.
+- **Rate limiting enforced** with a global per-IP limiter (previously installed but never applied); secrets are masked in logs; the operational logging WebSocket requires admin.
+
+### Reliability highlights
+
+- **WebSocket robustness.** Fixed concurrent-modification crashes in the pinger loops, removed a single shared dispatcher that head-of-line-blocked every client, collapsed N+1 blocking JDBC in WS coroutines, and made the answer-dashboard flow drop-oldest under backpressure instead of suspending the submit handler.
+- **Caching fixes.** Geo cache now short-circuits the DB, drops its global mutex, stops permanently caching failures, and is size-bounded; a dir-contents cache key mismatch (permanent miss + leak) is fixed; per-user answer-queue channels are bounded by a fixed worker pool.
+- **Parser + startup fixes.** Nested-brace Kotlin script conversion, Java invocation ordering, quote-aware Python list parsing, a non-numeric env-var startup crash, and a bounded answer-check loop (no more attacker-triggered `IndexOutOfBoundsException`).
+- **`Challenge.functionInfo()` is now `suspend`** — the blocking script eval no longer bridges through `runBlocking` inside request/WS coroutines and runs on `Dispatchers.IO`.
+
+### Build & tooling highlights
 
 - **`/oauth` URL deduped.** New `Endpoints.OAUTH_PREFIX` constant; `OAUTH_LOGIN_*` and `OAUTH_CALLBACK_*` endpoints derive from it, and `Intercepts.publicPrefixes` references the constant instead of a duplicated literal.
 - **Allowlist cleanup.** Removed the redundant `"/static/"` entries from `publicPrefixes` / `readinessAllowedPrefixes` (already covered by `"/$STATIC/"`) and the unused `"/css.css"` entry from `publicPaths`.
@@ -14,6 +40,10 @@ Cleanup release: dedupes the `/oauth` URL literal, trims redundant entries from 
 - **Detekt 2.0 alpha.** Plugin id moves from `io.gitlab.arturbosch.detekt` to `dev.detekt` (1.23.8 → 2.0.0-alpha.3). Imports updated, the report block switches to `checkstyle.required` / `markdown.required`, and `config/detekt/detekt.yml` is migrated (obsolete `build:` block removed; `LongParameterList.functionThreshold` / `constructorThreshold` renamed to `allowedFunctionParameters` / `allowedConstructorParameters`).
 - **Kotlin serialization plugin wired explicitly.** `readingbat-core/build.gradle.kts` now applies `libs.plugins.kotlin.serialization` via the catalog alias so the compiler plugin is in effect for the subproject (root keeps the `apply false` declaration).
 - **Makefile tightening.** New `make help` target prints a self-documenting index of every target with a `## description` annotation, and a bare `make` invokes it. `make lint` now runs Kotlinter and detekt in a single Gradle invocation instead of double-running detekt via a prerequisite. The inline Python in `make coverage-packages` moves to `scripts/coverage_packages.py`. Inline `ifeq` version guards become explicit prerequisite targets (`_check-gpg-env`, `_require-version`, `_require-gradle-version`), and `$GPG_SIGNING_KEY_ID` is properly quoted in the signing block.
+
+### Dependencies
+
+common-utils → 2.9.2 · detekt → 2.0.0-alpha.4 · HikariCP → 7.1.0 · Kotest → 6.2.0 · prometheus-proxy → 3.2.0
 
 **Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.1.8...3.2.0
 

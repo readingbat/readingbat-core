@@ -134,11 +134,20 @@ Create your secrets file:
 
 ```bash
 # secrets/secrets.env
+SESSION_SECRET=<openssl rand -hex 32>
 DBMS_PASSWORD=my-database-password
 GITHUB_OAUTH_CLIENT_SECRET=ghp_xxxxxxxxxxxx
 GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxx
 RESEND_API_KEY=re_xxxxxxxxxxxx
 ```
+
+!!! warning "`SESSION_SECRET` is required in production"
+
+    Session cookies are signed and encrypted (AES-128 + HMAC-SHA256), so a
+    `SESSION_SECRET` **must** be set in production — the server will not start
+    without it. Generate one with `openssl rand -hex 32`, use the **same value on
+    every node** (so cookies validate across instances), and note that **rotating
+    it invalidates all existing sessions** (users must log in again).
 
 ## Property Initialization
 
