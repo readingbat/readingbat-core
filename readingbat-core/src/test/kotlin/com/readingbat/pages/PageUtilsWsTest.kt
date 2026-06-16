@@ -21,7 +21,6 @@ import com.readingbat.common.WsProtocol
 import com.readingbat.pages.PageUtils.summaryOnMessageJs
 import com.readingbat.pages.PageUtils.wsHostRewriteJs
 import io.kotest.core.spec.style.StringSpec
-import io.kotest.matchers.shouldBe
 import io.kotest.matchers.shouldNotBe
 import io.kotest.matchers.string.shouldContain
 

@@ -120,7 +120,7 @@ internal object SessionsPage {
                 rows
                   .forEach { row ->
                     tr {
-                      td { +row.session_id }
+                      td { +row.sessionId }
                       td {
                         if (row.fullName != UNKNOWN_FULLNAME) {
                           +row.fullName.toString()

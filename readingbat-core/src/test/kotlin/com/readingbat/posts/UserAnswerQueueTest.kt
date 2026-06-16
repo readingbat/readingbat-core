@@ -27,7 +27,6 @@ import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
