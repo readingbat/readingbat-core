@@ -6,9 +6,12 @@
 [![codecov](https://codecov.io/gh/readingbat/readingbat-core/branch/master/graph/badge.svg)](https://codecov.io/gh/readingbat/readingbat-core)
 [![Kotlin](https://img.shields.io/badge/%20language-Kotlin-red.svg)](https://kotlinlang.org/)
 [![ktlint](https://img.shields.io/badge/ktlint%20code--style-%E2%9D%A4-FF4081)](https://pinterest.github.io/ktlint/)
+[![Docs](https://img.shields.io/badge/docs-readingbat.github.io-blue)](https://readingbat.github.io/readingbat-core/)
 
 A Kotlin-based framework for creating interactive programming challenges and educational content, powering the
 [ReadingBat](https://readingbat.com) platform for teaching Java, Kotlin, and Python programming concepts.
+
+📖 **Documentation:** <https://readingbat.github.io/readingbat-core/>
 
 ## 🚀 Features
 
@@ -17,15 +20,16 @@ A Kotlin-based framework for creating interactive programming challenges and edu
 - **Web-Based Platform**: Built on Ktor with real-time WebSocket updates
 - **User Management**: Complete authentication system with class/teacher support
 - **Progress Tracking**: Detailed analytics and progress monitoring
+- **Security**: Signed + encrypted session cookies, per-IP rate limiting, verified-email OAuth, and class-ownership authorization
 - **Scalable Architecture**: Multi-server deployment ready with database persistence
 
 ## 🏗️ Architecture
 
 ReadingBat Core is built using modern Kotlin technologies:
 
-- **Web Framework**: Ktor 3.4.3 with CIO engine
+- **Web Framework**: Ktor 3.5.0 with CIO engine
 - **Database**: PostgreSQL with Exposed ORM (`exposed-kotlin-datetime`) and HikariCP connection pooling
-- **Authentication**: OAuth (GitHub, Google) with session management
+- **Authentication**: OAuth (GitHub, Google, verified-email required) with signed + encrypted session cookies
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
 - **Build System**: Gradle 9.5 with Kotlin DSL, multi-module structure, and configuration cache enabled
 - **Serialization**: kotlinx.serialization for JSON processing
@@ -227,6 +231,7 @@ ReadingBat Core includes comprehensive monitoring:
 
 ## 📚 Related Projects
 
+- **[Documentation site](https://readingbat.github.io/readingbat-core/)**: DSL, configuration, server, testing guides, and release notes
 - **[ReadingBat Template](https://github.com/readingbat/readingbat-template)**: Template for creating custom content
 
 ## 📄 License
