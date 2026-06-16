@@ -227,7 +227,7 @@ class FunctionInfo(
    * Returns a [ChallengeResults] containing whether the answer was correct and an optional hint
    * (e.g., "Answer should be bracketed", "Python booleans are either True or False").
    */
-  suspend fun checkResponse(index: Int, userResponse: String): ChallengeResults {
+  fun checkResponse(index: Int, userResponse: String): ChallengeResults {
     val correctAnswer = correctAnswers[index]
     val answered = userResponse.isNotBlank()
     val correctAndHint =

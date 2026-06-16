@@ -20,7 +20,6 @@ package com.readingbat.server.ws
 import com.readingbat.common.Constants.FLOW_BUFFER_CAPACITY
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.StringSpec
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import kotlin.time.Duration.Companion.seconds
 
@@ -35,12 +34,10 @@ class DashboardFlowTest : StringSpec() {
     "dashboardFlow does not suspend the producer when nothing drains it" {
       val flow = dashboardFlow<Int>()
       shouldNotThrowAny {
-        runBlocking {
-          // With SUSPEND this blocks once the buffer fills (no collector) and times out; with
-          // DROP_OLDEST every emit returns immediately.
-          withTimeout(5.seconds) {
-            repeat(FLOW_BUFFER_CAPACITY + 500) { flow.emit(it) }
-          }
+        // With SUSPEND this blocks once the buffer fills (no collector) and times out; with
+        // DROP_OLDEST every emit returns immediately.
+        withTimeout(5.seconds) {
+          repeat(FLOW_BUFFER_CAPACITY + 500) { flow.emit(it) }
         }
       }
     }

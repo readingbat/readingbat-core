@@ -205,10 +205,3 @@ class PlaywrightAuthSetup : StringSpec() {
     }
   }
 }
-
-private inline fun <R> Page.use(block: (Page) -> R): R =
-  try {
-    block(this)
-  } finally {
-    close()
-  }

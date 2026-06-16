@@ -214,7 +214,7 @@ fun Project.configureVersions() {
 
 abstract class SecretsEnvSource : ValueSource<Map<String, String>, SecretsEnvSource.Params> {
   interface Params : ValueSourceParameters {
-    val secretsFile: org.gradle.api.file.RegularFileProperty
+    val secretsFile: RegularFileProperty
   }
 
   override fun obtain(): Map<String, String> {

@@ -62,7 +62,7 @@ internal object SessionActivites {
 
   /** Data class holding the result of a session activity query, including user, geo, and request info. */
   class QueryInfo(
-    val session_id: String,
+    val sessionId: String,
     val fullName: FullName,
     val email: Email,
     val ip: String,
@@ -91,7 +91,7 @@ internal object SessionActivites {
           .orderBy(maxDate, SortOrder.DESC)
           .map { row ->
             QueryInfo(
-              session_id = row[session_id],
+              sessionId = row[session_id],
               fullName = FullName(row[fullName]),
               email = Email(row[email]),
               ip = row[ip],

@@ -24,6 +24,8 @@ import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
 import com.readingbat.common.Constants
 import com.readingbat.common.EnvVar
+import com.readingbat.server.GeoInfo.Companion.MAX_GEO_CACHE_SIZE
+import com.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -40,7 +42,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.select
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
-import java.util.Collections
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -90,7 +92,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
     if (valid)
       try {
         listOf(city, state_prov, country_name, organization).joinToString(", ")
-      } catch (e: NoSuchElementException) {
+      } catch (_: NoSuchElementException) {
         "Missing Geo data"
       }
     else
