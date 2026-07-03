@@ -27,11 +27,11 @@ A Kotlin-based framework for creating interactive programming challenges and edu
 
 ReadingBat Core is built using modern Kotlin technologies:
 
-- **Web Framework**: Ktor 3.5.0 with CIO engine
+- **Web Framework**: Ktor 3.5.1 with CIO engine
 - **Database**: PostgreSQL with Exposed ORM (`exposed-kotlin-datetime`) and HikariCP connection pooling
 - **Authentication**: OAuth (GitHub, Google, verified-email required) with signed + encrypted session cookies
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
-- **Build System**: Gradle 9.5 with Kotlin DSL, multi-module structure, and configuration cache enabled
+- **Build System**: Gradle 9.6 with Kotlin DSL, multi-module structure, and configuration cache enabled
 - **Serialization**: kotlinx.serialization for JSON processing
 - **Testing**: Kotest framework with Playwright for E2E testing
 

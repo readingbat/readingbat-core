@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Run a single test by name: `./gradlew :readingbat-core:test --tests "EndpointTest.Simple endpoint tests"`
 - Run application: `make run` or `./gradlew run`
 
-Gradle 9.5.0 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
+Gradle 9.6.1 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
 catalog (`gradle/libs.versions.toml`) is the single source of truth for plugin, dependency, **and toolchain** versions —
 the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.versions.jvm`) and by the Makefile (the
 `upgrade-wrapper` target derives `GRADLE_VERSION` from the `gradle-wrapper` key in the catalog). Project version comes from `gradle.properties`
@@ -159,7 +159,7 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
 
 ### Key Dependencies
 
-- **common-utils** 2.9.2 (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
+- **common-utils** 2.9.3 (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
   exposed-utils, ktor-client/server-utils, script-utils, etc. (`respondWith`/`redirectTo` take a `suspend` block as of 2.9.2)
 - **prometheus-proxy** 3.2.0: metrics collection
 - **Kover** 0.9.8: code coverage, applied to every subproject and aggregated at the root; CI uploads

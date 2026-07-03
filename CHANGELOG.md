@@ -4,6 +4,31 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.2.1] - 2026-07-03
+
+A maintenance release: a Gradle 9.6.1 upgrade, a routine dependency refresh, and two build/test polish items. No functional changes to the running server.
+
+### Changed
+
+- Reworked the `configureVersions()` pre-release filter in the root `build.gradle.kts`: a candidate is now rejected only when the *current* version is stable, so dependencies intentionally tracked on a pre-release line (e.g. the detekt 2.0 alpha) still surface newer pre-releases. The qualifier regex now matches both dash-style (`-alpha`) and dot-style (Netty's `.Beta1`) suffixes while leaving stable classifiers like `-jre` / `.Final` / `-macos` alone
+- Marked the `dependencyUpdates` task incompatible with the configuration cache so `make versions` no longer trips the cache
+- `TestSupport.forEachAnswer` now accepts a `suspend` block, matching the suspend `functionInfo()` call site introduced in 3.2.0
+- Bumped version to 3.2.1
+
+### Dependencies
+
+- Gradle wrapper 9.5.1 → 9.6.1
+- common-utils 2.9.2 → 2.9.3
+- Ktor 3.5.0 → 3.5.1
+- Exposed 1.3.0 → 1.3.1
+- Kotest 6.2.0 → 6.2.1
+- Flyway 12.8.1 → 12.10.0
+- PostgreSQL driver 42.7.11 → 42.7.12
+- Google Cloud SQL socket factory 1.28.4 → 1.28.6
+- Playwright 1.60.0 → 1.61.0
+- detekt 2.0.0-alpha.4 → 2.0.0-alpha.5
+- Vanniktech maven-publish 0.36.0 → 0.37.0
+
 ## [3.2.0] - 2026-06-15
 
 A security-hardening release. A multi-agent security review surfaced 48 confirmed findings (7 high, 19 medium, 22 low); all 48 are addressed here, alongside the build/tooling cleanup below.

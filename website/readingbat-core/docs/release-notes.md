@@ -6,6 +6,22 @@ icon: lucide/tag
 
 For the complete, commit-level history see [`CHANGELOG.md`](https://github.com/readingbat/readingbat-core/blob/master/CHANGELOG.md) in the repository.
 
+## v3.2.1 — 2026-07-03
+
+Maintenance release: a Gradle 9.6.1 upgrade, a routine dependency refresh, and two small build/test polish items. No functional changes to the running server and no upgrade steps — a drop-in bump from 3.2.0.
+
+### Changed
+
+- **Gradle 9.6.1** — the wrapper moves from 9.5.1 to 9.6.1.
+- **Smarter pre-release version filter** — `configureVersions()` rejects a pre-release candidate only when the *current* dependency is stable, so libraries tracked on a pre-release line (e.g. the detekt 2.0 alpha) keep surfacing newer pre-releases. The `dependencyUpdates` task is also marked incompatible with the configuration cache.
+- **`TestSupport.forEachAnswer` takes a `suspend` block** — matching the suspend `functionInfo()` call site introduced in 3.2.0.
+
+### Dependencies
+
+Gradle 9.5.1 → 9.6.1 · common-utils 2.9.2 → 2.9.3 · Ktor 3.5.0 → 3.5.1 · Exposed 1.3.0 → 1.3.1 · Kotest 6.2.0 → 6.2.1 · Flyway 12.8.1 → 12.10.0 · PostgreSQL driver 42.7.11 → 42.7.12 · Cloud SQL socket factory 1.28.4 → 1.28.6 · Playwright 1.60.0 → 1.61.0 · detekt 2.0.0-alpha.4 → 2.0.0-alpha.5 · maven-publish 0.36.0 → 0.37.0
+
+[Full changelog: 3.2.0…3.2.1](https://github.com/readingbat/readingbat-core/compare/3.2.0...3.2.1)
+
 ## v3.2.0 — 2026-06-15
 
 Security-hardening release. A multi-agent security review surfaced 48 confirmed findings (7 high, 19 medium, 22 low); all 48 are addressed here, alongside a batch of WebSocket/caching reliability fixes and the 3.1.9-era build/tooling cleanup.
