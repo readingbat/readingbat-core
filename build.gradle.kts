@@ -1,10 +1,12 @@
 
+import com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask
 import com.vanniktech.maven.publish.JavadocJar
 import com.vanniktech.maven.publish.SourcesJar
 import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.extensions.DetektExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
+import org.gradle.kotlin.dsl.withType
 
 plugins {
   alias(libs.plugins.kotlin.jvm)
@@ -201,13 +203,22 @@ fun Project.configureTesting() {
 }
 
 fun Project.configureVersions() {
-  // Match preview/unstable qualifiers anchored on a separator so plain substrings like
-  // "DEV" inside a real version (e.g. "1.0-developer") don't trigger false rejections.
-  val nonStableRegex = Regex("(?i)[-.](RC|BETA|ALPHA|M\\d+|SNAPSHOT|DEV|PREVIEW|EAP|CR)\\b")
+  // A pre-release qualifier is a `.` or `-` delimiter followed by a known unstable
+  // keyword. `m\d` matches milestones (`-M1`/`.M2`) without catching stable classifiers
+  // like `-macos`/`-MR1`, and the `[.-]` delimiter catches both dash-style (`-alpha`)
+  // and dot-style (Netty's `.Beta1`) qualifiers while leaving `-jre`/`.Final` stable.
+  val preReleaseQualifier =
+    Regex("""[.-](rc|beta|alpha|m\d|cr|snapshot|eap|dev|milestone|pre)""", RegexOption.IGNORE_CASE)
 
-  tasks.withType<com.github.benmanes.gradle.versions.updates.DependencyUpdatesTask>().configureEach {
+  fun isNonStable(version: String): Boolean = preReleaseQualifier.containsMatchIn(version)
+
+  tasks.withType<DependencyUpdatesTask>().configureEach {
+    notCompatibleWithConfigurationCache("the dependency updates plugin is not compatible with the configuration cache")
+    // Reject a pre-release candidate only when the current version is stable. For
+    // dependencies we intentionally track on a pre-release line (e.g. a detekt
+    // alpha), newer pre-releases are still surfaced as available updates.
     rejectVersionIf {
-      nonStableRegex.containsMatchIn(candidate.version)
+      isNonStable(candidate.version) && !isNonStable(currentVersion)
     }
   }
 }
