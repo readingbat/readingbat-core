@@ -177,7 +177,7 @@ object TestSupport {
 
   fun FunctionInfo.answerFor(index: Int) = ChallengeAnswer(this, index)
 
-  suspend fun Challenge.forEachAnswer(block: (ChallengeAnswer) -> Unit) =
+  suspend fun Challenge.forEachAnswer(block: suspend (ChallengeAnswer) -> Unit) =
     functionInfo().apply {
       (0 until questionCount).toList().forAll { i -> block(ChallengeAnswer(this, i)) }
     }
