@@ -22,8 +22,6 @@ import com.readingbat.common.Constants.OAUTH_ERROR
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GITHUB_ENDPOINT
 import com.readingbat.common.Endpoints.OAUTH_CALLBACK_GOOGLE_ENDPOINT
 import com.readingbat.common.Property
-import com.readingbat.server.ConfigureOAuth.configureGitHubOAuth
-import com.readingbat.server.ConfigureOAuth.configureGoogleOAuth
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO

@@ -36,7 +36,6 @@ import com.readingbat.server.BrowserSessionsTable
 import com.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.readingbat.server.ServerUtils.fetchUser
 import com.readingbat.server.ServerUtils.get
-import com.readingbat.server.routes.AdminRoutes.assignBrowserSession
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.http.ContentType.Text.Plain
 import io.ktor.http.HttpStatusCode

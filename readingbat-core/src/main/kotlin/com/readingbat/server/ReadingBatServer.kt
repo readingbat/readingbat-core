@@ -53,7 +53,6 @@ import com.readingbat.server.ReadingBatServer.isContentReady
 import com.readingbat.server.ReadingBatServer.logger
 import com.readingbat.server.ReadingBatServer.markContentLoaded
 import com.readingbat.server.ReadingBatServer.metrics
-import com.readingbat.server.ReadingBatServer.start
 import com.readingbat.server.ServerUtils.logToShim
 import com.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.readingbat.server.routes.oauthRoutes

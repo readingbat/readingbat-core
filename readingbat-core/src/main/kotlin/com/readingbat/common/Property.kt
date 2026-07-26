@@ -21,8 +21,6 @@ import com.pambrose.common.email.Email
 import com.pambrose.common.email.Email.Companion.toResendEmail
 import com.pambrose.common.util.obfuscate
 import com.readingbat.common.Constants.UNASSIGNED
-import com.readingbat.common.KtorProperty.Companion.assignProperties
-import com.readingbat.common.KtorProperty.Companion.configStore
 import com.readingbat.common.PropertyNames.AGENT
 import com.readingbat.common.PropertyNames.CHALLENGES
 import com.readingbat.common.PropertyNames.CLASSES
