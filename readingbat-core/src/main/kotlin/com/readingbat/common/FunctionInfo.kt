@@ -289,7 +289,7 @@ class FunctionInfo(
      */
     internal fun splitTopLevelCommas(csv: String): List<String> {
       if (csv.isBlank()) return emptyList()
-      val elements = mutableListOf<String>()
+      val elements: MutableList<String> = []
       val current = StringBuilder()
       var quoteChar: Char? = null
       for (c in csv) {

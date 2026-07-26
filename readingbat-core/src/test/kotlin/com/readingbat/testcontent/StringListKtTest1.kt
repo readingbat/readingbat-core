@@ -17,7 +17,7 @@
 
 package com.readingbat.testcontent
 
-fun combinel(s1: String, s2: String): List<String> = listOf(s1, s2)
+fun combinel(s1: String, s2: String): List<String> = [s1, s2]
 
 fun main() {
   println(combinel("Car", "wash"))

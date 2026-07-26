@@ -87,7 +87,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 object Installs {
   private val logger = KotlinLogging.logger {}
-  private val excludedEndpoints = listOf("/$STATIC/", "$WS_ROOT/")
+  private val excludedEndpoints = ["/$STATIC/", "$WS_ROOT/"]
 
   /**
    * Paths excluded from rate limiting: static assets, WebSocket upgrades, and health pings.

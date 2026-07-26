@@ -106,7 +106,7 @@ internal object StudentSummaryWs {
                   var incorrectAttempts = 0
                   var attempted = 0
 
-                  val results = mutableListOf<String>()
+                  val results: MutableList<String> = []
                   for (invocation in funcInfo.invocations) {
                     val historyMd5 = md5Of(languageName, groupName, challengeName, invocation)
                     if (student.historyExists(historyMd5, invocation)) {

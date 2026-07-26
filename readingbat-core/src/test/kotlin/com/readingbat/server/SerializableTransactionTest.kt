@@ -40,7 +40,7 @@ class SerializableTransactionTest : StringSpec() {
         invocation = Invocation("test()"),
         correct = false,
         incorrectAttempts = 3,
-        answers = mutableListOf("wrong1", "wrong2", "wrong3"),
+        answers = ["wrong1", "wrong2", "wrong3"],
       )
 
       history.markCorrect("right")
@@ -55,13 +55,13 @@ class SerializableTransactionTest : StringSpec() {
         invocation = Invocation("test()"),
         correct = false,
         incorrectAttempts = 2,
-        answers = mutableListOf("wrong1", "wrong2"),
+        answers = ["wrong1", "wrong2"],
       )
 
       history.markIncorrect("wrong3")
       history.correct shouldBe false
       history.incorrectAttempts shouldBe 3
-      history.answers shouldBe mutableListOf("wrong1", "wrong2", "wrong3")
+      history.answers shouldBe ["wrong1", "wrong2", "wrong3"]
     }
 
     "ChallengeHistory markIncorrect does not increment for duplicate answer" {
@@ -70,12 +70,12 @@ class SerializableTransactionTest : StringSpec() {
         invocation = Invocation("test()"),
         correct = false,
         incorrectAttempts = 1,
-        answers = mutableListOf("wrong1"),
+        answers = ["wrong1"],
       )
 
       history.markIncorrect("wrong1")
       history.incorrectAttempts shouldBe 1
-      history.answers shouldBe mutableListOf("wrong1")
+      history.answers shouldBe ["wrong1"]
     }
 
     "ChallengeHistory concurrent mutation scenario shows why isolation matters" {

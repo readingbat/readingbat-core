@@ -56,7 +56,7 @@ import kotlinx.html.tr
  * (about, help, admin, prefs), teacher/student mode toggle, and the OAuth sign-in modal.
  */
 internal object HelpAndLogin {
-  private val rootVals = listOf("", "/")
+  private val rootVals = ["", "/"]
 
   // Google "G" logo — official colors, 18x18
   @Suppress("ktlint:standard:max-line-length")

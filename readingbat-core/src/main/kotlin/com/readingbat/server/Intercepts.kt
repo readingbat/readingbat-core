@@ -123,10 +123,10 @@ internal object Intercepts {
     )
 
   val publicPrefixes =
-    listOf(
+    [
       "$OAUTH_PREFIX/",
       "/$STATIC/",
-    )
+    ]
 
   // Paths that must remain available before the DSL content has finished loading.
   // Anything else gets a 503 + ContentLoadingPage until ReadingBatServer.isContentReady is true.
@@ -139,9 +139,9 @@ internal object Intercepts {
     )
 
   val readinessAllowedPrefixes =
-    listOf(
+    [
       "/$STATIC/",
-    )
+    ]
 
   @Suppress("unused")
   val timer =

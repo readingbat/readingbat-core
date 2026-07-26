@@ -34,7 +34,7 @@ class BulkAnswerHistoryTest : StringSpec() {
     }
 
     "ChallengeHistory with data preserves all fields" {
-      val answers = mutableListOf("wrong1", "wrong2", "correct")
+      val answers: MutableList<String> = ["wrong1", "wrong2", "correct"]
       val history =
         ChallengeHistory(
           invocation = Invocation("foo(2)"),
@@ -44,7 +44,7 @@ class BulkAnswerHistoryTest : StringSpec() {
         )
       history.correct shouldBe true
       history.incorrectAttempts shouldBe 2
-      history.answers shouldContainExactly listOf("wrong1", "wrong2", "correct")
+      history.answers shouldContainExactly ["wrong1", "wrong2", "correct"]
     }
 
     "Bulk result map lookup falls back to default for missing md5" {
@@ -55,13 +55,13 @@ class BulkAnswerHistoryTest : StringSpec() {
               invocation = Invocation("test(1)"),
               correct = true,
               incorrectAttempts = 0,
-              answers = mutableListOf("42"),
+              answers = ["42"],
             ),
         )
 
       val found = historyMap["abc123"] ?: ChallengeHistory(Invocation("test(1)"))
       found.correct shouldBe true
-      found.answers shouldContainExactly listOf("42")
+      found.answers shouldContainExactly ["42"]
 
       val missing = historyMap["xyz789"] ?: ChallengeHistory(Invocation("test(2)"))
       missing.correct shouldBe false
@@ -72,17 +72,17 @@ class BulkAnswerHistoryTest : StringSpec() {
     "Multiple invocations map to distinct entries" {
       val historyMap =
         mapOf(
-          "md5_1" to ChallengeHistory(Invocation("foo(1)"), true, 0, mutableListOf("1")),
-          "md5_2" to ChallengeHistory(Invocation("foo(2)"), false, 3, mutableListOf("a", "b", "c")),
-          "md5_3" to ChallengeHistory(Invocation("foo(3)"), true, 1, mutableListOf("x", "3")),
+          "md5_1" to ChallengeHistory(Invocation("foo(1)"), true, 0, ["1"]),
+          "md5_2" to ChallengeHistory(Invocation("foo(2)"), false, 3, ["a", "b", "c"]),
+          "md5_3" to ChallengeHistory(Invocation("foo(3)"), true, 1, ["x", "3"]),
         )
 
       val invocations =
-        listOf(
+        [
           Invocation("foo(1)") to "md5_1",
           Invocation("foo(2)") to "md5_2",
           Invocation("foo(3)") to "md5_3",
-        )
+        ]
 
       var numCorrect = 0
       val results =
@@ -96,12 +96,12 @@ class BulkAnswerHistoryTest : StringSpec() {
       results.size shouldBe 3
       results[0].second.correct shouldBe true
       results[1].second.incorrectAttempts shouldBe 3
-      results[2].second.answers shouldContainExactly listOf("x", "3")
+      results[2].second.answers shouldContainExactly ["x", "3"]
     }
 
     "Empty history map returns defaults for all invocations" {
       val emptyMap = emptyMap<String, ChallengeHistory>()
-      val invocations = listOf("md5_a", "md5_b", "md5_c")
+      val invocations = ["md5_a", "md5_b", "md5_c"]
 
       val results =
         invocations.map { md5 ->

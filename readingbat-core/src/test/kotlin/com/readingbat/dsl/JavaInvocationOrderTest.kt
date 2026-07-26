@@ -44,7 +44,7 @@ class JavaInvocationOrderTest : StringSpec() {
         """.trimIndent()
 
       extractJavaInvocations(code, psvmRegex, javaEndRegex).map { it.toString() } shouldBe
-        listOf("a(1)", "b(2)", "c(3)")
+        ["a(1)", "b(2)", "c(3)"]
     }
   }
 }

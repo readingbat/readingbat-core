@@ -70,7 +70,7 @@ class AnswerHistoryBulkEquivalenceTest : StringSpec() {
           }
         }
 
-        val bulk = user.answerHistoryBulk(listOf("md5-a", "md5-b", "md5-c"))
+        val bulk = user.answerHistoryBulk(["md5-a", "md5-b", "md5-c"])
 
         // Present for exactly the md5s with stored history (== historyExists), absent otherwise.
         bulk.keys shouldBe setOf("md5-a", "md5-b")

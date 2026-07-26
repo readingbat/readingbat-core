@@ -95,7 +95,6 @@ sealed class Challenge(
 
   // Allow description updates only if not found in the Content.kt decl
   private val isDescriptionSetInDsl by lazy { description.isNotBlank() }
-  internal val gitpodUrl by lazy { pathOf(repo.sourcePrefix, "blob/$branchName", srcPath, fqName) }
   internal val parsedDescription by lazy { MarkdownParser.toHtml(description) }
   internal val path by lazy { pathOf(languageName, groupName, challengeName) }
 
@@ -308,7 +307,7 @@ class KotlinChallenge(
     val funcCode = "\n${extractKotlinFunction(lines)}\n\n"
     val invocations = extractKotlinInvocations(lines, KotlinParse.funMainRegex, KotlinParse.kotlinEndRegex)
     val script = convertToKotlinScript(lines).also { logger.debug { "Kotlin: $it" } }
-    val correctAnswers = mutableListOf<Any>()
+    val correctAnswers: MutableList<Any> = []
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 
@@ -360,7 +359,7 @@ class PythonChallenge(
     val funcCode = extractPythonFunction(lines)
     val invocations = extractPythonInvocations(lines, PythonParse.defMainRegex, PythonParse.ifMainEndRegex)
     val script = convertToPythonScript(lines)
-    val correctAnswers = mutableListOf<Any>()
+    val correctAnswers: MutableList<Any> = []
 
     logger.debug { "$challengeName return type: $returnType script: \n${script.withLineNumbers()}" }
 

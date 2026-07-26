@@ -124,7 +124,7 @@ internal object LanguageGroupPage {
         head { headDefault() }
 
         body {
-          val oauthError = queryParam(OAUTH_ERROR).takeIf { it in listOf("github", "google") } ?: ""
+          val oauthError = queryParam(OAUTH_ERROR).takeIf { it in ["github", "google"] } ?: ""
           val msg =
             if (oauthError.isNotBlank())
               Message("Sign-in with ${oauthError.toCapitalized()} failed. Please try again.", isError = true)

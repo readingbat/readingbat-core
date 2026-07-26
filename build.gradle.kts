@@ -6,7 +6,6 @@ import dev.detekt.gradle.Detekt
 import dev.detekt.gradle.extensions.DetektExtension
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
-import org.gradle.kotlin.dsl.withType
 
 plugins {
   alias(libs.plugins.kotlin.jvm)
@@ -46,12 +45,13 @@ dependencies {
   kover(project(kotestModule))
 }
 
-dokka {
-  moduleName.set("ReadingBat")
-  pluginsConfiguration.html {
-    homepageLink.set(repoUrl)
-    footerMessage.set(projectName)
-  }
+// Dokka config is root-level (aggregate docs); the plugin is applied via the plugins {} block
+// above. It can't go in allprojects {} — subprojects don't have the Dokka plugin applied until
+// the subprojects {} block below runs, so the `dokka` extension wouldn't exist yet there.
+configureDokka()
+
+allprojects {
+  configureVersions()
 }
 
 subprojects {
@@ -68,7 +68,6 @@ subprojects {
   configureKotlinter()
   configureDetekt()
   configureSecrets()
-  configureVersions()
 }
 
 fun Project.configureKotlin() {
@@ -82,6 +81,15 @@ fun Project.configureKotlin() {
 
   kotlin {
     jvmToolchain(jvmTargetVersion.toInt())
+
+    // Collection literals (`val x: List<Int> = [1, 2, 3]`) are an experimental Kotlin 2.4
+    // feature gated behind this flag. Removing it breaks every `[...]` literal in the
+    // sources. Note this flag applies to project sources only -- it is NOT in effect for
+    // the JSR-223 script engine that evaluates the content DSL at runtime, so DSL content
+    // files must keep using listOf()/mutableListOf().
+    compilerOptions {
+      freeCompilerArgs.add("-Xcollection-literals")
+    }
 
     sourceSets.all {
       listOf(
@@ -198,6 +206,16 @@ fun Project.configureTesting() {
       events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR)
       exceptionFormat = TestExceptionFormat.FULL
       showStandardStreams = false
+    }
+  }
+}
+
+fun Project.configureDokka() {
+  dokka {
+    moduleName.set("ReadingBat")
+    pluginsConfiguration.html {
+      homepageLink.set(repoUrl)
+      footerMessage.set(projectName)
     }
   }
 }

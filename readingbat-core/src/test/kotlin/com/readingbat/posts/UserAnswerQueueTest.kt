@@ -45,7 +45,7 @@ class UserAnswerQueueTest : StringSpec() {
     }
 
     "workerIndex handles negative ids without going out of range" {
-      listOf(-1L, -17L, -1234L).forEach { id ->
+      [-1L, -17L, -1234L].forEach { id ->
         workerIndex(id) shouldBeGreaterThanOrEqual 0
         workerIndex(id) shouldBeLessThan WORKER_COUNT
       }

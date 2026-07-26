@@ -77,7 +77,7 @@ import kotlin.time.measureTimedValue
 @ReadingBatDslMarker
 class ReadingBatContent {
   internal val timeStamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("M/d/y H:m:ss"))
-  private val languageList by lazy { listOf(java, python, kotlin) }
+  private val languageList by lazy { [java, python, kotlin] }
   private val languageMap by lazy { languageList.associateBy { it.languageType } }
 
   // contentMap will prevent reading the same content multiple times
@@ -96,7 +96,7 @@ class ReadingBatContent {
   /** Language group for Kotlin challenges. Accessible in the DSL as a property or block receiver. */
   val kotlin by lazy { LanguageGroup<KotlinChallenge>(this, Kotlin) }
 
-  val languages by lazy { listOf(python, java, kotlin) }
+  val languages by lazy { [python, java, kotlin] }
 
   val cacheChallenges get() = isProduction() || isTesting()
 

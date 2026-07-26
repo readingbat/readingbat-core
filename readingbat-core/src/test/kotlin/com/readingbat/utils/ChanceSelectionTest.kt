@@ -58,7 +58,7 @@ class ChanceSelectionTest : StringSpec() {
       val size = 5
       val current = 2
       val candidates = (0 until size).filter { it != current }
-      candidates shouldBe listOf(0, 1, 3, 4)
+      candidates shouldBe [0, 1, 3, 4]
     }
   }
 }

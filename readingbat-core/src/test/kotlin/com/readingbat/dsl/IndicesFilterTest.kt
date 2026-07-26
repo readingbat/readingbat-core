@@ -29,7 +29,7 @@ class IndicesFilterTest : StringSpec() {
   init {
     "extractJavaFunction should find static method body" {
       val code =
-        listOf(
+        [
           "import java.util.*;",
           "",
           "public class Warmup {",
@@ -41,7 +41,7 @@ class IndicesFilterTest : StringSpec() {
           "    System.out.println(sleepIn(false, false));",
           "  }",
           "}",
-        )
+        ]
       val result = extractJavaFunction(ChallengeName("sleepIn"), code)
       result shouldContain "sleepIn"
       result shouldContain "return !weekday || vacation"
@@ -50,13 +50,13 @@ class IndicesFilterTest : StringSpec() {
 
     "extractPythonFunction should find def function body" {
       val code =
-        listOf(
+        [
           "def sleep_in(weekday, vacation):",
           "  return not weekday or vacation",
           "",
           "def main():",
           "  print(sleep_in(False, False))",
-        )
+        ]
       val result = extractPythonFunction(code)
       result shouldContain "sleep_in"
       result shouldContain "return not weekday or vacation"
@@ -64,7 +64,7 @@ class IndicesFilterTest : StringSpec() {
     }
 
     "indices.filter produces same results as mapIndexed for index extraction" {
-      val items = listOf("apple", "banana", "avocado", "cherry", "apricot")
+      val items = ["apple", "banana", "avocado", "cherry", "apricot"]
       val pattern = Regex("^a")
 
       val viaMapIndexed =
@@ -75,7 +75,7 @@ class IndicesFilterTest : StringSpec() {
       val viaIndicesFilter = items.indices.filter { items[it].contains(pattern) }
 
       viaIndicesFilter shouldBe viaMapIndexed
-      viaIndicesFilter shouldBe listOf(0, 2, 4)
+      viaIndicesFilter shouldBe [0, 2, 4]
     }
   }
 }

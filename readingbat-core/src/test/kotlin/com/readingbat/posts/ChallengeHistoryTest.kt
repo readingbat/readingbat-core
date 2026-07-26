@@ -32,7 +32,7 @@ class ChallengeHistoryTest : StringSpec() {
       history.markCorrect("42")
 
       history.correct shouldBe true
-      history.answers shouldContainExactly listOf("42")
+      history.answers shouldContainExactly ["42"]
       history.incorrectAttempts shouldBe 0
     }
 
@@ -43,7 +43,7 @@ class ChallengeHistoryTest : StringSpec() {
 
       history.correct shouldBe false
       history.incorrectAttempts shouldBe 1
-      history.answers shouldContainExactly listOf("wrong")
+      history.answers shouldContainExactly ["wrong"]
     }
 
     "markUnanswered sets correct to false" {
@@ -61,7 +61,7 @@ class ChallengeHistoryTest : StringSpec() {
       history.markIncorrect("wrong")
       history.markIncorrect("wrong")
 
-      history.answers shouldContainExactly listOf("wrong")
+      history.answers shouldContainExactly ["wrong"]
       history.incorrectAttempts shouldBe 1
     }
 
@@ -72,7 +72,7 @@ class ChallengeHistoryTest : StringSpec() {
       history.markIncorrect("second")
       history.markCorrect("correct")
 
-      history.answers shouldContainExactly listOf("first", "second", "correct")
+      history.answers shouldContainExactly ["first", "second", "correct"]
       history.incorrectAttempts shouldBe 2
       history.correct shouldBe true
     }
@@ -93,17 +93,17 @@ class ChallengeHistoryTest : StringSpec() {
     "pre-fetched histories produce correct marking results" {
       // Simulate the pre-fetch pattern: create histories first, then mark them
       val invocations =
-        listOf(
+        [
           Invocation("test(1)"),
           Invocation("test(2)"),
           Invocation("test(3)"),
-        )
+        ]
       val results =
-        listOf(
+        [
           ChallengeResults(invocations[0], userResponse = "42", answered = true, correct = true),
           ChallengeResults(invocations[1], userResponse = "wrong", answered = true, correct = false),
           ChallengeResults(invocations[2], userResponse = "", answered = false, correct = false),
-        )
+        ]
 
       // Pre-fetch: create histories before processing (simulates reading from DB before write tx)
       val histories = invocations.map { ChallengeHistory(it) }
@@ -119,11 +119,11 @@ class ChallengeHistoryTest : StringSpec() {
 
       // Verify results
       histories[0].correct shouldBe true
-      histories[0].answers shouldContainExactly listOf("42")
+      histories[0].answers shouldContainExactly ["42"]
       histories[0].incorrectAttempts shouldBe 0
 
       histories[1].correct shouldBe false
-      histories[1].answers shouldContainExactly listOf("wrong")
+      histories[1].answers shouldContainExactly ["wrong"]
       histories[1].incorrectAttempts shouldBe 1
 
       histories[2].correct shouldBe false
@@ -137,7 +137,7 @@ class ChallengeHistoryTest : StringSpec() {
           invocation = Invocation("test(1)"),
           correct = false,
           incorrectAttempts = 2,
-          answers = mutableListOf("attempt1", "attempt2"),
+          answers = ["attempt1", "attempt2"],
         )
 
       // User now submits the correct answer
@@ -145,7 +145,7 @@ class ChallengeHistoryTest : StringSpec() {
 
       history.correct shouldBe true
       history.incorrectAttempts shouldBe 2 // unchanged
-      history.answers shouldContainExactly listOf("attempt1", "attempt2", "correct_answer")
+      history.answers shouldContainExactly ["attempt1", "attempt2", "correct_answer"]
     }
   }
 }

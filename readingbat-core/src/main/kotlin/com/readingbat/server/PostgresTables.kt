@@ -29,22 +29,22 @@ import org.jetbrains.exposed.v1.datetime.timestamp
 
 /** Unique index on (session_ref, user_ref) for the user_sessions table. */
 val userSessionIndex =
-  Index(listOf(UserSessionsTable.sessionRef, UserSessionsTable.userRef), true, "user_sessions_unique")
+  Index([UserSessionsTable.sessionRef, UserSessionsTable.userRef], true, "user_sessions_unique")
 
 val userChallengeInfoIndex =
-  Index(listOf(UserChallengeInfoTable.userRef, UserChallengeInfoTable.md5), true, "user_challenge_info_unique")
+  Index([UserChallengeInfoTable.userRef, UserChallengeInfoTable.md5], true, "user_challenge_info_unique")
 
 val userAnswerHistoryIndex =
   Index(
-    listOf(UserAnswerHistoryTable.userRef, UserAnswerHistoryTable.md5, UserAnswerHistoryTable.invocation),
+    [UserAnswerHistoryTable.userRef, UserAnswerHistoryTable.md5, UserAnswerHistoryTable.invocation],
     true,
     "user_answer_history_unique",
   )
 
 val oauthLinksProviderIndex =
-  Index(listOf(OAuthLinksTable.provider, OAuthLinksTable.providerId), true, "oauth_links_provider_unique")
+  Index([OAuthLinksTable.provider, OAuthLinksTable.providerId], true, "oauth_links_provider_unique")
 
-val geoInfosUnique = Index(listOf(GeoInfosTable.ip), true, "geo_info_unique")
+val geoInfosUnique = Index([GeoInfosTable.ip], true, "geo_info_unique")
 
 /** Tracks anonymous browser sessions identified by a random session ID cookie. */
 object BrowserSessionsTable : LongIdTable("browser_sessions") {

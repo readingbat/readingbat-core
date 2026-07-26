@@ -33,24 +33,24 @@ class OAuthGitHubEmailTest : StringSpec() {
 
     "resolveGitHubEmail prefers a primary verified email when the profile email is blank" {
       val emails =
-        listOf(
+        [
           GitHubEmail("secondary@example.com", primary = false, verified = true),
           GitHubEmail("primary@example.com", primary = true, verified = true),
-        )
+        ]
       resolveGitHubEmail(null, emails) shouldBe "primary@example.com"
     }
 
     "resolveGitHubEmail falls back to any verified email" {
       val emails =
-        listOf(
+        [
           GitHubEmail("unverified@example.com", primary = true, verified = false),
           GitHubEmail("verified@example.com", primary = false, verified = true),
-        )
+        ]
       resolveGitHubEmail(null, emails) shouldBe "verified@example.com"
     }
 
     "resolveGitHubEmail returns null when only unverified emails exist" {
-      resolveGitHubEmail(null, listOf(GitHubEmail("x@example.com", primary = true, verified = false))) shouldBe null
+      resolveGitHubEmail(null, [GitHubEmail("x@example.com", primary = true, verified = false)]) shouldBe null
     }
 
     "resolveGitHubEmail returns null when there is no email at all" {

@@ -52,7 +52,7 @@ fun main() {
 
 @Suppress("unused")
 fun javaTest() {
-  val correctAnswers = mutableListOf<Any>()
+  val correctAnswers: MutableList<Any> = []
   val script =
     """
       public class LessThan {
@@ -97,7 +97,7 @@ fun javaTest() {
 
 @Suppress("unused")
 fun pythonTest() {
-  val correctAnswers = mutableListOf<Any>()
+  val correctAnswers: MutableList<Any> = []
 
   val script =
     """

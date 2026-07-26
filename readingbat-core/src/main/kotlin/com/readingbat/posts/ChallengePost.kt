@@ -130,7 +130,7 @@ data class ChallengeHistory(
   var invocation: Invocation,
   var correct: Boolean = false,
   var incorrectAttempts: Int = 0,
-  @Required val answers: MutableList<String> = mutableListOf(),
+  @Required val answers: MutableList<String> = [],
 ) {
   fun markCorrect(userResponse: String) {
     correct = true

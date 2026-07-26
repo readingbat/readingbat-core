@@ -67,7 +67,7 @@ class ChallengeGroup<T : Challenge>(
   internal val groupNameSuffix: GroupName,
 ) {
   /** The ordered list of challenges in this group. */
-  val challenges = mutableListOf<T>()
+  val challenges: MutableList<T> = []
 
   private val groupPrefix by lazy { pathOf(languageName, groupName) }
   private val srcPath get() = languageGroup.srcPath
@@ -149,7 +149,7 @@ class ChallengeGroup<T : Challenge>(
   var includeFilesWithType by IncludeFilesWithType(this, languageType)
 
   private class IncludeFiles<T : Challenge>(val group: ChallengeGroup<T>, val languageType: LanguageType) {
-    val includeList = mutableListOf<PatternReturnType>()
+    val includeList: MutableList<PatternReturnType> = []
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>) = includeList.toString()
 
@@ -166,7 +166,7 @@ class ChallengeGroup<T : Challenge>(
   }
 
   private class IncludeFilesWithType<T : Challenge>(val group: ChallengeGroup<T>, val languageType: LanguageType) {
-    val includeList = mutableListOf<PatternReturnType>()
+    val includeList: MutableList<PatternReturnType> = []
 
     operator fun getValue(thisRef: Any?, property: KProperty<*>): PatternReturnType = PatternReturnType("", Runtime)
 

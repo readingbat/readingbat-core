@@ -82,7 +82,7 @@ internal object ConfigureOAuth {
           requestMethod = HttpMethod.Post,
           clientId = clientId,
           clientSecret = clientSecret,
-          defaultScopes = listOf("user:email"),
+          defaultScopes = ["user:email"],
         )
       }
       client = httpClient
@@ -115,7 +115,7 @@ internal object ConfigureOAuth {
           requestMethod = HttpMethod.Post,
           clientId = clientId,
           clientSecret = clientSecret,
-          defaultScopes = listOf("openid", "profile", "email"),
+          defaultScopes = ["openid", "profile", "email"],
         )
       }
       client = httpClient

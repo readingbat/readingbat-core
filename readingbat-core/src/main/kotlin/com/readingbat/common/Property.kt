@@ -133,7 +133,7 @@ open class KtorProperty(
   companion object {
     private val logger = KotlinLogging.logger {}
     private val initialized = AtomicBoolean(false)
-    private val instances = mutableListOf<KtorProperty>()
+    private val instances: MutableList<KtorProperty> = []
     internal val configStore = java.util.concurrent.ConcurrentHashMap<String, String>()
 
     // Names of properties that have individually had a value assigned via setProperty. Lets the
@@ -466,7 +466,7 @@ sealed class Property(
 
     /** Returns the ordered list of properties that should be initialized at application startup. */
     fun initProperties() =
-      listOf(
+      [
         DSL_FILE_NAME,
         DSL_VARIABLE_NAME,
         PROXY_HOSTNAME,
@@ -503,6 +503,6 @@ sealed class Property(
         GOOGLE_OAUTH_CLIENT_ID,
         GOOGLE_OAUTH_CLIENT_SECRET,
         SESSION_SECRET,
-      )
+      ]
   }
 }
