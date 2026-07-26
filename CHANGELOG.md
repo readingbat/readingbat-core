@@ -4,6 +4,35 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.3.0] - 2026-07-26
+
+A modernization + maintenance release. Adopts Kotlin's experimental collection-literal syntax across the codebase, refreshes dependencies (including major-version bumps to Flyway 13, prometheus-proxy 4.0, and common-utils 3.x), and lands a few code-quality cleanups. No configuration or upgrade steps are required — `./gradlew check` is green against the new toolchain.
+
+### Changed
+
+- Adopted Kotlin collection literals (an experimental 2.4 feature, enabled via the `-Xcollection-literals` compiler flag in `configureKotlin()`). 191 call sites across `src` and `test` were converted: `emptyList()` → `[]`, `listOf(...)` → `[...]`, and `mutableListOf(...)` → `[...]` with an explicit `MutableList<T>` type added to the declaration so mutability is never inferred away. The flag applies to project sources only — the JSR-223 script engine that evaluates content DSL files at runtime is unaffected, so DSL content keeps using `listOf()`/`mutableListOf()`
+- Moved the Dokka configuration into a root-level `configureDokka()` helper and `configureVersions()` into an `allprojects {}` block in the root `build.gradle.kts`
+- Removed redundant imports of symbols defined within a file's own object/companion (`Property.kt`, `ConfigureOAuth.kt`, `GeoInfo.kt`, `ReadingBatServer.kt`, `AdminRoutes.kt`)
+- Simplified an early-return conditional in `Intercepts.isBrowsableContentPath` (`if (x) return true; return y` → `return x || y`, behavior-preserving)
+- Bumped version to 3.3.0
+
+### Fixed
+
+- Resolved the unresolved `[initProperties]` KDoc link in `ContentDsl.kt` — it referenced a `Property` companion member not in scope, so Dokka couldn't resolve it and it rendered as plain text. Now uses the fully-qualified custom-link-text form, and Dokka module generation is warning-free
+
+### Dependencies
+
+- Kotlin 2.4.0 → 2.4.10
+- common-utils 2.9.3 → 3.2.1
+- prometheus-proxy 3.2.0 → 4.0.0
+- Flyway 12.10.0 → 13.0.0
+- Kotest 6.2.1 → 6.2.3
+- Logback 1.5.18 → 1.5.38
+- PostgreSQL driver 42.7.12 → 42.7.13
+- Cloud SQL socket factory 1.28.6 → 1.29.0
+- Kotlinter 5.5.0 → 5.6.0
+- Kover 0.9.8 → 0.9.9
+
 ## [3.2.1] - 2026-07-03
 
 A maintenance release: a Gradle 9.6.1 upgrade, a routine dependency refresh, and two build/test polish items. No functional changes to the running server.
