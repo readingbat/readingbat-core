@@ -26,6 +26,16 @@ the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.ve
 - Kotlinter enforces ktlint code style — run format before committing
 - Detekt static analysis via the `dev.detekt` 2.0 alpha plugin; config in `config/detekt/detekt.yml`, run standalone with `make detekt` or refresh the baseline with `make detekt-baseline`
 
+### Kotlin Conventions
+
+- **Collection literals** (`[...]`) are enabled via the `-Xcollection-literals` compiler flag (set in `configureKotlin()`
+  in the root `build.gradle.kts`). Prefer literal syntax over the factory functions in project sources: `emptyList()` →
+  `[]`, `listOf(...)` → `[...]`, and `mutableListOf(...)` → `[...]` **with an explicit `MutableList<T>` type on the
+  declaration** so mutability is not inferred away (e.g. `val xs: MutableList<String> = []`). Leave a call untouched when
+  the element type can't be inferred from context (e.g. a Kotest `Any?`-typed `shouldBe` argument) — the compiler is the
+  authority. **Content DSL files are exempt:** the flag applies to project sources only, not the JSR-223 script engine
+  that evaluates content at runtime, so DSL content must keep using `listOf()`/`mutableListOf()`.
+
 ### Coverage
 
 - HTML report: `make coverage` or `make coverage-html` (`./gradlew koverHtmlReport`)
@@ -159,9 +169,9 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
 
 ### Key Dependencies
 
-- **common-utils** 2.9.3 (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
+- **common-utils** 3.2.1 (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
   exposed-utils, ktor-client/server-utils, script-utils, etc. (`respondWith`/`redirectTo` take a `suspend` block as of 2.9.2)
-- **prometheus-proxy** 3.2.0: metrics collection
-- **Kover** 0.9.8: code coverage, applied to every subproject and aggregated at the root; CI uploads
+- **prometheus-proxy** 4.0.0: metrics collection
+- **Kover** 0.9.9: code coverage, applied to every subproject and aggregated at the root; CI uploads
   `build/reports/kover/report.xml` to Codecov via `codecov-action@v5`
 - Dependency versions managed in `gradle/libs.versions.toml`

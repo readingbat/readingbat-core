@@ -1,5 +1,23 @@
 # Release Notes
 
+## v3.3.0 — 2026-07-26
+
+A modernization + maintenance release. It adopts Kotlin's experimental collection-literal syntax across the codebase, refreshes dependencies (with major-version bumps to Flyway 13, prometheus-proxy 4.0, and common-utils 3.x), and lands a handful of code-quality cleanups. No configuration or upgrade steps are required — this is a drop-in bump from 3.2.1, and `./gradlew check` is green against the new toolchain.
+
+### Highlights
+
+- **Kotlin collection literals.** Enabled the experimental `-Xcollection-literals` compiler flag and converted 191 call sites across `src` and `test`: `emptyList()` → `[]`, `listOf(...)` → `[...]`, and `mutableListOf(...)` → `[...]` — the latter with an explicit `MutableList<T>` type on the declaration so mutability is never inferred away. The flag scopes to project sources only; the JSR-223 engine that evaluates content DSL files at runtime is unaffected, so DSL content continues to use `listOf()`/`mutableListOf()`.
+- **Dokka is warning-free.** Fixed the unresolved `[initProperties]` KDoc link in `ContentDsl.kt` (a `Property` companion member that wasn't in scope) using the fully-qualified custom-link-text form, so the module now generates with zero warnings. The Dokka configuration also moved to a root-level `configureDokka()` helper, and `configureVersions()` moved into an `allprojects {}` block.
+- **Code-quality cleanups.** Removed redundant imports of symbols defined within a file's own object/companion (five files), and simplified an early-return conditional in `Intercepts.isBrowsableContentPath` (`if (x) return true; return y` → `return x || y`, behavior-preserving).
+
+### Dependencies
+
+Kotlin 2.4.0 → 2.4.10 · common-utils 2.9.3 → 3.2.1 · prometheus-proxy 3.2.0 → 4.0.0 · Flyway 12.10.0 → 13.0.0 · Kotest 6.2.1 → 6.2.3 · Logback 1.5.18 → 1.5.38 · PostgreSQL driver 42.7.12 → 42.7.13 · Cloud SQL socket factory 1.28.6 → 1.29.0 · Kotlinter 5.5.0 → 5.6.0 · Kover 0.9.8 → 0.9.9
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.2.1...3.3.0
+
+---
+
 ## v3.2.1 — 2026-07-03
 
 Maintenance release. A Gradle 9.6.1 upgrade, a routine dependency refresh, and two small build/test polish items. No functional changes to the running server, and no configuration or upgrade steps are required — this is a drop-in bump from 3.2.0.
