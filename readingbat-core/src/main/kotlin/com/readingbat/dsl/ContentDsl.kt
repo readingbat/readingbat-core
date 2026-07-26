@@ -110,7 +110,8 @@ fun isProduction() = IS_PRODUCTION.getProperty(false)
 /**
  * Returns true if the server is running in test mode. Accessible from Content.kt DSL files.
  *
- * IS_TESTING is not part of [initProperties] (it is set directly via setProperty in tests and
+ * IS_TESTING is not part of [Property.initProperties][com.readingbat.common.Property.initProperties]
+ * (it is set directly via setProperty in tests and
  * defaults to false in production), so it is read with errorOnNonInit = false: the single global
  * init guard can never meaningfully flag this specific property anyway.
  */

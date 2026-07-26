@@ -24,8 +24,6 @@ import com.pambrose.common.exposed.readonlyTx
 import com.pambrose.common.exposed.upsert
 import com.readingbat.common.Constants
 import com.readingbat.common.EnvVar
-import com.readingbat.server.GeoInfo.Companion.MAX_GEO_CACHE_SIZE
-import com.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO

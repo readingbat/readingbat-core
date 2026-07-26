@@ -162,8 +162,7 @@ internal object Intercepts {
 private fun isBrowsableContentPath(path: String): Boolean {
   if (!path.startsWith("$CHALLENGE_ROOT/") && path != CHALLENGE_ROOT) return false
   val suffix = path.removePrefix(CHALLENGE_ROOT).trimStart('/')
-  if (suffix.isEmpty()) return true
-  return suffix.split('/').size <= 2 // /content/java (1) or /content/java/Warmup-1 (2)
+  return suffix.isEmpty() || suffix.split('/').size <= 2 // /content/java (1) or /content/java/Warmup-1 (2)
 }
 
 /**
