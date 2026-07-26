@@ -79,7 +79,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
               row[UserAnswerHistoryTable.invocation] = invocation.value
               row[correct] = true
               row[incorrectAttempts] = 2
-              row[historyJson] = Json.encodeToString(listOf("wrong1", "wrong2", "right"))
+              row[historyJson] = Json.encodeToString(["wrong1", "wrong2", "right"])
             }
           }
         }
@@ -88,7 +88,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         val history = user.answerHistory(md5, invocation)
         history.correct shouldBe true
         history.incorrectAttempts shouldBe 2
-        history.answers shouldContainExactly listOf("wrong1", "wrong2", "right")
+        history.answers shouldContainExactly ["wrong1", "wrong2", "right"]
       }
     }
 
@@ -149,7 +149,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
               row[invocation] = "invokeA()"
               row[correct] = true
               row[incorrectAttempts] = 0
-              row[historyJson] = Json.encodeToString(listOf("answerA"))
+              row[historyJson] = Json.encodeToString(["answerA"])
             }
             upsert(conflictIndex = userAnswerHistoryIndex) { row ->
               row[userRef] = user.userDbmsId
@@ -158,12 +158,12 @@ class AnswerHistoryPersistenceTest : StringSpec() {
               row[invocation] = "invokeB()"
               row[correct] = false
               row[incorrectAttempts] = 3
-              row[historyJson] = Json.encodeToString(listOf("wrong1", "wrong2", "wrong3"))
+              row[historyJson] = Json.encodeToString(["wrong1", "wrong2", "wrong3"])
             }
           }
         }
 
-        val bulk = user.answerHistoryBulk(listOf(md5A, md5B, md5Missing))
+        val bulk = user.answerHistoryBulk([md5A, md5B, md5Missing])
         bulk.size shouldBe 2
         bulk[md5A]!!.correct shouldBe true
         bulk[md5B]!!.incorrectAttempts shouldBe 3
@@ -195,7 +195,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
               row[UserAnswerHistoryTable.invocation] = invocation.value
               row[correct] = false
               row[incorrectAttempts] = 1
-              row[historyJson] = Json.encodeToString(listOf("wrong"))
+              row[historyJson] = Json.encodeToString(["wrong"])
             }
           }
         }
@@ -212,7 +212,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
               row[UserAnswerHistoryTable.invocation] = invocation.value
               row[correct] = true
               row[incorrectAttempts] = 1
-              row[historyJson] = Json.encodeToString(listOf("wrong", "right"))
+              row[historyJson] = Json.encodeToString(["wrong", "right"])
             }
           }
         }
@@ -220,7 +220,7 @@ class AnswerHistoryPersistenceTest : StringSpec() {
         val updated = user.answerHistory(md5, invocation)
         updated.correct shouldBe true
         updated.incorrectAttempts shouldBe 1
-        updated.answers shouldContainExactly listOf("wrong", "right")
+        updated.answers shouldContainExactly ["wrong", "right"]
       }
     }
 

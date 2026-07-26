@@ -706,11 +706,9 @@ internal object ChallengePage {
     val groupName = challenge.groupName
     val challengeName = challenge.challengeName
 
-    p(classes = TwClasses.EXPERIMENT) {
-      +"Experiment with this code on "
-      this@otherLinks.addLink("Gitpod.io", "https://gitpod.io/#${challenge.gitpodUrl}", true)
-      if (languageType.isKotlin) {
-        +" or as a "
+    if (languageType.isKotlin) {
+      p(classes = TwClasses.EXPERIMENT) {
+        +"Experiment with this code as a "
         this@otherLinks.addLink("Kotlin Playground", pathOf(PLAYGROUND_ROOT, groupName, challengeName), false)
       }
     }

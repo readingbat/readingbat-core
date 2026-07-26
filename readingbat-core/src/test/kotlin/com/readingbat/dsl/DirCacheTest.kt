@@ -30,14 +30,14 @@ import io.kotest.matchers.shouldBe
 class DirCacheTest : StringSpec() {
   init {
     "readDirCache returns what writeDirCache stored under a consistent key" {
-      ChallengeGroup.writeDirCache("java/Warmup-1", listOf("a.java", "b.java"))
-      ChallengeGroup.readDirCache("java/Warmup-1") shouldBe listOf("a.java", "b.java")
+      ChallengeGroup.writeDirCache("java/Warmup-1", ["a.java", "b.java"])
+      ChallengeGroup.readDirCache("java/Warmup-1") shouldBe ["a.java", "b.java"]
     }
 
     "rewriting the dir cache overwrites instead of accumulating duplicates" {
-      ChallengeGroup.writeDirCache("python/Group-2", listOf("a.py"))
-      ChallengeGroup.writeDirCache("python/Group-2", listOf("a.py", "b.py"))
-      ChallengeGroup.readDirCache("python/Group-2") shouldBe listOf("a.py", "b.py")
+      ChallengeGroup.writeDirCache("python/Group-2", ["a.py"])
+      ChallengeGroup.writeDirCache("python/Group-2", ["a.py", "b.py"])
+      ChallengeGroup.readDirCache("python/Group-2") shouldBe ["a.py", "b.py"]
     }
   }
 }

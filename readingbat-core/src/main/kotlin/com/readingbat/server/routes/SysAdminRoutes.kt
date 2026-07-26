@@ -98,11 +98,11 @@ fun Routing.sysAdminRoutes(metrics: Metrics, resetContentFunc: (String) -> Unit)
         }
     }
 
-    return listOf(
+    return [
       deleteContentDslCache(),
       deleteSourceCodeCache(),
       deleteDirContentsCache(),
-    ).joinToString(", ")
+    ].joinToString(", ")
   }
 
   post(RESET_CONTENT_DSL_ENDPOINT, metrics) {

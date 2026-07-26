@@ -106,7 +106,7 @@ internal object ChallengeGroupWs {
 
               if (enrollees.isNotEmpty()) {
                 // Reorder challenges to return values left to right
-                val ltor = mutableListOf<Challenge>()
+                val ltor: MutableList<Challenge> = []
                 val rows = challenges.size.rows(Constants.COLUMN_CNT)
                 repeat(rows) { i ->
                   challenges

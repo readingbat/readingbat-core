@@ -47,11 +47,11 @@ class WsConnectionSnapshotTest : StringSpec() {
     }
 
     "snapshotUnderMonitor returns a decoupled copy" {
-      val set = Collections.synchronizedSet(LinkedHashSet<Int>()).apply { addAll(listOf(1, 2, 3)) }
+      val set = Collections.synchronizedSet(LinkedHashSet<Int>()).apply { addAll([1, 2, 3]) }
       val snapshot = set.snapshotUnderMonitor()
       set.add(4)
       set.remove(1)
-      snapshot shouldBe listOf(1, 2, 3)
+      snapshot shouldBe [1, 2, 3]
     }
   }
 }

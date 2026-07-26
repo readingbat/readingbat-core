@@ -47,7 +47,7 @@ enum class LanguageType(val useDoubleQuotes: Boolean, val suffix: String, val sr
 
   companion object {
     val defaultLanguageType = Java
-    val languageTypeList = listOf(Java, Python, Kotlin)
+    val languageTypeList = [Java, Python, Kotlin]
 
     /** Returns all language types, optionally reordered to put [defaultLanguage] first. */
     fun languageTypes(defaultLanguage: LanguageType? = null): List<LanguageType> =

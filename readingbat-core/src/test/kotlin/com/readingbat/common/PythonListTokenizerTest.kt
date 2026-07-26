@@ -30,15 +30,15 @@ import io.kotest.matchers.shouldBe
 class PythonListTokenizerTest : StringSpec() {
   init {
     "splitTopLevelCommas keeps commas inside single-quoted elements together" {
-      splitTopLevelCommas("'a,b', 'c'").map { it.trim() } shouldBe listOf("'a,b'", "'c'")
+      splitTopLevelCommas("'a,b', 'c'").map { it.trim() } shouldBe ["'a,b'", "'c'"]
     }
 
     "splitTopLevelCommas keeps commas inside double-quoted elements together" {
-      splitTopLevelCommas(""""a,b", "c"""").map { it.trim() } shouldBe listOf("\"a,b\"", "\"c\"")
+      splitTopLevelCommas(""""a,b", "c"""").map { it.trim() } shouldBe ["\"a,b\"", "\"c\""]
     }
 
     "splitTopLevelCommas splits unquoted top-level elements" {
-      splitTopLevelCommas("1, 2, 3").map { it.trim() } shouldBe listOf("1", "2", "3")
+      splitTopLevelCommas("1, 2, 3").map { it.trim() } shouldBe ["1", "2", "3"]
     }
 
     "splitTopLevelCommas returns an empty list for blank input" {

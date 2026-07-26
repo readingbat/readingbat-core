@@ -83,7 +83,7 @@ class WsProtocolConstantsTest : StringSpec() {
         ClassSummary(
         userId = "user1",
         challengeName = "hello",
-        results = listOf("Y", "N"),
+        results = ["Y", "N"],
         stats = "1/2",
         likeDislike = "",
       )
@@ -102,7 +102,7 @@ class WsProtocolConstantsTest : StringSpec() {
         StudentSummary(
         groupName = "Warmup-1",
         challengeName = "hello",
-        results = listOf("Y"),
+        results = ["Y"],
         stats = "1/1",
         likeDislike = "",
       )

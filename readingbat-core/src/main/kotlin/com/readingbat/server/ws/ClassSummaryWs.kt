@@ -108,7 +108,7 @@ internal object ClassSummaryWs {
                   for (enrollee in enrollees) {
                     var incorrectAttempts = 0
 
-                    val results = mutableListOf<String>()
+                    val results: MutableList<String> = []
                     for (invocation in funcInfo.invocations) {
                       val historyMd5 = md5Of(langName, groupName, challengeName, invocation)
                       if (enrollee.historyExists(historyMd5, invocation)) {

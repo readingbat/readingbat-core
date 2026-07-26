@@ -30,11 +30,11 @@ class AnswerPublisherTest : StringSpec() {
     // The teacher dashboard renders this string via innerHTML over a WebSocket, so student
     // answers must be HTML-escaped to prevent stored XSS, while the <br> separators stay literal.
     "formatDashboardAnswers reverses, limits, and joins answers with <br>" {
-      AnswerPublisher.formatDashboardAnswers(listOf("a", "b", "c"), 2) shouldBe "c<br>b"
+      AnswerPublisher.formatDashboardAnswers(["a", "b", "c"], 2) shouldBe "c<br>b"
     }
 
     "formatDashboardAnswers leaves a plain answer unchanged" {
-      AnswerPublisher.formatDashboardAnswers(listOf("42"), 10) shouldBe "42"
+      AnswerPublisher.formatDashboardAnswers(["42"], 10) shouldBe "42"
     }
 
     "formatDashboardAnswers returns empty string for no answers" {
@@ -42,13 +42,13 @@ class AnswerPublisherTest : StringSpec() {
     }
 
     "formatDashboardAnswers HTML-escapes a script-injection answer" {
-      val result = AnswerPublisher.formatDashboardAnswers(listOf("<img src=x onerror=alert(1)>"), 10)
+      val result = AnswerPublisher.formatDashboardAnswers(["<img src=x onerror=alert(1)>"], 10)
       result shouldNotContainSubstring "<img"
       result shouldContainSubstring "&lt;img"
     }
 
     "formatDashboardAnswers keeps the <br> separator literal between escaped answers" {
-      val result = AnswerPublisher.formatDashboardAnswers(listOf("<b>x", "<b>y"), 10)
+      val result = AnswerPublisher.formatDashboardAnswers(["<b>x", "<b>y"], 10)
       result shouldBe "&lt;b&gt;y<br>&lt;b&gt;x"
     }
 

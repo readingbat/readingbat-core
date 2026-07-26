@@ -174,7 +174,7 @@ class PlaygroundRequest(val groupName: String, val challengeName: String)
 /** Inline value class wrapping a language name string (e.g., "java", "python", "kotlin"). */
 @JvmInline
 value class LanguageName(val value: String) {
-  val isJvm get() = value in listOf("kotlin", "java") // jmvLanguages
+  val isJvm get() = value in ["kotlin", "java"] // jmvLanguages
 
   fun toLanguageType() =
     try {

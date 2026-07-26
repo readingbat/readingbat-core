@@ -166,13 +166,13 @@ internal object SystemConfigurationPage {
             h3 { +"System Maps" }
             div(classes = TwClasses.INDENT_1EM) {
               table {
-                listOf(
+                [
                   "Request timing map size" to requestTimingMap,
                   "IP Geo map size" to geoInfoMap,
                   "Content map size" to content.contentMap,
                   "User ID cache size" to userIdCache,
                   "User email cache size" to emailCache,
-                )
+                ]
                   .forEach {
                     tr {
                       td { +it.first }

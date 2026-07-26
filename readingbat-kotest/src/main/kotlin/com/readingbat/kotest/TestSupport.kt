@@ -91,12 +91,12 @@ object TestSupport {
       functionInfo().block()
     }
 
-  private fun Challenge.formData() =
-    mutableListOf(
+  private fun Challenge.formData(): MutableList<Pair<String, String>> =
+    [
       LANG_SRC to challengeGroup.languageGroup.languageName.value,
       GROUP_SRC to challengeGroup.groupName.value,
       CHALLENGE_SRC to challengeName.value,
-    )
+    ]
 
   private suspend fun Challenge.parseChallengeResults(content: String): List<ChallengeResult> {
     var cnt = 0

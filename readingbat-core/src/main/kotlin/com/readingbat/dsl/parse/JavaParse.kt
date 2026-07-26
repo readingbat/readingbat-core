@@ -48,15 +48,15 @@ internal object JavaParse {
   internal val svmRegex = Regex("""\s*static\s+void\s+main\(""")
 
   private val prefixRegex =
-    listOf(
+    [
       Regex("""System\.out\.println\("""),
       Regex("""ArrayUtils\.arrayPrint\("""),
       Regex("""ListUtils\.listPrint\("""),
       Regex("""arrayPrint\("""),
       Regex("""listPrint\("""),
-    )
+    ]
   private val prefixes =
-    listOf("System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint")
+    ["System.out.println", "ArrayUtils.arrayPrint", "ListUtils.listPrint", "arrayPrint", "listPrint"]
 
   /**
    * Derives the return type of a Java challenge function by locating the first `static` method

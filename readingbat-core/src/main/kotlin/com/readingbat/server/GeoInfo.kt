@@ -91,7 +91,7 @@ class GeoInfo(val requireDbmsLookUp: Boolean, val dbmsId: Long, val remoteHost: 
   fun summary() =
     if (valid)
       try {
-        listOf(city, state_prov, country_name, organization).joinToString(", ")
+        [city, state_prov, country_name, organization].joinToString(", ")
       } catch (_: NoSuchElementException) {
         "Missing Geo data"
       }

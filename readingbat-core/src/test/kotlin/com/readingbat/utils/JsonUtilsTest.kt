@@ -47,7 +47,7 @@ class JsonUtilsTest : StringSpec() {
     }
 
     "toJson serializes a list of primitives" {
-      listOf(1, 2, 3).toJson() shouldBe "[1,2,3]"
+      [1, 2, 3].toJson() shouldBe "[1,2,3]"
     }
 
     "toJson serializes a map with string keys" {
@@ -56,7 +56,7 @@ class JsonUtilsTest : StringSpec() {
     }
 
     "toJson serializes a nested data class round-trips through Json.decodeFromString" {
-      val original = Wrapper(tag = "t", values = listOf(1, 2, 3), person = Person("Bob", 7))
+      val original = Wrapper(tag = "t", values = [1, 2, 3], person = Person("Bob", 7))
       val encoded = original.toJson()
       Json.decodeFromString<Wrapper>(encoded) shouldBe original
     }

@@ -23,12 +23,12 @@ import io.kotest.matchers.shouldBe
 class ForEachConsistencyTest : StringSpec() {
   init {
     "forEach with destructuring should process all pairs" {
-      val pairs = listOf("a" to 1, "b" to 2, "c" to 3)
-      val collected = mutableListOf<String>()
+      val pairs = ["a" to 1, "b" to 2, "c" to 3]
+      val collected: MutableList<String> = []
       pairs.forEach { (key, value) ->
         collected += "$key=$value"
       }
-      collected shouldBe listOf("a=1", "b=2", "c=3")
+      collected shouldBe ["a=1", "b=2", "c=3"]
     }
 
     "forEach with destructuring on empty list should be no-op" {
@@ -42,7 +42,7 @@ class ForEachConsistencyTest : StringSpec() {
 
     "forEach with destructuring should maintain order" {
       val pairs = (1..100).map { "key$it" to it }
-      val indices = mutableListOf<Int>()
+      val indices: MutableList<Int> = []
       pairs.forEach { (_, value) ->
         indices += value
       }

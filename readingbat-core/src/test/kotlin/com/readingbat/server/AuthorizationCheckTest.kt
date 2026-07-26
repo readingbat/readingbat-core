@@ -62,13 +62,13 @@ class AuthorizationCheckTest : StringSpec() {
                 .post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
                   header(ContentType, FormUrlEncoded.toString())
                   setBody(
-                    listOf(
+                    [
                       LANGUAGE_NAME_PARAM to "Java",
                       GROUP_NAME_PARAM to TestData.GROUP_NAME,
                       CHALLENGE_NAME_PARAM to "StringArrayTest1",
                       CORRECT_ANSWERS_PARAM to spoofedKey,
                       CHALLENGE_ANSWERS_PARAM to "",
-                    ).formUrlEncode(),
+                    ].formUrlEncode(),
                   )
                 }
             // Should redirect (not crash) — the spoofed key is silently ignored
@@ -92,12 +92,12 @@ class AuthorizationCheckTest : StringSpec() {
                 .post(CLEAR_GROUP_ANSWERS_ENDPOINT) {
                   header(ContentType, FormUrlEncoded.toString())
                   setBody(
-                    listOf(
+                    [
                       LANGUAGE_NAME_PARAM to "Java",
                       GROUP_NAME_PARAM to TestData.GROUP_NAME,
                       CORRECT_ANSWERS_PARAM to "[\"$spoofedKey\"]",
                       CHALLENGE_ANSWERS_PARAM to "[]",
-                    ).formUrlEncode(),
+                    ].formUrlEncode(),
                   )
                 }
             // Should redirect (not crash) — the spoofed keys are silently ignored

@@ -63,13 +63,13 @@ class DeleteFromTableTest : StringSpec() {
                 .post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
                   header(ContentType, FormUrlEncoded.toString())
                   setBody(
-                    listOf(
+                    [
                       LANGUAGE_NAME_PARAM to "Java",
                       GROUP_NAME_PARAM to TestData.GROUP_NAME,
                       CHALLENGE_NAME_PARAM to "StringArrayTest1",
                       CORRECT_ANSWERS_PARAM to correctKey,
                       CHALLENGE_ANSWERS_PARAM to challengeKey,
-                    ).formUrlEncode(),
+                    ].formUrlEncode(),
                   )
                 }
             response shouldHaveStatus Found
@@ -90,13 +90,13 @@ class DeleteFromTableTest : StringSpec() {
                 .post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
                   header(ContentType, FormUrlEncoded.toString())
                   setBody(
-                    listOf(
+                    [
                       LANGUAGE_NAME_PARAM to "Java",
                       GROUP_NAME_PARAM to TestData.GROUP_NAME,
                       CHALLENGE_NAME_PARAM to "StringArrayTest1",
                       CORRECT_ANSWERS_PARAM to "",
                       CHALLENGE_ANSWERS_PARAM to "",
-                    ).formUrlEncode(),
+                    ].formUrlEncode(),
                   )
                 }
             response shouldHaveStatus Found
@@ -117,13 +117,13 @@ class DeleteFromTableTest : StringSpec() {
                 .post(CLEAR_CHALLENGE_ANSWERS_ENDPOINT) {
                   header(ContentType, FormUrlEncoded.toString())
                   setBody(
-                    listOf(
+                    [
                       LANGUAGE_NAME_PARAM to "Java",
                       GROUP_NAME_PARAM to TestData.GROUP_NAME,
                       CHALLENGE_NAME_PARAM to "StringArrayTest1",
                       CORRECT_ANSWERS_PARAM to "malformed-key-no-separators",
                       CHALLENGE_ANSWERS_PARAM to "also-malformed",
-                    ).formUrlEncode(),
+                    ].formUrlEncode(),
                   )
                 }
             response shouldHaveStatus Found

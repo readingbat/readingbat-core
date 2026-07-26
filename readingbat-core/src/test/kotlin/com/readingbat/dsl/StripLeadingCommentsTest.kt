@@ -25,88 +25,88 @@ class StripLeadingCommentsTest : StringSpec() {
   init {
     "strips multi-line copyright block comment" {
       val lines =
-        listOf(
+        [
         "/*",
         " * Copyright © 2023 Paul Ambrose",
         " */",
         "",
         "fun hello() = 1",
-      )
-      stripLeadingComments(lines) shouldBe listOf("fun hello() = 1")
+      ]
+      stripLeadingComments(lines) shouldBe ["fun hello() = 1"]
     }
 
     "keeps non-copyright multi-line block comment" {
       val lines =
-        listOf(
+        [
         "/* This is a regular comment */",
         "fun hello() = 1",
-      )
+      ]
       stripLeadingComments(lines) shouldBe lines
     }
 
     "strips single-line copyright block comment" {
       val lines =
-        listOf(
+        [
         "/* Copyright 2023 */",
         "fun hello() = 1",
-      )
-      stripLeadingComments(lines) shouldBe listOf("fun hello() = 1")
+      ]
+      stripLeadingComments(lines) shouldBe ["fun hello() = 1"]
     }
 
     "strips copyright line comment" {
       val lines =
-        listOf(
+        [
         "// Copyright 2023",
         "fun hello() = 1",
-      )
-      stripLeadingComments(lines) shouldBe listOf("fun hello() = 1")
+      ]
+      stripLeadingComments(lines) shouldBe ["fun hello() = 1"]
     }
 
     "keeps non-copyright line comment" {
       val lines =
-        listOf(
+        [
         "// This is a regular comment",
         "fun hello() = 1",
-      )
+      ]
       stripLeadingComments(lines) shouldBe lines
     }
 
     "strips leading blank lines before code" {
       val lines =
-        listOf(
+        [
         "",
         "",
         "fun hello() = 1",
-      )
-      stripLeadingComments(lines) shouldBe listOf("fun hello() = 1")
+      ]
+      stripLeadingComments(lines) shouldBe ["fun hello() = 1"]
     }
 
     "strips copyright block followed by blank lines" {
       val lines =
-        listOf(
+        [
         "/*",
         " * Copyright © 2023",
         " */",
         "",
         "",
         "fun hello() = 1",
-      )
-      stripLeadingComments(lines) shouldBe listOf("fun hello() = 1")
+      ]
+      stripLeadingComments(lines) shouldBe ["fun hello() = 1"]
     }
 
     "keeps non-copyright block comment after copyright block" {
       val lines =
-        listOf(
+        [
         "/* Copyright 2023 */",
         "",
         "/* This describes the function */",
         "fun hello() = 1",
-      )
+      ]
       stripLeadingComments(lines) shouldBe
-        listOf(
+        [
         "/* This describes the function */",
         "fun hello() = 1",
-      )
+      ]
     }
 
     "handles empty input" {
@@ -114,45 +114,45 @@ class StripLeadingCommentsTest : StringSpec() {
     }
 
     "handles all-blank input" {
-      stripLeadingComments(listOf("", "  ", "")) shouldBe emptyList()
+      stripLeadingComments(["", "  ", ""]) shouldBe emptyList()
     }
 
     "copyright check is case-insensitive" {
       val lines =
-        listOf(
+        [
         "/* cOpYrIgHt 2023 */",
         "fun hello() = 1",
-      )
-      stripLeadingComments(lines) shouldBe listOf("fun hello() = 1")
+      ]
+      stripLeadingComments(lines) shouldBe ["fun hello() = 1"]
     }
 
     "keeps multi-line non-copyright block comment" {
       val lines =
-        listOf(
+        [
         "/*",
         " * This is a doc comment",
         " */",
         "fun hello() = 1",
-      )
+      ]
       stripLeadingComments(lines) shouldBe lines
     }
 
     "handles unclosed multi-line copyright block at end of input" {
       val lines =
-        listOf(
+        [
         "/*",
         " * Copyright 2023",
-      )
+      ]
       // The block never closes, but all lines contain copyright — should strip them
       stripLeadingComments(lines) shouldBe emptyList()
     }
 
     "handles code with no leading comments" {
       val lines =
-        listOf(
+        [
         "fun hello() = 1",
         "fun world() = 2",
-      )
+      ]
       stripLeadingComments(lines) shouldBe lines
     }
   }

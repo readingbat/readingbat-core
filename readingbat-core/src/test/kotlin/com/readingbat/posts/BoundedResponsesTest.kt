@@ -31,24 +31,24 @@ class BoundedResponsesTest : StringSpec() {
   init {
     "boundedResponses returns one trimmed response per invocation" {
       ChallengePost.boundedResponses(2, mapOf("response0" to " a ", "response1" to "b")) shouldBe
-        listOf("a", "b")
+        ["a", "b"]
     }
 
     "boundedResponses ignores extra response params instead of throwing" {
       ChallengePost.boundedResponses(
         2,
         mapOf("response0" to "a", "response1" to "b", "response2" to "c", "response3" to "d"),
-      ) shouldBe listOf("a", "b")
+      ) shouldBe ["a", "b"]
     }
 
     "boundedResponses treats a missing response as blank (unanswered)" {
       ChallengePost.boundedResponses(3, mapOf("response0" to "a", "response2" to "c")) shouldBe
-        listOf("a", "", "c")
+        ["a", "", "c"]
     }
 
     "boundedResponses ignores non-numeric response keys" {
       ChallengePost.boundedResponses(1, mapOf("response0" to "a", "responseFoo" to "x")) shouldBe
-        listOf("a")
+        ["a"]
     }
   }
 }

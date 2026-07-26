@@ -72,13 +72,13 @@ internal object SessionsPage {
           h2 { +"ReadingBat Sessions" }
 
           val activeUserCounts =
-            listOf(
+            [
               1.minutes to "minute",
               15.minutes to "15 minutes",
               1.hours to "hour",
               24.hours to "24 hours",
               7.days to "week",
-            )
+            ]
               .map { (duration, label) -> label to activeSessions(duration) }
 
           h3 { +"Active Users" }

@@ -62,10 +62,10 @@ internal object PubSubCommandsWs {
     @Transient val endPoint: String,
     val languageTypes: List<LanguageType>,
   ) {
-    LOAD_JAVA(LOAD_JAVA_ENDPOINT, listOf(Java)),
-    LOAD_PYTHON(LOAD_PYTHON_ENDPOINT, listOf(Python)),
-    LOAD_KOTLIN(LOAD_KOTLIN_ENDPOINT, listOf(Kotlin)),
-    LOAD_ALL(LOAD_ALL_ENDPOINT, listOf(Java, Python, Kotlin)),
+    LOAD_JAVA(LOAD_JAVA_ENDPOINT, [Java]),
+    LOAD_PYTHON(LOAD_PYTHON_ENDPOINT, [Python]),
+    LOAD_KOTLIN(LOAD_KOTLIN_ENDPOINT, [Kotlin]),
+    LOAD_ALL(LOAD_ALL_ENDPOINT, [Java, Python, Kotlin]),
     ;
 
     fun toJson() = Json.encodeToString(serializer(), this)

@@ -48,7 +48,7 @@ class LanguageGroup<T : Challenge>(
   val contentRoot get() = languageType.contentRoot
 
   /** The ordered list of challenge groups in this language. */
-  val challengeGroups = mutableListOf<ChallengeGroup<T>>()
+  val challengeGroups: MutableList<ChallengeGroup<T>> = []
 
   /**
    * The content source for this language's challenge files. Inherits the parent
