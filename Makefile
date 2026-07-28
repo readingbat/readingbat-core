@@ -1,11 +1,14 @@
 .PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
         coverage coverage-html coverage-xml coverage-log coverage-verify coverage-open coverage-packages coverage-clean \
-        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline depends versions kdocs clean-docs \
-        site publish-local publish-local-snapshot publish-snapshot publish-maven-central upgrade-wrapper \
+        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline depends versions kdocs check-site upgrade-site \
+        clean-docs site publish-local publish-local-snapshot publish-snapshot publish-maven-central upgrade-wrapper \
         _check-gpg-env _require-version _require-gradle-version
 
 VERSION := $(shell sed -n 's/^version=\(.*\)/\1/p' gradle.properties)
 GRADLE_VERSION := $(shell sed -n 's/^gradle-wrapper = "\(.*\)"/\1/p' gradle/libs.versions.toml)
+
+WEBSITE_DIR := website
+SITE_DIR := $(WEBSITE_DIR)/readingbat-core
 
 GPG_ENV = \
 	ORG_GRADLE_PROJECT_signingInMemoryKey="$$(gpg --armor --export-secret-keys "$$GPG_SIGNING_KEY_ID")" \
@@ -107,6 +110,12 @@ versions: ## Report available dependency updates
 
 kdocs: ## Generate Dokka HTML documentation
 	./gradlew dokkaGeneratePublicationHtml
+
+check-site:  ## Check for outdated website dependencies
+	cd $(WEBSITE_DIR) && env -u VIRTUAL_ENV uv lock --upgrade --dry-run
+
+upgrade-site:  ## Upgrade the website dependencies
+	cd $(WEBSITE_DIR) && env -u VIRTUAL_ENV uv lock --upgrade
 
 clean-docs: ## Remove generated website artifacts
 	rm -rf website/readingbat-core/site website/readingbat-core/.cache
