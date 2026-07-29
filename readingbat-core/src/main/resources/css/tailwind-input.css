@@ -8,10 +8,17 @@
   --color-rb-link: #0000DD;
   --color-rb-visited: #551A8B;
   --color-rb-incomplete: #F1F1F1;
+  /* Fills only. Both are backgrounds behind black label text (7.1:1 and 5.3:1). */
   --color-rb-correct: #4EAA3A;
   --color-rb-wrong: #FF0000;
-  --color-rb-header: #419DC1;
+  /* Text variants: same hue and saturation, darkened until they clear WCAG AA (4.5:1) on white. */
+  --color-rb-correct-text: #3E862E;
+  --color-rb-wrong-text: #ED0000;
+  --color-rb-header: #337E9C;
   --color-rb-code-stripe: #0600EE;
+  /* The two hairline grays: buttons take the lighter, text fields the darker. */
+  --color-control-border: #D1D5DB;
+  --color-field-border: #767676;
   --font-sans: verdana, arial, helvetica, sans-serif;
 }
 
@@ -76,8 +83,10 @@
   a {
     text-decoration: none;
   }
+  /* Underline rather than recolor: red is reserved for wrong answers, and an underline
+     is a non-color hover cue that keeps the link's 10.3:1 contrast intact. */
   a:hover {
-    color: red;
+    text-decoration: underline;
   }
   th, td {
     padding: 1px;
@@ -91,10 +100,6 @@
   .h1 { font-size: 300%; }
   .h2 { font-size: 166%; text-decoration: none; }
   .h3 { font-size: 120%; }
-
-  /* Answer feedback cells */
-  td.no { min-width: 22px; background-color: red; }
-  td.ok { min-width: 22px; background-color: green; }
 
   /* Navigation tabs */
   nav ul {
@@ -114,18 +119,18 @@
 
   /* Restore native form element appearance stripped by preflight */
   input[type="text"], input[type="password"] {
-    border: 1px solid #767676;
+    border: 1px solid var(--color-field-border);
     background-color: white;
   }
   textarea {
-    border: 1px solid #767676;
+    border: 1px solid var(--color-field-border);
     background-color: white;
   }
 
   /* Global button base styles (preflight strips native appearance) */
   input[type="submit"], button {
-    background-color: #F1F1F1;
-    border: 1px solid #D1D5DB;
+    background-color: var(--color-rb-incomplete);
+    border: 1px solid var(--color-control-border);
     border-radius: 0.25rem;
     padding: 2px 8px;
     cursor: pointer;
@@ -162,4 +167,28 @@
   /* TD padding descendant selector */
   div.tdPadding th { margin-top: 1em; padding-right: 1em; }
   div.tdPadding td { margin-top: 1em; padding-right: 1em; }
+
+  /*
+   * Busy indicator for answer checking, like/dislike, and admin commands.
+   * Replaces a Font Awesome CDN stylesheet that was loaded for this one glyph — and that the
+   * like/dislike and admin spinners never had access to in the first place.
+   *
+   * This is the only animation in the system; the rest of the UI changes state in one frame.
+   */
+  .rb-spinner {
+    display: inline-block;
+    width: 22px;
+    height: 22px;
+    border: 3px solid var(--color-control-border);
+    border-top-color: var(--color-rb-header);
+    border-radius: 50%;
+    animation: rb-spin 0.8s linear infinite;
+  }
+  @keyframes rb-spin {
+    to { transform: rotate(360deg); }
+  }
+  /* Slow it rather than stopping it: the spinner is the only signal that work is in flight. */
+  @media (prefers-reduced-motion: reduce) {
+    .rb-spinner { animation-duration: 2.4s; }
+  }
 }

@@ -47,7 +47,13 @@ internal object ErrorPage {
           bodyTitle()
 
           p {
-            img(classes = TwClasses.CENTER) { src = pathOf(STATIC_ROOT, "bscod-small.jpg") }
+            img(classes = TwClasses.CENTER) {
+              src = pathOf(STATIC_ROOT, "bscod-small.jpg")
+              alt = ""
+              width = "512"
+              height = "320"
+              attributes["loading"] = "lazy"
+            }
           }
 
           h2 { +"Ouch! Not sure what happened, but we seem to have had a problem!" }

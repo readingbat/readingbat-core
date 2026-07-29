@@ -17,8 +17,8 @@
 
 package com.readingbat.common
 
-import com.readingbat.common.Constants.CORRECT_COLOR
-import com.readingbat.common.Constants.WRONG_COLOR
+import com.readingbat.common.Constants.CORRECT_TEXT_COLOR
+import com.readingbat.common.Constants.WRONG_TEXT_COLOR
 
 /**
  * A user-facing message with an associated error/success state, used for flash messages and status displays.
@@ -30,7 +30,14 @@ data class Message(val value: String, val isError: Boolean = false) {
   val isBlank get() = value.isBlank()
   val isNotBlank get() = value.isNotBlank()
 
-  val color get() = if (isError) WRONG_COLOR else CORRECT_COLOR
+  /** Text-safe variants of the wrong/correct hues; both clear WCAG AA (4.5:1) on white. */
+  val color get() = if (isError) WRONG_TEXT_COLOR else CORRECT_TEXT_COLOR
+
+  /**
+   * The same two colors as Tailwind classes, so pages style messages from the theme tokens
+   * instead of writing a literal hex into an inline `style` attribute.
+   */
+  val colorClass get() = if (isError) "text-rb-wrong-text" else "text-rb-correct-text"
 
   fun isAssigned() = this != EMPTY_MESSAGE
 

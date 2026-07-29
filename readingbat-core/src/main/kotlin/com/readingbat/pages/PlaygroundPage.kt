@@ -117,6 +117,7 @@ internal object PlaygroundPage {
             img(classes = "align-bottom") {
               height = "25"
               src = pathOf(STATIC_ROOT, RUN_BUTTON)
+              alt = "the Run button"
             }
             +" to run the code"
           }

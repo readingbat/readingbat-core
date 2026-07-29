@@ -99,7 +99,8 @@ internal object AdminPrefsPage {
                   a {
                     href = "https://share.pingdom.com/banners/$it"
                     img {
-                      style = "width:300px; height:165px"
+                      width = "300"
+                      height = "165"
                       src = "https://share.pingdom.com/banners/$it"
                       alt = "Uptime Report for ReadingBat.com: Last 30 days"
                       title = "Uptime Report for ReadingBat.com: Last 30 days"

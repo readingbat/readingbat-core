@@ -43,7 +43,14 @@ internal object DbmsDownPage {
         head { headDefault() }
         body {
           bodyTitle()
-          p { img(classes = TwClasses.CENTER) { src = pathOf(STATIC_ROOT, "dbmsdown.jpg") } }
+          p {
+            img(classes = TwClasses.CENTER) {
+              src = pathOf(STATIC_ROOT, "dbmsdown.jpg")
+              alt = ""
+              width = "427"
+              height = "320"
+            }
+          }
           h2 { +DBMS_DOWN.toString() }
           p { +"We seem to be having problems with our database. Please check back later." }
           backLink("/")

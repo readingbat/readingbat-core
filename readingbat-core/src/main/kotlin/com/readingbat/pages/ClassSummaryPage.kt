@@ -49,7 +49,6 @@ import com.readingbat.common.isNotValidUser
 import com.readingbat.dsl.InvalidRequestException
 import com.readingbat.dsl.LanguageType
 import com.readingbat.dsl.ReadingBatContent
-import com.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.readingbat.pages.HelpAndLogin.helpAndLogin
 import com.readingbat.pages.PageUtils.backLink
 import com.readingbat.pages.PageUtils.bodyTitle
@@ -170,8 +169,7 @@ internal object ClassSummaryPage {
 
           if (msg.isAssigned())
             p {
-              span {
-                style = "color:${msg.color}"
+              span(classes = msg.colorClass) {
                 this@body.displayMessage(msg)
               }
             }
@@ -208,8 +206,7 @@ internal object ClassSummaryPage {
     table {
       tr {
         td {
-          h3(classes = "ml-[15px] mb-[15px] text-rb-header") {
-            style = "margin-left:15px; margin-bottom:15px; color:$HEADER_COLOR; font-size:22px"
+          h3(classes = "ml-[15px] mb-[15px] text-[137%] text-rb-header") {
             +classCode.toDisplayString()
           }
         }
@@ -311,8 +308,7 @@ internal object ClassSummaryPage {
     languageName: LanguageName,
     groupName: GroupName,
   ) {
-    h3(classes = "ml-[15px] text-rb-header") {
-      style = "margin-left: 15px; color: $HEADER_COLOR; font-size:18px"
+    h3(classes = "ml-[15px] text-[112%] text-rb-header") {
       +" "
 
       languageName.toLanguageType().toString()

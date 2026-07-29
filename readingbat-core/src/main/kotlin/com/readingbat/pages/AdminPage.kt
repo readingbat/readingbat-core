@@ -94,8 +94,7 @@ internal object AdminPage {
             else -> {
               if (msg.isAssigned())
                 p {
-                  span {
-                    style = "color:${msg.color}"
+                  span(classes = msg.colorClass) {
                     this@body.displayMessage(msg)
                   }
                 }

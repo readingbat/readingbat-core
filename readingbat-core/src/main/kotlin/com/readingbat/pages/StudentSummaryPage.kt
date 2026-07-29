@@ -43,7 +43,6 @@ import com.readingbat.common.isNotValidUser
 import com.readingbat.dsl.InvalidRequestException
 import com.readingbat.dsl.ReadingBatContent
 import com.readingbat.dsl.challenge.Challenge
-import com.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.readingbat.pages.ClassSummaryPage.LIKE_DISLIKE
 import com.readingbat.pages.ClassSummaryPage.STATS
 import com.readingbat.pages.HelpAndLogin.helpAndLogin
@@ -136,7 +135,6 @@ internal object StudentSummaryPage {
           h2 { +"Student Summary" }
 
           h3(classes = "ml-[15px] text-rb-header") {
-            style = "margin-left:15px; color: $HEADER_COLOR"
             a(classes = TwClasses.UNDERLINE) {
               href = pathOf(CHALLENGE_ROOT, languageName)
               +languageName.toLanguageType().toString()
@@ -144,7 +142,6 @@ internal object StudentSummaryPage {
           }
 
           h3(classes = "ml-[15px] text-rb-header") {
-            style = "margin-left:15px; color: $HEADER_COLOR"
             a(classes = TwClasses.UNDERLINE) {
               href = classSummaryEndpoint(classCode)
               +classCode.toDisplayString()
@@ -152,7 +149,6 @@ internal object StudentSummaryPage {
           }
 
           h3(classes = "ml-[15px] text-rb-header") {
-            style = "margin-left:15px; color: $HEADER_COLOR"
             +"Student: $studentName ${student.email} "
           }
 
@@ -187,7 +183,7 @@ internal object StudentSummaryPage {
         name = USER_ID_PARAM
         value = student.userId
       }
-      submitInput(classes = "align-middle mt-px mb-0 rounded-lg text-xs") {
+      submitInput(classes = "align-middle mt-px mb-0 rounded-lg text-xs min-h-6 px-3") {
         name = PREFS_ACTION_PARAM
         value = REMOVE_FROM_CLASS
       }
