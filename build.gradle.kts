@@ -23,6 +23,7 @@ val kotlinLib = libs.plugins.kotlin.jvm.get().pluginId
 val ktlinterLib = libs.plugins.kotlinter.get().pluginId
 val detektLib = libs.plugins.detekt.get().pluginId
 val koverLib = libs.plugins.kover.get().pluginId
+val versionsLib = libs.plugins.versions.get().pluginId
 
 val coreModule = ":readingbat-core"
 val kotestModule = ":readingbat-kotest"
@@ -59,7 +60,7 @@ subprojects {
   version = rootProject.version
 
   apply(plugin = "java-library")
-  apply(plugin = "com.github.ben-manes.versions")
+  apply(plugin = versionsLib)
   apply(plugin = koverLib)
 
   configureKotlin()
