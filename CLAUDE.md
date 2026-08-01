@@ -7,11 +7,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Build and Test
 
 - List Makefile targets: `make help` (self-documenting index — every target with a `## description` annotation)
-- Build project: `make build` or `./gradlew build -xtest`
-- Run all tests: `make tests` or `./gradlew check`
-- Run a single test class: `./gradlew :readingbat-core:test --tests "EndpointTest"`
-- Run a single test by name: `./gradlew :readingbat-core:test --tests "EndpointTest.Simple endpoint tests"`
-- Run application: `make run` or `./gradlew run`
 
 Gradle 9.6.1 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
 catalog (`gradle/libs.versions.toml`) is the single source of truth for plugin, dependency, **and toolchain** versions —
@@ -38,17 +33,11 @@ the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.ve
 
 ### Coverage
 
-- HTML report: `make coverage` or `make coverage-html` (`./gradlew koverHtmlReport`)
-- XML report (CI/Codecov): `./gradlew koverXmlReport` (output at `build/reports/kover/report.xml`)
-- Threshold check: `make coverage-verify` (`./gradlew koverVerify`)
-- Per-package breakdown: `make coverage-packages` (runs `scripts/coverage_packages.py` against the XML report)
 - Aggregated at the root project across `readingbat-core` and `readingbat-kotest`
 - Codecov configuration in `codecov.yml` defines `server` / `dsl` / `pages` / `common` components for per-area visibility
 
 ### Database
 
-- Reset database: `make dbreset` (clean + migrate)
-- Migrate: `make dbmigrate` or `./gradlew flywayMigrate`
 - Migration SQL lives in `src/main/resources/db/migration/`
 - Requires PostgreSQL running locally (Docker setup in README.md)
 
@@ -59,13 +48,6 @@ Secrets are loaded from `secrets/secrets.env` (not committed). The root `build.g
 `Test` task. Edits to `secrets/secrets.env` invalidate the configuration cache and trigger a re-run of affected tasks.
 
 ## Project Architecture
-
-### Module Structure
-
-Two Gradle submodules under the root project:
-
-- **readingbat-core/**: Main application — Ktor web server, DSL engine, database layer, HTML page generation
-- **readingbat-kotest/**: Test utilities module providing `TestSupport` helpers for Kotest-based integration tests
 
 ### Content DSL Pipeline
 
@@ -81,12 +63,6 @@ script engines:
 6. The DSL file and variable name are configured via `Property.DSL_FILE_NAME` and `Property.DSL_VARIABLE_NAME` (HOCON
    properties)
 
-### Server Entry Point
-
-- `ReadingBatServer.start()` launches the Ktor CIO engine via `EngineMain`
-- `Application.module()` is the Ktor entry point — initializes properties, database, metrics, content DSL, and routing
-- Configuration is supplied via HOCON `-config=` argument (defaults to `src/main/resources/application.conf`)
-
 ### Dual Configuration System
 
 The app uses a two-layer configuration pattern where most settings can come from either source:
@@ -97,16 +73,6 @@ The app uses a two-layer configuration pattern where most settings can come from
 - **`EnvVar`** (enum): Environment variables that override HOCON values. Pattern:
   `EnvVar.X.getEnv(Property.X.configValue(...))`.
 - Properties are backed by `System.setProperty()` after initialization, making them globally accessible.
-
-### Routing Architecture
-
-- **Type-safe routing** via Ktor `@Resource` annotations in `Locations.kt`: `Language` → `Language.Group` →
-  `Language.Group.Challenge` (nested resources mapping to URL paths like `/content/java/Warmup-1/hello`)
-- **User routes** in `UserRoutes.kt`: standard GET/POST endpoints for pages, authentication, admin
-- **OAuth routes** in `OAuthRoutes.kt`: GitHub and Google login/callback, conditionally registered per provider via
-  `ConfigureOAuth.githubOAuthConfigured` / `googleOAuthConfigured` flags
-- **Admin routes** in `AdminRoutes.kt` and **SysAdmin routes** in `SysAdminRoutes.kt`
-- **WebSocket routes** in `server/ws/`: real-time updates for challenge answers, class summaries, student progress
 
 ### Authentication
 
@@ -125,23 +91,6 @@ The app uses a two-layer configuration pattern where most settings can come from
 All HTML pages are generated server-side using Kotlinx.html (no templates). Each page has its own file in
 `com.readingbat.pages` with a companion object function pattern (e.g., `ChallengePage.challengePage()`).
 JavaScript for client-side interactivity is generated in `pages/js/`.
-
-### Database Schema
-
-Exposed ORM table definitions in `PostgresTables.kt`. Key tables:
-
-- `UsersTable` — user accounts with salted password hashes
-- `BrowserSessionsTable` / `UserSessionsTable` — session tracking
-- `UserChallengeInfoTable` / `SessionChallengeInfoTable` — answer state per challenge
-- `UserAnswerHistoryTable` / `SessionAnswerHistoryTable` — answer history
-- `OAuthLinksTable` — links OAuth provider accounts to users
-- `ClassesTable` / `EnrolleesTable` — teacher class management
-- `ServerRequestsTable` / `GeoInfosTable` — request logging with geolocation
-
-### Value Types
-
-The codebase uses Kotlin `@JvmInline value class` extensively for type safety: `LanguageName`, `GroupName`,
-`ChallengeName`, `ChallengeMd5`, `Password`, `FullName`, `ResetId` (all in `Locations.kt`).
 
 ### Testing
 
@@ -169,9 +118,4 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
 
 ### Key Dependencies
 
-- **common-utils** 3.2.1 (BOM from `com.github.pambrose`): shared utility library providing core-utils, email-utils,
-  exposed-utils, ktor-client/server-utils, script-utils, etc. (`respondWith`/`redirectTo` take a `suspend` block as of 2.9.2)
-- **prometheus-proxy** 4.0.0: metrics collection
-- **Kover** 0.9.9: code coverage, applied to every subproject and aggregated at the root; CI uploads
-  `build/reports/kover/report.xml` to Codecov via `codecov-action@v5`
-- Dependency versions managed in `gradle/libs.versions.toml`
+- **common-utils** (BOM from `com.github.pambrose`): `respondWith`/`redirectTo` take a `suspend` block as of 2.9.2
