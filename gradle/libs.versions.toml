@@ -11,20 +11,20 @@ kotlinter = "5.6.0"
 kover = "0.9.9"
 dokka = "2.2.0"
 maven-publish = "0.37.0"
-versions = "0.54.0"
+versions = "0.57.0"
 
 # Library versions
 cloud = "1.29.0"
 commons = "1.15.0"
 exposed = "1.3.1"
 flexmark = "0.64.8"
-flyway = "13.0.0"
+flyway = "13.1.0"
 github-api = "1.330"
 hikari = "7.1.0"
 java-scriptengine = "2.0.0"
 khealth = "3.0.1"
 kotest = "6.2.3"
-ktor = "3.5.1"
+ktor = "3.5.2"
 logback = "1.5.38"
 logging = "7.0.12"
 pgjdbc = "0.8.9"
@@ -36,7 +36,7 @@ python = "2.7.4"
 resend = "4.13.0"
 serialization = "1.11.0"
 testcontainers = "1.21.4"
-utils = "3.2.1"
+utils = "3.2.2"
 
 [libraries]
 # Serialization
@@ -125,7 +125,7 @@ dokka = { id = "org.jetbrains.dokka", version.ref = "dokka" }
 maven-publish = { id = "com.vanniktech.maven.publish", version.ref = "maven-publish" }
 kotlinter = { id = "org.jmailen.kotlinter", version.ref = "kotlinter" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
-versions = { id = "com.github.ben-manes.versions", version.ref = "versions" }
+versions = { id = "io.github.ben-manes.versions", version.ref = "versions" }
 
 [bundles]
 ktor-client = [
