@@ -4,6 +4,50 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.3.1] - 2026-08-01
+
+An accessibility, performance, and maintenance release. The headline fix is that answer grading was communicated by fill color alone and was never announced to assistive technology — it now carries text and a live region. Also lands image-weight reductions, a design-system record, a stale-artifact guard in CI, and a dependency refresh. No configuration or upgrade steps are required; this is a drop-in bump from 3.3.0.
+
+### Fixed
+
+- **Answer grading was inaccessible.** `checkAnswers` painted each result cell green or red and did nothing else, so a screen-reader user received no result at all and a colorblind user was left comparing two fills that measure **1.36:1** against each other — far below the 3:1 WCAG 2.1 AA non-text minimum, and a 1.4.1 (Use of Color) failure. Result cells now carry `✓ correct` / `✗ try again` text, and the status cell is a `role="status"` / `aria-live="polite"` region announcing `N of M correct.`
+- Answer inputs had no accessible name; each now carries `aria-label="Return value for <invocation>"`
+- Like/dislike controls had no accessible name, and their images were announced as content; the buttons now carry aria-labels and the images `alt=""`
+- The sign-in modal's close control was a `span` with an `onClick`, so it was unreachable by keyboard; it is now a real `button` with `aria-label="Close sign-in dialog"` sized 28×28
+- Pass/fail colors met contrast as fills but not as text. Added `rb-correct-text` (`#3E862E`) and `rb-wrong-text` (`#ED0000`) as separate text tokens, and darkened `rb-header` to `#337E9C` for AA at its rendered size
+- `HEADER_COLOR` was emitted as an inline style on the same elements that already carried `text-rb-header`, so the inline value won and re-toning the token alone would have been a silent no-op. The constant and all 13 call sites are gone
+- Link hover was `color: red`, colliding with the wrongness signal; it is now an underline
+- The like/dislike and admin spinners used `fa-spin`, but Font Awesome is not loaded on those pages, so they never rendered. Replaced with a CSS `.rb-spinner` that honors `prefers-reduced-motion`
+- The page wordmark is now an `h1`, the language nav carries `aria-label="Languages"`, and pages emit `<meta charset>` and a viewport tag
+- Documentation referenced a `make dbreset` target that does not exist — in `README.md` (twice), `llms.txt`, and the docs site. All now name the real Flyway targets (`dbmigrate`, `dbclean`, `dbinfo`, `dbvalidate`). `llms.txt` also claimed a `releaseDate` key that is not in `gradle.properties`
+
+### Performance
+
+- Resized the four like/dislike PNGs from 1600px wide to 60px — they render at 30px. **345 KB → 12 KB**
+- Converted `nervous.png` / `panic.png` to JPEG. **~450 KB → ~72 KB**
+- Added explicit `width`/`height` (removing layout shift) and `loading` hints at all six `img` sites
+
+### Added
+
+- `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` record the product context and the design system the accessibility work was audited against
+- A `Tailwind CSS` CI workflow that regenerates the stylesheet and fails if the checked-in artifact is stale. It runs on macOS because the vendored CLI is a Mach-O arm64 binary and the Gradle wiring only regenerates on macOS — which is how the artifact went stale in the first place
+- `make check-site` / `make upgrade-site` / `make clean-docs` for managing the website dependencies
+
+### Changed
+
+- Regenerated `static/tailwind.css`, which had drifted from its source: the accessibility pass deleted rules and utility classes, but the minified artifact was never rebuilt, so it still carried CSS for classes nothing emits (80,540 → 78,905 bytes)
+- Trimmed 57 lines of codebase-derivable content from `CLAUDE.md` (9,935 → 6,538 chars). Two of the removed lines were also wrong: a `make dbreset` target that does not exist, and a common-utils version that had drifted from the catalog
+- The versions plugin is now applied by its catalog id rather than a hardcoded legacy string, matching how the Kotlin, Kotlinter, detekt, and Kover plugin ids are already derived — the catalog id change alone had left the deprecation warning in place
+- Bumped version to 3.3.1
+
+### Dependencies
+
+- Ktor 3.5.1 → 3.5.2
+- Flyway 13.0.0 → 13.1.0
+- common-utils 3.2.1 → 3.2.2
+- versions plugin 0.54.0 → 0.57.0 (id `com.github.ben-manes.versions` → `io.github.ben-manes.versions`)
+- zensical 3.10.2 → 3.10.3, markdown 0.0.51 → 0.0.52 (website)
+
 ## [3.3.0] - 2026-07-26
 
 A modernization + maintenance release. Adopts Kotlin's experimental collection-literal syntax across the codebase, refreshes dependencies (including major-version bumps to Flyway 13, prometheus-proxy 4.0, and common-utils 3.x), and lands a few code-quality cleanups. No configuration or upgrade steps are required — `./gradlew check` is green against the new toolchain.

@@ -6,13 +6,13 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 
 ## Key Technologies
 
-- Kotlin 2.4.10 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.5.1 (CIO engine), Exposed ORM 1.3.1 with kotlinx-datetime, PostgreSQL
+- Kotlin 2.4.10 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.5.2 (CIO engine), Exposed ORM 1.3.1 with kotlinx-datetime, PostgreSQL
 - Kotlinx.html for server-side HTML generation (no templates)
 - Kotest 6.2.3 for testing, Playwright for E2E tests
 - Gradle 9.6.1 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle`, `jvm`) versions; parallel project execution and configuration cache enabled
 - Kover 0.9.9 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
 - Detekt 2.0 alpha (`dev.detekt` plugin) for static analysis; Kotlinter for ktlint style
-- common-utils 3.2.1 (shared utility BOM from `com.github.pambrose`)
+- common-utils 3.2.2 (shared utility BOM from `com.github.pambrose`)
 - Java 17 toolchain
 
 ## Project Structure
@@ -80,10 +80,9 @@ Extensive use of Kotlin `@JvmInline value class` for type safety: LanguageName, 
 - Lint: `make lint` (Kotlinter + detekt in one Gradle invocation)
 - Format: `./gradlew formatKotlinMain formatKotlinTest`
 - Coverage: `make coverage` (HTML), `./gradlew koverXmlReport` (CI/Codecov), `make coverage-verify` (thresholds), `make coverage-packages` (per-package breakdown via `scripts/coverage_packages.py`)
-- DB reset: `make dbreset`
-- DB migrate: `make dbmigrate`
+- DB migrate: `make dbmigrate` (also `make dbinfo`, `make dbclean`, `make dbvalidate`)
 
-Project version, group, and `releaseDate` are defined in `gradle.properties`. Override the version on the CLI with `-PoverrideVersion=...`. Secrets in `secrets/secrets.env` are loaded via a Gradle `ValueSource` and registered as task inputs on `Test`/`JavaExec`, so edits invalidate the configuration cache.
+Project version and group are defined in `gradle.properties`. Override the version on the CLI with `-PoverrideVersion=...`. Secrets in `secrets/secrets.env` are loaded via a Gradle `ValueSource` and registered as task inputs on `Test`/`JavaExec`, so edits invalidate the configuration cache.
 
 ## Links
 
