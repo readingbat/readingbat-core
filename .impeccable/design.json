@@ -1,0 +1,503 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-29T05:35:00Z",
+  "title": "Design System: ReadingBat",
+  "extensions": {
+    "colorMeta": {
+      "rb-header": {
+        "role": "primary",
+        "displayName": "Chalk Blue",
+        "canonical": "#337E9C",
+        "tonalRamp": [
+          "oklch(18% 0.042 232)",
+          "oklch(28% 0.058 232)",
+          "oklch(38% 0.072 232)",
+          "oklch(48% 0.082 232)",
+          "oklch(56% 0.085 232)",
+          "oklch(70% 0.070 232)",
+          "oklch(83% 0.046 232)",
+          "oklch(94% 0.020 232)"
+        ]
+      },
+      "rb-correct": {
+        "role": "secondary",
+        "displayName": "Grading Green",
+        "canonical": "#4EAA3A",
+        "tonalRamp": [
+          "oklch(20% 0.060 142)",
+          "oklch(31% 0.090 142)",
+          "oklch(42% 0.115 142)",
+          "oklch(52% 0.135 142)",
+          "oklch(63% 0.150 142)",
+          "oklch(74% 0.125 142)",
+          "oklch(85% 0.080 142)",
+          "oklch(95% 0.035 142)"
+        ]
+      },
+      "rb-wrong": {
+        "role": "secondary",
+        "displayName": "Marker Red",
+        "canonical": "#FF0000",
+        "tonalRamp": [
+          "oklch(20% 0.090 29)",
+          "oklch(31% 0.135 29)",
+          "oklch(41% 0.180 29)",
+          "oklch(52% 0.220 29)",
+          "oklch(63% 0.258 29)",
+          "oklch(74% 0.205 29)",
+          "oklch(85% 0.130 29)",
+          "oklch(95% 0.055 29)"
+        ]
+      },
+      "rb-code-stripe": {
+        "role": "tertiary",
+        "displayName": "Ballpoint Blue",
+        "canonical": "#0600EE",
+        "tonalRamp": [
+          "oklch(18% 0.120 264)",
+          "oklch(27% 0.180 264)",
+          "oklch(36% 0.240 264)",
+          "oklch(45% 0.300 264)",
+          "oklch(56% 0.250 264)",
+          "oklch(68% 0.185 264)",
+          "oklch(82% 0.110 264)",
+          "oklch(94% 0.045 264)"
+        ]
+      },
+      "rb-link": {
+        "role": "tertiary",
+        "displayName": "Link Blue",
+        "canonical": "#0000DD",
+        "tonalRamp": [
+          "oklch(15% 0.100 264)",
+          "oklch(23% 0.155 264)",
+          "oklch(30% 0.205 264)",
+          "oklch(37% 0.250 264)",
+          "oklch(50% 0.215 264)",
+          "oklch(64% 0.160 264)",
+          "oklch(80% 0.095 264)",
+          "oklch(93% 0.040 264)"
+        ]
+      },
+      "rb-visited": {
+        "role": "tertiary",
+        "displayName": "Visited Purple",
+        "canonical": "#551A8B",
+        "tonalRamp": [
+          "oklch(16% 0.075 305)",
+          "oklch(24% 0.110 305)",
+          "oklch(31% 0.140 305)",
+          "oklch(35% 0.160 305)",
+          "oklch(48% 0.145 305)",
+          "oklch(63% 0.110 305)",
+          "oklch(79% 0.065 305)",
+          "oklch(93% 0.028 305)"
+        ]
+      },
+      "rb-incomplete": {
+        "role": "neutral",
+        "displayName": "Newsprint Gray",
+        "canonical": "#F1F1F1",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(27% 0 0)",
+          "oklch(39% 0 0)",
+          "oklch(51% 0 0)",
+          "oklch(63% 0 0)",
+          "oklch(75% 0 0)",
+          "oklch(87% 0 0)",
+          "oklch(96% 0 0)"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#FFFFFF",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(27% 0 0)",
+          "oklch(39% 0 0)",
+          "oklch(51% 0 0)",
+          "oklch(63% 0 0)",
+          "oklch(75% 0 0)",
+          "oklch(88% 0 0)",
+          "oklch(100% 0 0)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "oklch(0% 0 0)",
+          "oklch(14% 0 0)",
+          "oklch(28% 0 0)",
+          "oklch(42% 0 0)",
+          "oklch(56% 0 0)",
+          "oklch(70% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(95% 0 0)"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#666666",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(26% 0 0)",
+          "oklch(37% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(59% 0 0)",
+          "oklch(71% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(96% 0 0)"
+        ]
+      },
+      "control-border": {
+        "role": "neutral",
+        "displayName": "Control Border",
+        "canonical": "#D1D5DB",
+        "tonalRamp": [
+          "oklch(20% 0.010 258)",
+          "oklch(31% 0.012 258)",
+          "oklch(43% 0.013 258)",
+          "oklch(55% 0.014 258)",
+          "oklch(67% 0.013 258)",
+          "oklch(78% 0.011 258)",
+          "oklch(87% 0.010 258)",
+          "oklch(96% 0.005 258)"
+        ]
+      },
+      "field-border": {
+        "role": "neutral",
+        "displayName": "Field Border",
+        "canonical": "#767676",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(27% 0 0)",
+          "oklch(38% 0 0)",
+          "oklch(49% 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(84% 0 0)",
+          "oklch(96% 0 0)"
+        ]
+      },
+      "code-halo": {
+        "role": "neutral",
+        "displayName": "Code Halo",
+        "canonical": "#DFDFDF",
+        "tonalRamp": [
+          "oklch(15% 0 0)",
+          "oklch(27% 0 0)",
+          "oklch(39% 0 0)",
+          "oklch(51% 0 0)",
+          "oklch(63% 0 0)",
+          "oklch(75% 0 0)",
+          "oklch(89% 0 0)",
+          "oklch(97% 0 0)"
+        ]
+      },
+      "oauth-google": {
+        "role": "tertiary",
+        "displayName": "Google Blue (provider brand)",
+        "canonical": "#4285F4",
+        "tonalRamp": [
+          "oklch(22% 0.070 258)",
+          "oklch(33% 0.110 258)",
+          "oklch(44% 0.150 258)",
+          "oklch(55% 0.180 258)",
+          "oklch(64% 0.190 258)",
+          "oklch(76% 0.140 258)",
+          "oklch(87% 0.080 258)",
+          "oklch(95% 0.035 258)"
+        ]
+      },
+      "oauth-github": {
+        "role": "tertiary",
+        "displayName": "GitHub Charcoal (provider brand)",
+        "canonical": "#333333",
+        "tonalRamp": [
+          "oklch(10% 0 0)",
+          "oklch(23% 0 0)",
+          "oklch(36% 0 0)",
+          "oklch(48% 0 0)",
+          "oklch(60% 0 0)",
+          "oklch(73% 0 0)",
+          "oklch(85% 0 0)",
+          "oklch(96% 0 0)"
+        ]
+      },
+      "rb-correct-text": {
+        "role": "secondary",
+        "displayName": "Grading Green Text",
+        "canonical": "#3E862E",
+        "tonalRamp": [
+          "oklch(18% 0.055 142)",
+          "oklch(28% 0.082 142)",
+          "oklch(38% 0.105 142)",
+          "oklch(48% 0.120 142)",
+          "oklch(56% 0.125 142)",
+          "oklch(70% 0.110 142)",
+          "oklch(83% 0.072 142)",
+          "oklch(94% 0.032 142)"
+        ]
+      },
+      "rb-wrong-text": {
+        "role": "secondary",
+        "displayName": "Marker Red Text",
+        "canonical": "#ED0000",
+        "tonalRamp": [
+          "oklch(18% 0.085 29)",
+          "oklch(28% 0.125 29)",
+          "oklch(38% 0.165 29)",
+          "oklch(48% 0.205 29)",
+          "oklch(58% 0.240 29)",
+          "oklch(72% 0.195 29)",
+          "oklch(84% 0.125 29)",
+          "oklch(95% 0.052 29)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "The ReadingBat wordmark in the page header, linked to /. Set at 36px and deliberately NOT bold — the largest element on the page is also the lightest-feeling."
+      },
+      "tab": {
+        "displayName": "Tab",
+        "purpose": "Language tabs (Java / Python / Kotlin). Larger than the page's own h2, because switching languages is the most frequent structural move a student makes."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "The h2 element — page titles such as 'About ReadingBat' and 'ReadingBat Help'."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "h3 section headings, always in Chalk Blue. Group names, class-summary and student-summary section titles."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "The 115% step. Function-call cells, challenge descriptions, status text, table headers, hand-off links. Anything a student must read closely."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default prose at the 16px root, line-height 1.5, capped at an 800px measure."
+      },
+      "code": {
+        "displayName": "Code",
+        "purpose": "The 95% step. Prism blocks and the CodeMirror playground. Code steps down while reading steps up, so a block reads as a quoted artifact."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Answer input fields at 90%."
+      },
+      "micro": {
+        "displayName": "Micro",
+        "purpose": "Admin buttons and the clear-history control at 75–85% bold. Small and out of the student's way."
+      }
+    },
+    "shadows": [
+      {
+        "name": "rest",
+        "value": "0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)",
+        "purpose": "The resting state of every button. Tight and low — enough to read as an object, not enough to read as a card. The only rest shadow in the system."
+      },
+      {
+        "name": "pressed",
+        "value": "inset 0 2px 4px 0 rgb(0 0 0 / 0.05)",
+        "purpose": "The :active state of every button, paired with transform: translateY(1px). Applied with no transition."
+      },
+      {
+        "name": "overlay",
+        "value": "0 4px 24px rgba(0,0,0,0.2)",
+        "purpose": "The OAuth sign-in modal, and only the sign-in modal. The single element permitted to look like it is above the page."
+      },
+      {
+        "name": "code-stripe",
+        "value": "-1px 0 0 0 #0600EE, 0 0 0 1px #dfdfdf",
+        "purpose": "Doubles the 10px Ballpoint Blue left border on Prism code blocks so the stripe has no seam, and rings the block in a 1px halo. A label, not an elevation."
+      }
+    ],
+    "motion": [
+      {
+        "name": "rb-spin",
+        "value": "rotate 0.8s linear infinite (2.4s under prefers-reduced-motion)",
+        "purpose": "The busy indicator for answer checking, like/dislike, and admin commands. The only animation in the system."
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Check Answers Button",
+      "kind": "button",
+      "refersTo": "button-check-answers",
+      "description": "The student's principal control — the largest control on any page, and the one that triggers grading.",
+      "html": "<button class=\"ds-btn-check\">Check My Answers</button>",
+      "css": ".ds-btn-check { width: 224px; height: 32px; background-color: #F1F1F1; color: #000; font-family: verdana, arial, helvetica, sans-serif; font-size: 100%; font-weight: 700; border: 1px solid #D1D5DB; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); } .ds-btn-check:active { box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05); transform: translateY(1px); }"
+    },
+    {
+      "name": "Admin Button",
+      "kind": "button",
+      "refersTo": "button-admin",
+      "description": "Teacher and admin actions. Small on purpose — 30px tall at 75% bold type, so it never competes with the student's control.",
+      "html": "<button class=\"ds-btn-admin\">Load Challenge</button>",
+      "css": ".ds-btn-admin { height: 30px; padding: 0 14px; background-color: #F1F1F1; color: #000; font-family: verdana, arial, helvetica, sans-serif; font-size: 75%; font-weight: 700; border: 1px solid #D1D5DB; border-radius: 6px; cursor: pointer; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); } .ds-btn-admin:active { box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05); transform: translateY(1px); }"
+    },
+    {
+      "name": "Clear History Button",
+      "kind": "button",
+      "refersTo": "button-clear-history",
+      "description": "The one button with a hover state. 85% type, 4px corners, gray-200 on hover.",
+      "html": "<button class=\"ds-btn-clear\">Clear History</button>",
+      "css": ".ds-btn-clear { padding: 4px 16px; background-color: #F1F1F1; color: #000; font-family: verdana, arial, helvetica, sans-serif; font-size: 85%; border: 1px solid #D1D5DB; border-radius: 4px; cursor: pointer; box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1); } .ds-btn-clear:hover { background-color: #E5E7EB; } .ds-btn-clear:active { box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.05); transform: translateY(1px); }"
+    },
+    {
+      "name": "Answer Input",
+      "kind": "input",
+      "refersTo": "answer-input",
+      "description": "Where the student types a predicted return value. System-native by intent — the base layer restores the border and white face that Tailwind preflight strips, rather than designing a replacement.",
+      "html": "<input class=\"ds-input-answer\" type=\"text\" value=\"&quot;hello&quot;\">",
+      "css": ".ds-input-answer { width: 240px; padding: 5px 5px 5px 7px; background-color: #fff; color: #000; font-family: verdana, arial, helvetica, sans-serif; font-size: 90%; border: 1px solid #99A1AF; border-radius: 4px; }"
+    },
+    {
+      "name": "Feedback Cell",
+      "kind": "custom",
+      "refersTo": "feedback-cell",
+      "description": "The graded blank. White when unanswered, Grading Green when correct, Marker Red when wrong — and always labeled '✓ correct' / '✗ try again' so the fill is never the only signal. The two fills sit at 1.36:1 against each other, so the words carry the meaning for colorblind students.",
+      "html": "<table class=\"ds-feedback-row\"><tr><td class=\"ds-feedback ds-feedback--none\"></td><td class=\"ds-feedback ds-feedback--correct\">✓ correct</td><td class=\"ds-feedback ds-feedback--wrong\">✗ try again</td></tr></table>",
+      "css": ".ds-feedback-row { border-collapse: separate; } .ds-feedback { width: 160px; height: 28px; border: 7px solid #fff; text-align: center; font-weight: 700; color: #000; font-family: verdana, arial, helvetica, sans-serif; } .ds-feedback--none { background-color: #fff; box-shadow: inset 0 0 0 1px #DFDFDF; } .ds-feedback--correct { background-color: #4EAA3A; } .ds-feedback--wrong { background-color: #FF0000; }"
+    },
+    {
+      "name": "Invocation Grid",
+      "kind": "custom",
+      "refersTo": "invocation-cell",
+      "description": "The signature component and the system's only data visualization. One 7×15px cell per challenge invocation, 1px black border, Newsprint Gray until attempted. A teacher reads a class as a field of color; a student's history reads as a barcode. No chart, no axis, no legend.",
+      "html": "<table class=\"ds-invoc\"><tr><td class=\"ds-invoc-cell ds-invoc-cell--correct\"></td><td class=\"ds-invoc-cell ds-invoc-cell--correct\"></td><td class=\"ds-invoc-cell ds-invoc-cell--wrong\"></td><td class=\"ds-invoc-cell ds-invoc-cell--correct\"></td><td class=\"ds-invoc-cell\"></td><td class=\"ds-invoc-cell\"></td><td class=\"ds-invoc-cell\"></td><td class=\"ds-invoc-cell\"></td><td class=\"ds-invoc-stat\">4/8</td></tr></table>",
+      "css": ".ds-invoc { border-collapse: separate; border-spacing: 1px; } .ds-invoc-cell { width: 7px; height: 15px; padding: 0; border: 1px solid #000; background-color: #F1F1F1; } .ds-invoc-cell--correct { background-color: #4EAA3A; } .ds-invoc-cell--wrong { background-color: #FF0000; } .ds-invoc-stat { padding-left: 4px; padding-right: 1px; font-family: verdana, arial, helvetica, sans-serif; font-size: 85%; color: #000; }"
+    },
+    {
+      "name": "Language Tabs",
+      "kind": "nav",
+      "refersTo": null,
+      "description": "The most characterful shape in the system: manila file-folder tabs in three CSS declarations. Three-sided borders with no bottom edge, and the selected tab pushed 1px down over the header's black rule with a white ground so it merges into the page.",
+      "html": "<div class=\"ds-tabs\"><nav><ul><li id=\"ds-tab-selected\"><a href=\"#\">Java</a></li><li><a href=\"#\">Python</a></li><li><a href=\"#\">Kotlin</a></li></ul></nav><div class=\"ds-tabs-rule\"></div></div>",
+      "css": ".ds-tabs { font-family: verdana, arial, helvetica, sans-serif; padding-top: 6px; } .ds-tabs ul { list-style-type: none; padding: 0; margin: 0; } .ds-tabs li { display: inline; font-size: 166%; font-weight: 700; border: 1px solid; border-width: 1px 1px 0 1px; margin: 0 25px 0 6px; } .ds-tabs li a { padding: 0 40px; color: #0000DD; text-decoration: none; } .ds-tabs li#ds-tab-selected { position: relative; top: 1px; background: #fff; } .ds-tabs-rule { border-top: 1px solid #000; }"
+    },
+    {
+      "name": "Challenge Group Card",
+      "kind": "card",
+      "refersTo": "group-card",
+      "description": "The only rounded container in the system, and the softest shape in it. Fixed 322px width (300px content + padding + border, border-box) so cards wrap by inline flow rather than by a grid.",
+      "html": "<div class=\"ds-group-card\"><a class=\"ds-group-name\" href=\"#\">Warmup-1</a><div class=\"ds-group-item\">simple_addition</div><div class=\"ds-group-item\">string_match</div></div>",
+      "css": ".ds-group-card { width: 322px; box-sizing: border-box; margin: 15px; padding: 10px; border: 1px solid #6A7282; border-radius: 1em; font-family: verdana, arial, helvetica, sans-serif; background: #fff; } .ds-group-name { font-size: 155%; color: #0000DD; text-decoration: none; } .ds-group-item { margin-top: 16px; }"
+    },
+    {
+      "name": "Code Block",
+      "kind": "custom",
+      "refersTo": null,
+      "description": "Prism-highlighted source behind a 10px Ballpoint Blue stripe, doubled by a -1px shadow so the edge has no seam and ringed by a 1px halo. Set at 95% — code steps down while reading steps up.",
+      "html": "<pre class=\"ds-code\"><code>public int addTwo(int a, int b) {\n  return a + b;\n}</code></pre>",
+      "css": ".ds-code { margin: 32px 16px; background: #fff; } .ds-code > code { display: block; padding: 12px 16px; font-size: 95%; font-family: Consolas, Monaco, monospace; white-space: pre; border-left: 10px solid #0600EE; box-shadow: -1px 0 0 0 #0600EE, 0 0 0 1px #dfdfdf; }"
+    },
+    {
+      "name": "OAuth Provider Buttons",
+      "kind": "button",
+      "refersTo": "oauth-google",
+      "description": "The only saturated fills in the system — and they belong to Google and GitHub, not to ReadingBat. Full-width inside the sign-in overlay, 4px corners, inline brand SVG at 18px.",
+      "html": "<div class=\"ds-oauth\"><a class=\"ds-oauth-btn ds-oauth-btn--google\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 48 48\" aria-hidden=\"true\"><path fill=\"#fff\" d=\"M44.5 20H24v8.5h11.8C34.7 33.4 30.1 36.5 24 36.5c-6.9 0-12.5-5.6-12.5-12.5S17.1 11.5 24 11.5c3.1 0 5.9 1.1 8.1 3l6.4-6.4C34.6 4.5 29.6 2.5 24 2.5 12.2 2.5 2.5 12.2 2.5 24S12.2 45.5 24 45.5c11 0 20.5-8 20.5-21.5 0-1.4-.2-2.7-.5-4z\"/></svg>Sign in with Google</a><a class=\"ds-oauth-btn ds-oauth-btn--github\" href=\"#\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 16 16\" aria-hidden=\"true\"><path fill=\"#fff\" d=\"M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z\"/></svg>Sign in with GitHub</a></div>",
+      "css": ".ds-oauth { font-family: verdana, arial, helvetica, sans-serif; } .ds-oauth-btn { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 10px 20px; margin: 8px 0; color: #fff; text-decoration: none; border-radius: 4px; font-size: 14px; } .ds-oauth-btn--google { background-color: #4285f4; } .ds-oauth-btn--github { background-color: #333; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Graded Worksheet",
+    "overview": "ReadingBat looks like paper a teacher handed you. White ground, plain resident type, a column of function calls on the left and a column of blanks on the right, and a mark in green or red once you commit to an answer. Nothing on the page competes with the code, because the code is the only thing a student is there to read. The system's central act — type a prediction, press Check, get marked — is exactly the act of filling in a worksheet and having it graded, and every visual decision in the implementation serves that act or gets out of its way.\n\nThe character is plain and self-effacing, and deliberately so. There is no web font, no gradient, no elevated card, no animation, no accent bar, no illustration in the working surfaces. Structure is carried entirely by 1px hairlines and by white space. Where most systems would reach for a fill, a shadow, or a brand color to separate two regions, this one draws a single line and stops. The restraint is the design, not the absence of one: a student reading `sum(1, 2)` and deciding what it returns is doing the hardest thing on the page, and the interface's job is to have no opinion while they do it.\n\nColor is rationed to the point of ceremony. Six chromatic values exist in the entire working vocabulary, each with exactly one job, and four of them are only ever earned — by answering, by following a link, by looking at a code block. A page with no answers on it is black text on white paper with one blue heading. That scarcity is what makes green and red mean something the instant they appear.",
+    "keyCharacteristics": [
+      "Resident system type only — Verdana at 16px, no font ever loaded over the network",
+      "White paper ground with 1px hairline structure; no fills, no gradients, no elevated surfaces",
+      "Six working colors, each with a single job; red and green are earned, not decorative",
+      "The 115% / 95% pair: reading steps up, code steps down",
+      "Flat by default — a shadow appears only on things you can press",
+      "No transitions anywhere; feedback replaces state instantly",
+      "Fixed desktop width, no breakpoints, prose measured at 800px"
+    ],
+    "rules": [
+      {
+        "name": "The Marker Red Rule",
+        "body": "Red means an answer is wrong. It has no other job in this system — not error text, not destructive actions, not emphasis, not hover. New surfaces must not spend red on anything a student could mistake for being marked wrong.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Job Per Blue Rule",
+        "body": "Three blues coexist and never substitute for each other: Chalk Blue heads sections, Ballpoint Blue stripes code, Link Blue marks links. Using one in another's role collapses a distinction the system relies on.",
+        "section": "colors"
+      },
+      {
+        "name": "The Earned Color Rule",
+        "body": "Green and red are applied only by a state change the user caused. A static page never ships them. Their scarcity is what makes them legible at a glance across a teacher's class summary of thirty students.",
+        "section": "colors"
+      },
+      {
+        "name": "The 115/95 Rule",
+        "body": "Prose a student must read closely steps up to 115%; code steps down to 95%. This pair predates the Tailwind migration (it was textFs / codeFs in the old Kotlin CSS builder) and it is the system's only typographic signature. Preserve it; don't normalize the two toward 100%.",
+        "section": "typography"
+      },
+      {
+        "name": "The Resident Type Rule",
+        "body": "No web font, ever. The stack is Verdana → Arial → Helvetica → sans-serif and every one of those is already on the machine. A page that needs a typeface the school computer doesn't have is a page that will render wrong in a lab.",
+        "section": "typography"
+      },
+      {
+        "name": "The Percent Rule",
+        "body": "Type sizes are expressed as percentages of the 16px root (text-[115%]), not in pixels. A student who raises their browser's font size scales the entire document, including the code they're reading.",
+        "section": "typography"
+      },
+      {
+        "name": "The 800px Measure Rule",
+        "body": "Running prose never exceeds 800px, regardless of monitor width. Tables and code blocks are exempt — they size to content.",
+        "section": "layout"
+      },
+      {
+        "name": "The Indent-Not-Box Rule",
+        "body": "Subordinate content indents by 1em or 2em. It does not get a card, a tint, a border, or a background. Nesting is expressed by position alone.",
+        "section": "layout"
+      },
+      {
+        "name": "The Pressable Shadow Rule",
+        "body": "A shadow signals \"you can press this.\" Surfaces that aren't controls stay flat and are separated by hairlines. A shadowed card in this system would read as a giant button.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Instant Feedback Rule",
+        "body": "There are no CSS transitions or animations anywhere in the codebase. State changes — a cell turning green, a button depressing, a panel hiding — happen in one frame. The only moving element in the entire system is the spinner shown while answers are being checked.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Hairline Rule",
+        "body": "Structure is drawn with 1px borders. Never with a background tint, never with a shadow, never with a rule thicker than 1px — except the 10px code stripe, which is a label, not a border.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do put every class string in TwClasses.kt as a complete literal. The Tailwind v4 scanner reads **/*.kt by regex and cannot evaluate a Kotlin expression — a dynamically assembled class name silently produces no CSS.",
+      "Do step reading copy up to 115% and code down to 95%. The pair is the system's typographic signature.",
+      "Do separate structure with 1px hairlines and indentation (ml-4 / ml-8), not with cards, tints, or shadows.",
+      "Do keep new type sizes as percentages of the 16px root so browser zoom scales the document.",
+      "Do reserve the shadow-plus-inset-on-active treatment for things the user can press.",
+      "Do let green and red be earned — applied by a state change the user caused, never present on a static page.",
+      "Do restore native form appearance when preflight strips it, rather than designing a replacement control."
+    ],
+    "donts": [
+      "Don't spend red on anything but a wrong answer. Known debt: a:hover { color: red } currently turns every link red on hover, which collides head-on with this rule. Don't propagate it to new surfaces, and treat it as a fix waiting to happen.",
+      "Don't introduce a second green or a second red. Known debt: the system already carries text-green-500 / text-red-500 for status messages alongside #4EAA3A / #FF0000 for answers, plus dead td.ok / td.no rules using the CSS keywords green and red that no page emits. Consolidate rather than extend.",
+      "Don't load a web font. The type stack is resident and the built Tailwind file is the site-wide CSS payload. (Known debt: the challenge page pulls all of Font Awesome 4.7.0 from cdnjs for a single spinner glyph, and the playground page loads kotlin-playground from unpkg. Prism's per-language CSS is served locally and is fine.)",
+      "Don't add transitions or animations to state changes. Feedback is instantaneous by design; the answer-checking spinner is the only moving element.",
+      "Don't add a colored or filled button. Action buttons are Newsprint Gray; prominence comes from size and position.",
+      "Don't style a surface with a shadow. A shadowed panel reads as a giant button in this system.",
+      "Don't write new inline style = strings. Known debt: 72 remain across 12 page files after the Tailwind migration; the direction of travel is toward TwClasses constants, not away.",
+      "Don't underline links to distinguish them, or remove their color. Color is the only link affordance here and the convention is consistent site-wide.",
+      "Don't assume a breakpoint exists. The system defines zero responsive utilities and emits no viewport meta tag; adding a md: variant to one component without a system-wide decision produces a layout that is responsive in exactly one place."
+    ]
+  }
+}

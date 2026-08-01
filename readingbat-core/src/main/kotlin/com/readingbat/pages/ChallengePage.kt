@@ -143,7 +143,6 @@ import org.jetbrains.exposed.v1.jdbc.select
  * updated via WebSockets.
  */
 internal object ChallengePage {
-  private const val SPINNER_CSS = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"
   private const val NAME_TD = "nameTd"
   private const val ANSWER_TD = "answersTd"
   private const val LIKE_DISLIKE_SPAN = "likeDislikeSpan"
@@ -151,7 +150,6 @@ internal object ChallengePage {
   private const val NUM_CORRECTION_SPAN = "numCorrectSpan"
   private const val PING_LABEL = "pingLabel"
   private const val PING_MSG = "pingMsg"
-  internal const val HEADER_COLOR = "#419DC1"
 
   /** Renders the challenge page HTML for the given challenge, including code, answer inputs, and teacher dashboard. */
   suspend fun RoutingContext.challengePage(
@@ -172,10 +170,6 @@ internal object ChallengePage {
     return createHTML()
       .html {
         head {
-          link {
-            rel = "stylesheet"
-            href = SPINNER_CSS
-          }
           link {
             rel = "stylesheet"
             href = pathOf(STATIC_ROOT, PRISM, "$languageName-prism.css")
@@ -267,13 +261,11 @@ internal object ChallengePage {
         tr {
           th(classes = "text-rb-header") {
             colSpan = "2"
-            style = "color: $HEADER_COLOR"
             +"Function Call"
             rawHtml(nbsp.text)
           }
           th(classes = "text-rb-header") {
             colSpan = "2"
-            style = "color: $HEADER_COLOR"
             +"Return Value"
           }
         }
@@ -311,6 +303,10 @@ internal object ChallengePage {
                   }
                 textInput(classes = TwClasses.USER_RESP + cls) {
                   id = "$RESP$i"
+
+                  // The visible column header ("Return Value") is too far away to name the field,
+                  // and the placeholder disappears on input, so name it after the call it answers.
+                  attributes["aria-label"] = "Return value for ${invocation.value}"
 
                   if (user == null || user.enrolledClassCode.isNotEnabled)
                     onKeyDown = "$PROCESS_USER_ANSWERS_FUNC(event, ${funcInfo.questionCount})"
@@ -491,7 +487,6 @@ internal object ChallengePage {
     // Render pass: pure markup over the precomputed rows.
     div(classes = "mt-8") {
       h3(classes = "ml-1 text-rb-header") {
-        style = "margin-left: 5px; color: $HEADER_COLOR"
         a(classes = TwClasses.UNDERLINE) {
           href = classSummaryEndpoint(classCode, languageName, groupName)
           +classCode.toDisplayString()
@@ -503,13 +498,11 @@ internal object ChallengePage {
         table(classes = "w-full border-separate border-spacing-x-[5px] border-spacing-y-[10px]") {
           tr {
             th(classes = "w-[15%] whitespace-nowrap text-left text-rb-header") {
-              style = "width:15%; white-space:nowrap; text-align:left; color: $HEADER_COLOR"
               +"Student"
             }
             funcInfo.invocations
               .forEach { invocation ->
                 th(classes = "text-left text-rb-header") {
-                  style = "text-align:left; color: $HEADER_COLOR"
                   +(invocation.value.run { substring(indexOf("(")) })
                 }
               }
@@ -585,7 +578,11 @@ internal object ChallengePage {
             }
           }
 
+          // Live region: answer-check outcomes are announced here, since the per-cell fill colors
+          // are invisible to assistive technology.
           td(classes = "align-middle") {
+            attributes["role"] = "status"
+            attributes["aria-live"] = "polite"
             span(classes = TwClasses.STATUS) { id = STATUS_ID }
             span(classes = TwClasses.SUCCESS) { id = SUCCESS_ID }
           }
@@ -646,10 +643,12 @@ internal object ChallengePage {
             id = LIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 2) "inline" else "none"}"
             button(classes = TwClasses.LIKE_BUTTONS) {
+              attributes["aria-label"] = "Like this challenge"
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
               img {
                 style = "height:${imgSize}px; width:${imgSize}px"
                 src = pathOf(STATIC_ROOT, LIKE_CLEAR_FILE)
+                alt = ""
               }
             }
           }
@@ -657,10 +656,12 @@ internal object ChallengePage {
             id = LIKE_COLOR
             style = "display:${if (likeDislikeVal == 1) "inline" else "none"}"
             button(classes = TwClasses.LIKE_BUTTONS) {
+              attributes["aria-label"] = "Remove your like from this challenge"
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
               img {
                 style = "height:${imgSize}px; width:${imgSize}px"
                 src = pathOf(STATIC_ROOT, LIKE_COLOR_FILE)
+                alt = ""
               }
             }
           }
@@ -668,10 +669,12 @@ internal object ChallengePage {
             id = DISLIKE_CLEAR
             style = "display:${if (likeDislikeVal == 0 || likeDislikeVal == 1) "inline" else "none"}"
             button(classes = TwClasses.LIKE_BUTTONS) {
+              attributes["aria-label"] = "Dislike this challenge"
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
               img {
                 style = "height:${imgSize}px; width:${imgSize}px"
                 src = pathOf(STATIC_ROOT, DISLIKE_CLEAR_FILE)
+                alt = ""
               }
             }
           }
@@ -679,10 +682,12 @@ internal object ChallengePage {
             id = DISLIKE_COLOR
             style = "display:${if (likeDislikeVal == 2) "inline" else "none"}"
             button(classes = TwClasses.LIKE_BUTTONS) {
+              attributes["aria-label"] = "Remove your dislike from this challenge"
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
               img {
                 style = "height:${imgSize}px; width:${imgSize}px"
                 src = pathOf(STATIC_ROOT, DISLIKE_COLOR_FILE)
+                alt = ""
               }
             }
           }

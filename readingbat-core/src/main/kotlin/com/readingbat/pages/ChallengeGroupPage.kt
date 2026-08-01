@@ -46,7 +46,6 @@ import com.readingbat.dsl.ChallengeGroup
 import com.readingbat.dsl.ReadingBatContent
 import com.readingbat.dsl.challenge.Challenge
 import com.readingbat.dsl.isDbmsEnabled
-import com.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.readingbat.pages.PageUtils.backLink
 import com.readingbat.pages.PageUtils.bodyHeader
 import com.readingbat.pages.PageUtils.encodeUriElems
@@ -191,7 +190,6 @@ internal object ChallengeGroupPage {
     enrollees: List<User>,
   ) {
     h3(classes = "ml-1 text-rb-header") {
-      style = "margin-left: 5px; color: $HEADER_COLOR"
       a(classes = TwClasses.UNDERLINE) {
         href =
           if (groupName.isNotValid())

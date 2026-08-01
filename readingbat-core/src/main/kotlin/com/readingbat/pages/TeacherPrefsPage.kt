@@ -128,8 +128,7 @@ internal object TeacherPrefsPage {
           h2 { +"Teacher Preferences" }
           if (msg.isAssigned())
             p {
-              span {
-                style = "color:${msg.color}"
+              span(classes = msg.colorClass) {
                 this@body.displayMessage(msg)
               }
             }
@@ -154,8 +153,7 @@ internal object TeacherPrefsPage {
               label { +"Class Description" }
             }
             td {
-              textInput {
-                style = "font-size:12px; padding:4px; border-radius:4px"
+              textInput(classes = "text-xs p-1 rounded") {
                 size = "42"
                 name = CLASS_DESC_PARAM
                 value = defaultClassDesc

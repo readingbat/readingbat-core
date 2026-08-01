@@ -37,9 +37,17 @@ object Constants {
   const val RESP = "response"
   const val LIKE_DESC = "likeDesc"
   const val NO_ANSWER_COLOR = "white"
+
+  // Cell fills. Used as backgrounds behind black label text, never as text colors themselves:
+  // on white they are only 2.9:1 and 4.0:1, which fails WCAG AA for copy.
   const val CORRECT_COLOR = "#4EAA3A"
   const val WRONG_COLOR = "#FF0000" // red
   const val INCOMPLETE_COLOR = "#F1F1F1"
+
+  // Text variants of the same two hues, darkened until they clear 4.5:1 on white.
+  // Keep in sync with --color-rb-correct-text / --color-rb-wrong-text in css/tailwind-input.css.
+  const val CORRECT_TEXT_COLOR = "#3E862E"
+  const val WRONG_TEXT_COLOR = "#ED0000"
   const val LABEL_WIDTH = "width:250"
   const val PING_CODE = "P"
   const val LIKE_DISLIKE_CODE = "LD"

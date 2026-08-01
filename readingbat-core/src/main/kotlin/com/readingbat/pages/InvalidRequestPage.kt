@@ -48,7 +48,15 @@ internal object InvalidRequestPage {
         body {
           bodyTitle()
 
-          p { img(classes = TwClasses.CENTER) { src = pathOf(STATIC_ROOT, "panic.png") } }
+          p {
+            img(classes = TwClasses.CENTER) {
+              src = pathOf(STATIC_ROOT, "panic.jpg")
+              alt = ""
+              width = "500"
+              height = "313"
+              attributes["loading"] = "lazy"
+            }
+          }
 
           h2 { +"There seems to be a misunderstanding" }
 

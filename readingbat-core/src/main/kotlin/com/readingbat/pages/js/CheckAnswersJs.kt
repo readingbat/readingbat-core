@@ -47,7 +47,11 @@ import kotlin.concurrent.atomics.incrementAndFetch
  * Generates the client-side JavaScript for submitting and checking challenge answers.
  *
  * The script posts user responses to the server via XMLHttpRequest and updates the UI
- * with color-coded feedback (correct, incorrect, not answered) and optional hints.
+ * with per-answer feedback (correct, incorrect, not answered) and optional hints.
+ *
+ * Feedback is never carried by color alone: each cell is filled with its status color *and*
+ * labeled with a "✓ correct" / "✗ try again" glyph, and the outcome count is written into the
+ * `role="status"` live region so it is announced to assistive technology.
  */
 internal object CheckAnswersJs {
   private val sessionCounter = AtomicInt(0)
@@ -68,6 +72,7 @@ internal object CheckAnswersJs {
         for (let i = 0; i < cnt; i++) {
           let x = document.getElementById("$FEEDBACK_ID"+i);
           x.style.backgroundColor = "white";
+          x.innerText = '';
 
           document.getElementById("$HINT_ID"+i).innerText = '';
 
@@ -89,32 +94,38 @@ internal object CheckAnswersJs {
 
     function checkAnswerHandleDone(){
       if(re.readyState == 1) {  // starting
-        document.getElementById('$SPINNER_ID').innerHTML = '<i class="fa fa-spinner fa-spin text-2xl" style="font-size:24px"></i>';
+        document.getElementById('$SPINNER_ID').innerHTML = '<span class="rb-spinner" aria-hidden="true"></span>';
         document.getElementById('$STATUS_ID').innerText = 'Checking answers...';
         document.getElementById('$SUCCESS_ID').innerText = '';
         document.getElementById('$NEXTPREVCHANCE_ID').style.display = "none";
       }
       else if(re.readyState == 4) {  // done
         let success = true;
+        let correctCount = 0;
         let results = JSON.parse(re.responseText);
         for (let i = 0; i < results.length; i++) {
           let x = document.getElementById("$FEEDBACK_ID"+i);
           if (results[i][0] == ${NOT_ANSWERED.value}) {
             x.style.backgroundColor = '$NO_ANSWER_COLOR';
+            x.innerText = '';
             success = false;
           }
           else if (results[i][0] == ${CORRECT.value}) {
             x.style.backgroundColor = '$CORRECT_COLOR';
+            x.innerText = '✓ correct';
+            correctCount++;
           }
           else {
             x.style.backgroundColor = '$WRONG_COLOR';
+            x.innerText = '✗ try again';
             success = false;
             document.getElementById("$HINT_ID"+i).innerText = results[i][1];
           }
         }
 
         document.getElementById('$SPINNER_ID').innerText = '';
-        document.getElementById('$STATUS_ID').innerText = '';
+        document.getElementById('$STATUS_ID').innerText =
+          success ? '' : correctCount + " of " + results.length + " correct.";
         document.getElementById('$SUCCESS_ID').innerText = success ? "Success! Congratulations!" : "";
         document.getElementById('$NEXTPREVCHANCE_ID').style.display = success ? "inline" : "none";
       }

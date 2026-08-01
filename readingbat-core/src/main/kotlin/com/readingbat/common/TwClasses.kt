@@ -45,9 +45,9 @@ internal object TwClasses {
   /** Generic button: white bg, gray on hover */
   const val BTN = "bg-white hover:bg-gray-200"
 
-  /** Clear answer history button */
+  /** Clear answer history button. `min-h-6` keeps the hit area at the 24px target minimum. */
   const val CLEAR_HISTORY =
-    "px-4 py-1 text-[85%] bg-rb-incomplete border border-gray-300 " +
+    "px-4 py-1 min-h-6 text-[85%] bg-rb-incomplete border border-gray-300 " +
       "rounded shadow cursor-pointer hover:bg-gray-200 active:shadow-inner active:translate-y-px"
 
   // -- Challenge page components --
@@ -64,8 +64,14 @@ internal object TwClasses {
   /** User response input: w:15em font-size:90% border rounded */
   const val USER_RESP = "w-60 text-[90%] border border-gray-400 rounded py-[5px] pr-[5px] pl-[7px]"
 
-  /** Feedback cell: w:10em border:7px solid white */
-  const val FEEDBACK = "w-40 border-[7px] border-solid border-white"
+  /**
+   * Feedback cell: w:10em border:7px solid white, centered bold label.
+   *
+   * The cell is filled with a status color by [com.readingbat.pages.js.CheckAnswersJs] and also
+   * carries a "✓ correct" / "✗ try again" text label, so correctness is never signalled by color
+   * alone. Black text holds 7.1:1 on the correct green and 5.3:1 on the wrong red.
+   */
+  const val FEEDBACK = "w-40 border-[7px] border-solid border-white text-center font-bold text-black"
 
   /** Status text: ml:5px font-size:115% */
   const val STATUS = "ml-1 text-[115%]"

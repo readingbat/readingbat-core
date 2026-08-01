@@ -140,8 +140,7 @@ internal object UserPrefsPage {
 
           if (msg.isAssigned())
             p {
-              span {
-                style = "color:${msg.color}"
+              span(classes = msg.colorClass) {
                 this@body.displayMessage(msg)
               }
             }
@@ -235,8 +234,7 @@ internal object UserPrefsPage {
                 label { +"Class Code" }
               }
               td {
-                textInput {
-                  style = "font-size:12px; padding:4px; border-radius:4px"
+                textInput(classes = "text-xs p-1 rounded") {
                   size = "42"
                   name = CLASS_CODE_NAME_PARAM
                   value = defaultClassCode.displayedValue
@@ -338,8 +336,7 @@ internal object UserPrefsPage {
 
           if (msg.isAssigned())
             p {
-              span {
-                style = "color:${msg.color}"
+              span(classes = msg.colorClass) {
                 this@body.displayMessage(msg)
               }
             }

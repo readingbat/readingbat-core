@@ -48,7 +48,13 @@ internal object NotFoundPage {
           bodyTitle()
 
           p {
-            img(classes = TwClasses.CENTER) { src = pathOf(STATIC_ROOT, "nervous.png") }
+            img(classes = TwClasses.CENTER) {
+              src = pathOf(STATIC_ROOT, "nervous.jpg")
+              alt = ""
+              width = "500"
+              height = "334"
+              attributes["loading"] = "lazy"
+            }
           }
 
           h2 { +"On no! We are afraid that page that does not exist" }

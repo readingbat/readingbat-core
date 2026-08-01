@@ -67,9 +67,11 @@ import kotlinx.html.a
 import kotlinx.html.button
 import kotlinx.html.div
 import kotlinx.html.form
+import kotlinx.html.h1
 import kotlinx.html.id
 import kotlinx.html.li
 import kotlinx.html.link
+import kotlinx.html.meta
 import kotlinx.html.nav
 import kotlinx.html.onClick
 import kotlinx.html.onSubmit
@@ -132,6 +134,19 @@ internal object PageUtils {
 
   /** Sets up the default HTML head with favicons, Tailwind CSS, page title, and Google Analytics. */
   fun HEAD.headDefault() {
+    // Declared explicitly so the answer-feedback glyphs and any non-ASCII challenge content
+    // decode correctly even when a proxy strips or rewrites the Content-Type charset.
+    meta { attributes["charset"] = "utf-8" }
+
+    // Declares the width this layout was actually designed for, so phones lay out at 1024px and
+    // scale, instead of falling back to the legacy 980px guess that clips the 3-column group grid.
+    // Deliberately NOT "width=device-width": there is no responsive CSS behind it, so that would
+    // trade a zoomed-but-coherent page for horizontal-scroll breakage. No user-scalable limits.
+    meta {
+      name = "viewport"
+      content = "width=1024"
+    }
+
     // From: https://favicon.io/emoji-favicons/glasses/
     val prefix = pathOf(STATIC_ROOT, ICONS)
     link {
@@ -203,17 +218,21 @@ internal object PageUtils {
     }
   }
 
+  /**
+   * Renders the site wordmark as the page's single `h1`.
+   *
+   * `font-normal` is deliberate: the base layer bolds `h1`–`h4`, but the wordmark is the largest
+   * and lightest-feeling element on the page, and that contrast is part of the identity.
+   */
   fun BODY.bodyTitle() {
-    // Tailwind equivalents: mb-0, text-4xl, pl-1
-    // Inline styles kept as fallback when Tailwind is disabled
-    div(classes = "mb-0") {
+    h1(classes = "mb-0 font-normal") {
       a {
         href = "/"
         span(classes = "text-4xl") {
           +READING_BAT
         }
       }
-      span(classes = "pl-1") {
+      span(classes = "pl-1 text-base") {
         +"code reading practice"
       }
     }
@@ -235,7 +254,7 @@ internal object PageUtils {
     p(classes = "mb-0") { if (displayWelcomeMsg) +"Welcome to ReadingBat." else rawHtml(nbsp.text) }
 
     p(classes = "mt-2 mb-0") {
-      val colorClass = if (msg.isError) "text-red-500" else "text-green-500"
+      val colorClass = if (msg.isError) "text-rb-wrong-text" else "text-rb-correct-text"
       span(classes = "$colorClass max-w-[800px]") {
         if (msg.isNotBlank) +(msg.toString()) else rawHtml(nbsp.text)
       }
@@ -243,6 +262,7 @@ internal object PageUtils {
 
     div(classes = "pt-1.5 min-w-screen clear-both") {
       nav {
+        attributes["aria-label"] = "Languages"
         ul {
           languageTypeList
             .filter { content[it].isNotEmpty() }

@@ -104,8 +104,7 @@ internal object SystemAdminPage {
 
           if (msg.isAssigned())
             p {
-              span {
-                style = "color:${msg.color}"
+              span(classes = msg.colorClass) {
                 this@body.displayMessage(msg)
               }
             }
@@ -183,8 +182,7 @@ internal object SystemAdminPage {
           }
 
           p {
-            textArea {
-              style = "font-size:9px"
+            textArea(classes = "text-[9px]") {
               id = MSGS
               readonly = true
               rows = "25"

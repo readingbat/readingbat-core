@@ -34,13 +34,13 @@ import com.readingbat.common.isAdminUser
 import com.readingbat.dsl.ReadingBatContent
 import com.readingbat.dsl.isDbmsEnabled
 import com.readingbat.dsl.isProduction
-import com.readingbat.pages.ChallengePage.HEADER_COLOR
 import com.readingbat.pages.PageUtils.rawHtml
 import com.readingbat.server.ServerUtils.firstNonEmptyLanguageType
 import kotlinx.html.BODY
 import kotlinx.html.TD
 import kotlinx.html.a
 import kotlinx.html.br
+import kotlinx.html.button
 import kotlinx.html.div
 import kotlinx.html.id
 import kotlinx.html.img
@@ -157,7 +157,6 @@ internal object HelpAndLogin {
           tr {
             td(classes = "text-right pt-1") {
               span(classes = "text-rb-header") {
-                style = "color: $HEADER_COLOR"
                 +user.enrolledClassCode.toDisplayString()
               }
             }
@@ -196,13 +195,18 @@ internal object HelpAndLogin {
           position:relative;
           """.trimIndent()
 
-        // Close button
-        span {
+        // Close button. A real <button> rather than a clickable <span>, so it is reachable and
+        // operable by keyboard and carries an accessible name. Sized to the 24px target minimum,
+        // and #767676 clears 4.5:1 on white where the previous #888 did not.
+        button {
+          attributes["aria-label"] = "Close sign-in dialog"
           onClick = "document.getElementById('oauth-modal').style.display='none';"
           style =
             """
-            position:absolute; top:8px; right:14px;
-            font-size:22px; cursor:pointer; color:#888;
+            position:absolute; top:8px; right:8px;
+            width:28px; height:28px; line-height:1;
+            font-size:22px; cursor:pointer; color:#767676;
+            background:none; border:none; box-shadow:none; padding:0;
             """.trimIndent()
           rawHtml("&times;")
         }
