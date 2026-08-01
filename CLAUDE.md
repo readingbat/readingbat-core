@@ -92,6 +92,22 @@ All HTML pages are generated server-side using Kotlinx.html (no templates). Each
 `com.readingbat.pages` with a companion object function pattern (e.g., `ChallengePage.challengePage()`).
 JavaScript for client-side interactivity is generated in `pages/js/`.
 
+### Styling
+
+`DESIGN.md` and `PRODUCT.md` are the design record — read them before changing anything visual.
+
+- **`static/tailwind.css` is a checked-in build artifact that only regenerates on macOS** (the `isMac` guard in
+  `readingbat-core/build.gradle.kts`), so editing the CSS or Kotlin sources anywhere else leaves it stale with no local
+  signal. CI catches it.
+- Tailwind scans Kotlin sources by regex (`@source "../../kotlin/**/*.kt"`) and cannot evaluate expressions, so a class
+  name must appear as a complete literal. Build them in `TwClasses.kt`, never by string concatenation.
+- **Never signal state by color alone** (WCAG 2.1 §1.4.1) — pair every color with text or an icon. Answer results are
+  the precedent: they carry `✓ correct` / `✗ try again` text plus an `aria-live` status region.
+- The color tokens are split by use — see the comments in `tailwind-input.css`. Reserve red for wrongness, never for
+  links, hover, or emphasis.
+- Do not emit an inline `style` for a color that a Tailwind class already sets. The inline value wins, so re-toning the
+  token becomes a silent no-op — the exact bug that hid `HEADER_COLOR` across 13 call sites.
+
 ### Testing
 
 Tests use Kotest with `StringSpec` style. Use `StringSpec()` with an `init {}` block (not the constructor lambda pattern):
