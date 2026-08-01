@@ -3,6 +3,7 @@
 [![GitHub release](https://img.shields.io/github/v/release/readingbat/readingbat-core?logo=github)](https://github.com/readingbat/readingbat-core/releases)
 [![Maven Central](https://img.shields.io/maven-central/v/com.readingbat/readingbat-core?logo=apachemaven)](https://central.sonatype.com/artifact/com.readingbat/readingbat-core)
 [![Tests](https://github.com/readingbat/readingbat-core/actions/workflows/test.yml/badge.svg)](https://github.com/readingbat/readingbat-core/actions/workflows/test.yml)
+[![Tailwind CSS](https://github.com/readingbat/readingbat-core/actions/workflows/tailwind-css.yml/badge.svg)](https://github.com/readingbat/readingbat-core/actions/workflows/tailwind-css.yml)
 [![codecov](https://codecov.io/gh/readingbat/readingbat-core/branch/master/graph/badge.svg)](https://codecov.io/gh/readingbat/readingbat-core)
 [![Kotlin](https://img.shields.io/badge/%20language-Kotlin-red.svg)](https://kotlinlang.org/)
 [![ktlint](https://img.shields.io/badge/ktlint%20code--style-%E2%9D%A4-FF4081)](https://pinterest.github.io/ktlint/)
@@ -21,13 +22,14 @@ A Kotlin-based framework for creating interactive programming challenges and edu
 - **User Management**: Complete authentication system with class/teacher support
 - **Progress Tracking**: Detailed analytics and progress monitoring
 - **Security**: Signed + encrypted session cookies, per-IP rate limiting, verified-email OAuth, and class-ownership authorization
+- **Accessible by Default**: Answer results are announced via live regions and labeled with text, never signalled by color alone; controls carry accessible names and text meets WCAG 2.1 AA contrast
 - **Scalable Architecture**: Multi-server deployment ready with database persistence
 
 ## 🏗️ Architecture
 
 ReadingBat Core is built using modern Kotlin technologies:
 
-- **Web Framework**: Ktor 3.5.1 with CIO engine
+- **Web Framework**: Ktor 3.5.2 with CIO engine
 - **Database**: PostgreSQL with Exposed ORM (`exposed-kotlin-datetime`) and HikariCP connection pooling
 - **Authentication**: OAuth (GitHub, Google, verified-email required) with signed + encrypted session cookies
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
@@ -77,7 +79,7 @@ readingbat-core/
 
 3. **Setup database**
    ```bash
-   make dbreset  # or ./gradlew flywayClean flywayMigrate
+   make dbmigrate  # or ./gradlew flywayMigrate
    ```
 
 4. **Build and run**
@@ -133,8 +135,9 @@ make coverage-packages  # Per-package coverage breakdown from the XML report
 
 ```bash
 make dbmigrate      # Run database migrations
-make dbreset        # Clean and migrate database
 make dbinfo         # Show migration status
+make dbclean        # Drop all database objects via Flyway
+make dbvalidate     # Validate applied migrations against scripts
 ```
 
 ### Running & Deployment

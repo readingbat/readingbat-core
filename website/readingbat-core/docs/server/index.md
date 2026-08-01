@@ -105,13 +105,17 @@ Connection pooling is managed by HikariCP.
 ### Database Commands
 
 ```bash
-# Reset database (clean + migrate)
-make dbreset
-
-# Run migrations only
+# Run migrations
 make dbmigrate
 # or
 ./gradlew flywayMigrate
+
+# Drop all database objects, then re-migrate
+make dbclean && make dbmigrate
+
+# Show migration status / validate applied migrations
+make dbinfo
+make dbvalidate
 ```
 
 Migration SQL files are located in `src/main/resources/db/migration/`.

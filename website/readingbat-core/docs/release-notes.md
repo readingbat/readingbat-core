@@ -6,6 +6,57 @@ icon: lucide/tag
 
 For the complete, commit-level history see [`CHANGELOG.md`](https://github.com/readingbat/readingbat-core/blob/master/CHANGELOG.md) in the repository.
 
+## v3.3.1 — 2026-08-01
+
+Accessibility, performance, and maintenance release. The headline fix is that answer grading — the single most important thing the app tells a student — was communicated by fill color alone and was never announced to assistive technology. No configuration or upgrade steps — a drop-in bump from 3.3.0.
+
+### Accessibility
+
+- **Answer grading is perceivable without color or sight** — `checkAnswers` painted each result cell green or red and did nothing else, so a screen-reader user received no result at all and a colorblind user was left comparing two fills measuring **1.36:1** against each other, far below the 3:1 WCAG 2.1 AA non-text minimum and a 1.4.1 (Use of Color) failure. Result cells now carry `✓ correct` / `✗ try again` text, and the status cell is a `role="status"` / `aria-live="polite"` region announcing `N of M correct.`
+- **Controls have accessible names** — answer inputs gained `aria-label="Return value for <invocation>"`, the like/dislike buttons gained labels with their images marked decorative, and the sign-in modal's close control (a `span` with an `onClick`, unreachable by keyboard) became a real `button`.
+- **Text colors pass AA** — the pass/fail colors met contrast as fills but not as text, so `rb-correct-text` (`#3E862E`) and `rb-wrong-text` (`#ED0000`) were added as separate text tokens and `rb-header` was darkened to `#337E9C`. Re-toning the tokens alone would have changed nothing: `HEADER_COLOR` was emitted as an inline style on the same elements, so the inline value won. That constant and all 13 call sites are gone.
+- **Link hover no longer turns red**, which collided with the wrongness signal — it is now an underline.
+- **Spinners that were never visible now work** — the like/dislike and admin spinners used `fa-spin`, but Font Awesome is not loaded on those pages. Replaced with a CSS `.rb-spinner` that honors `prefers-reduced-motion`.
+- The page wordmark is now an `h1`, the language nav carries `aria-label="Languages"`, and pages emit `<meta charset>` and a viewport tag.
+
+### Performance
+
+- **Images got much lighter** — the four like/dislike PNGs were 1600px wide and render at 30px (**345 KB → 12 KB**), and `nervous`/`panic` moved to JPEG (**~450 KB → ~72 KB**).
+- All six `img` sites gained explicit `width`/`height`, removing layout shift, plus `loading` hints.
+
+### Changed
+
+- **The generated stylesheet can no longer drift unnoticed** — `static/tailwind.css` is checked in, but the Gradle wiring only regenerates it on macOS, so the accessibility pass left it stale, still carrying CSS for classes nothing emits. It has been rebuilt (80,540 → 78,905 bytes), and a new `Tailwind CSS` workflow now regenerates it in CI and fails if the committed artifact does not match.
+- **A design-system record** — `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` capture the product context and the design system the accessibility work was audited against.
+- **Documentation accuracy** — `make dbreset` was referenced in four places but has never existed; all now name the real Flyway targets (`dbmigrate`, `dbclean`, `dbinfo`, `dbvalidate`). `CLAUDE.md` also shed 57 lines of content derivable from the codebase itself.
+- The versions plugin is applied by its catalog id rather than a hardcoded legacy string, clearing a Gradle deprecation warning.
+
+### Dependencies
+
+Ktor 3.5.1 → 3.5.2 · Flyway 13.0.0 → 13.1.0 · common-utils 3.2.1 → 3.2.2 · versions plugin 0.54.0 → 0.57.0 · zensical 3.10.2 → 3.10.3 · markdown 0.0.51 → 0.0.52
+
+[Full changelog: 3.3.0…3.3.1](https://github.com/readingbat/readingbat-core/compare/3.3.0...3.3.1)
+
+## v3.3.0 — 2026-07-26
+
+Modernization + maintenance release. Adopts Kotlin's experimental collection-literal syntax across the codebase, refreshes dependencies (with major bumps to Flyway 13, prometheus-proxy 4.0, and common-utils 3.x), and lands a handful of code-quality cleanups. No configuration or upgrade steps — a drop-in bump from 3.2.1.
+
+### Changed
+
+- **Kotlin collection literals** — enabled the experimental `-Xcollection-literals` compiler flag and converted 191 call sites across `src` and `test`: `emptyList()` → `[]`, `listOf(...)` → `[...]`, and `mutableListOf(...)` → `[...]`, the last with an explicit `MutableList<T>` type on the declaration so mutability is never inferred away. The flag scopes to project sources only — the JSR-223 engine that evaluates content DSL files at runtime is unaffected, so DSL content keeps using `listOf()`/`mutableListOf()`.
+- **Build-script structure** — the Dokka configuration moved into a root-level `configureDokka()` helper, and `configureVersions()` moved into an `allprojects {}` block.
+- **Code-quality cleanups** — removed redundant imports of symbols defined within a file's own object/companion (five files), and simplified an early-return conditional in `Intercepts.isBrowsableContentPath` (`if (x) return true; return y` → `return x || y`, behavior-preserving).
+
+### Fixed
+
+- **Dokka is warning-free** — the unresolved `[initProperties]` KDoc link in `ContentDsl.kt` referenced a `Property` companion member that was not in scope, so it rendered as plain text. It now uses the fully-qualified custom-link-text form.
+
+### Dependencies
+
+Kotlin 2.4.0 → 2.4.10 · common-utils 2.9.3 → 3.2.1 · prometheus-proxy 3.2.0 → 4.0.0 · Flyway 12.10.0 → 13.0.0 · Kotest 6.2.1 → 6.2.3 · Logback 1.5.18 → 1.5.38 · PostgreSQL driver 42.7.12 → 42.7.13 · Cloud SQL socket factory 1.28.6 → 1.29.0 · Kotlinter 5.5.0 → 5.6.0 · Kover 0.9.8 → 0.9.9
+
+[Full changelog: 3.2.1…3.3.0](https://github.com/readingbat/readingbat-core/compare/3.2.1...3.3.0)
+
 ## v3.2.1 — 2026-07-03
 
 Maintenance release: a Gradle 9.6.1 upgrade, a routine dependency refresh, and two small build/test polish items. No functional changes to the running server and no upgrade steps — a drop-in bump from 3.2.0.

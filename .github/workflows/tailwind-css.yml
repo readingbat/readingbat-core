@@ -1,0 +1,50 @@
+name: Tailwind CSS
+
+on:
+  push:
+    branches: [ master, dev-* ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  css-up-to-date:
+    name: Generated CSS matches its source
+    # readingbat-core/src/main/resources/static/tailwind.css is a build artifact that is
+    # checked in, and the Gradle wiring only regenerates it on macOS (see the isMac guard
+    # in readingbat-core/build.gradle.kts). That means a change to tailwind-input.css or to
+    # the Kotlin sources it scans can land without the stylesheet being rebuilt, and nothing
+    # would notice -- which is exactly how it went stale during the accessibility pass.
+    #
+    # This job runs on Apple silicon because the vendored CLI (bin/tailwindcss-v4) is a
+    # Mach-O arm64 binary. Using the same binary developers use is what makes a byte-for-byte
+    # comparison meaningful: a different platform build of the same Tailwind version is not
+    # guaranteed to produce identical minified output.
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # Invoke the Gradle task rather than the CLI directly, so the input paths and the
+      # --minify flag stay defined in exactly one place (readingbat-core/build.gradle.kts).
+      - name: Regenerate Tailwind CSS
+        run: ./gradlew :readingbat-core:tailwindBuild
+
+      - name: Fail if the checked-in stylesheet is stale
+        run: |
+          css=readingbat-core/src/main/resources/static/tailwind.css
+          if git diff --quiet -- "$css"; then
+            echo "$css is up to date with its source."
+            exit 0
+          fi
+          echo "::error file=${css}::Generated stylesheet is out of date. Run 'make tw-css' and commit the result."
+          git diff --stat -- "$css"
+          exit 1

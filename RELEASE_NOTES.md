@@ -1,5 +1,27 @@
 # Release Notes
 
+## v3.3.1 — 2026-08-01
+
+An accessibility, performance, and maintenance release. The headline fix is that answer grading — the single most important thing the app tells a student — was communicated by fill color alone and was never announced to assistive technology. No configuration or upgrade steps are required; this is a drop-in bump from 3.3.0.
+
+### Highlights
+
+- **Answer grading is now perceivable without color or sight.** `checkAnswers` painted each result cell green or red and did nothing else: a screen-reader user received no result at all, and a colorblind user was left comparing two fills that measure **1.36:1** against each other — far below the 3:1 WCAG 2.1 AA non-text minimum, and a 1.4.1 (Use of Color) failure. Result cells now carry `✓ correct` / `✗ try again` text, and the status cell is a `role="status"` / `aria-live="polite"` region announcing `N of M correct.`
+- **Controls have accessible names.** Answer inputs gained `aria-label="Return value for <invocation>"`; the like/dislike buttons gained labels with their images marked decorative; and the sign-in modal's close control — a `span` with an `onClick`, unreachable by keyboard — became a real `button`.
+- **Text colors now pass AA.** The pass/fail colors met contrast as fills but not as text, so `rb-correct-text` (`#3E862E`) and `rb-wrong-text` (`#ED0000`) were added as separate text tokens and `rb-header` was darkened to `#337E9C`. Re-toning the tokens alone would have changed nothing: `HEADER_COLOR` was being emitted as an inline style on the same elements, so the inline value won. That constant and all 13 call sites are gone.
+- **Spinners that were never visible now work.** The like/dislike and admin spinners used `fa-spin`, but Font Awesome is not loaded on those pages. Replaced with a CSS `.rb-spinner` that honors `prefers-reduced-motion`.
+- **Images got much lighter.** The four like/dislike PNGs were 1600px wide and render at 30px (**345 KB → 12 KB**), and `nervous`/`panic` moved to JPEG (**~450 KB → ~72 KB**). All six `img` sites gained explicit dimensions, removing layout shift.
+- **The generated stylesheet can no longer drift unnoticed.** `static/tailwind.css` is checked in but the Gradle wiring only regenerates it on macOS, so the accessibility pass left it stale — still carrying CSS for classes nothing emits. It has been rebuilt (80,540 → 78,905 bytes), and a new CI workflow now regenerates it and fails if the committed artifact does not match.
+- **A design-system record.** `PRODUCT.md`, `DESIGN.md`, and `.impeccable/design.json` capture the product context and the design system the accessibility work was audited against.
+
+### Dependencies
+
+Ktor 3.5.1 → 3.5.2 · Flyway 13.0.0 → 13.1.0 · common-utils 3.2.1 → 3.2.2 · versions plugin 0.54.0 → 0.57.0 · zensical 3.10.2 → 3.10.3 · markdown 0.0.51 → 0.0.52
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.3.0...3.3.1
+
+---
+
 ## v3.3.0 — 2026-07-26
 
 A modernization + maintenance release. It adopts Kotlin's experimental collection-literal syntax across the codebase, refreshes dependencies (with major-version bumps to Flyway 13, prometheus-proxy 4.0, and common-utils 3.x), and lands a handful of code-quality cleanups. No configuration or upgrade steps are required — this is a drop-in bump from 3.2.1, and `./gradlew check` is green against the new toolchain.
