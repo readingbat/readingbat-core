@@ -102,13 +102,22 @@
   .h3 { font-size: 120%; }
 
   /* Navigation tabs */
+  /* The 37px left pad shifts the strip right by one tab gap, so the first tab is not jammed
+     against the page edge. A gap is the 25px + 6px margins below plus the ~5.6px word space
+     between two inline-block tabs. */
   nav ul {
     list-style-type: none;
-    padding: 0;
+    padding: 0 0 0 37px;
     margin: 0;
   }
+  /* inline-block, bottom-aligned, is what lets the selected tab hide the divider below the strip.
+     An inline box is only as tall as the font's ascent plus descent, which WebKit leaves
+     fractional, so the tab's bottom edge stopped a fraction of a pixel above the rule and left a
+     hairline showing under the selected tab. A bottom-aligned inline-block ends exactly at the
+     line box bottom — where the divider starts — in every engine. */
   nav li {
-    display: inline;
+    display: inline-block;
+    vertical-align: bottom;
     border: 1px solid;
     border-width: 1px 1px 0 1px;
     margin: 0 25px 0 6px;
@@ -141,7 +150,8 @@
     transform: translateY(1px);
   }
 
-  /* Selected tab (used as id) */
+  /* Selected tab (used as id). The one-pixel nudge pulls its white background over the divider
+     below the tab strip, so the selected tab reads as open on that side. */
   #selected {
     position: relative;
     top: 1px;

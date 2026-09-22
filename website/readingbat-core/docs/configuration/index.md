@@ -43,6 +43,7 @@ initialized from `application.conf` during application startup via `assignProper
 | **Email** | `RESEND_API_KEY`, `RESEND_SENDER_EMAIL` | Email sending via Resend |
 | **Script Pools** | `JAVA_SCRIPTS_POOL_SIZE`, `KOTLIN_SCRIPTS_POOL_SIZE` | JSR-223 engine pool sizes |
 | **Monitoring** | `ANALYTICS_ID`, `PROMETHEUS_URL`, `GRAFANA_URL` | Observability configuration |
+| **Static Assets** | `STATIC_URL_PREFIX` | Where pages point for images, icons, and Prism files |
 
 ### HOCON Configuration File
 
@@ -57,6 +58,9 @@ readingbat {
     multiServerEnabled = false
     contentCachingEnabled = false
     googleAnalyticsId = ""
+    # Defaults to /static, i.e. served from the app's own jar. Point it at a CDN origin to serve
+    # the assets from there instead; the app keeps serving them at /static either way.
+    staticUrlPrefix = "/static"
   }
 
   content {
@@ -115,6 +119,7 @@ precedence when defined:
 | `RESEND_API_KEY` | Resend email API key | Yes |
 | `RESEND_SENDER_EMAIL` | Resend sender email address | No |
 | `IPGEOLOCATION_KEY` | IP geolocation API key | Yes |
+| `STATIC_URL_PREFIX` | URL prefix for static assets (default `/static`) | No |
 | `AGENT_ENABLED` | Enable Prometheus proxy agent | No |
 | `REDIRECT_HOSTNAME` | Hostname for redirects | No |
 | `OAUTH_CALLBACK_URL_PREFIX` | OAuth callback URL prefix | No |

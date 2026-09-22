@@ -353,8 +353,16 @@ Two form details carry more identity than their size suggests:
 **The folder tab.** Language tabs are `nav li` elements with a three-sided border
 (`border-width: 1px 1px 0 1px`) — no bottom edge — set against the header's 1px black bottom rule.
 The selected tab is pushed down 1px (`position: relative; top: 1px`) with a white background so it
-covers the rule and merges into the page body. It is a manila file-folder tab rendered in three CSS
-declarations, and it is the most characterful shape in the system.
+covers the rule and merges into the page body. The tabs are bottom-aligned inline-blocks so that
+1px lands exactly on the rule: an inline box is only as tall as the font's ascent plus descent,
+which WebKit leaves fractional, and the nudge then falls short and leaves a hairline under the
+selected language. It is a manila file-folder tab rendered in a handful of CSS declarations, and it
+is the most characterful shape in the system.
+
+The rule it sits on runs the full width of the viewport — it carries a negative horizontal margin
+that cancels the body's 8px gutter, because a structural rule that stops short of the edge reads as
+a mistake rather than as a margin. The strip itself is inset from the left by 37px, one tab gap, so
+the first tab is spaced from the page edge the way the tabs are spaced from each other.
 
 **The white gutter.** The answer feedback cell separates itself with a 7px *white* border rather than
 with margin. When the cell fills green or red, that white border becomes the gap between color
@@ -423,8 +431,9 @@ data visualization and it uses no chart, no axis, and no legend.
 ### Navigation
 
 - **Language tabs:** 166% bold, three-sided folder-tab borders, 25px right / 6px left margins, 40px
-  of horizontal padding inside the link. Active tab is `#selected` — white ground, pushed 1px down
-  over the header rule.
+  of horizontal padding inside the link, the strip inset 37px — one tab gap — from the left. Active
+  tab is `#selected` — white ground, pushed 1px down over the header rule, which itself runs the
+  full viewport width.
 - **Utility bar:** small text links floated right above the wordmark — log in · about · help ·
   admin · prefs — separated by literal `|` characters. Items appear conditionally by role.
 - **Links generally:** no underline; Link Blue at rest, Visited Purple once followed.

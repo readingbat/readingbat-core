@@ -26,7 +26,6 @@ import com.readingbat.common.Constants.MSG
 import com.readingbat.common.Endpoints.CHALLENGE_GROUP_ENDPOINT
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.readingbat.common.Endpoints.CLEAR_GROUP_ANSWERS_ENDPOINT
-import com.readingbat.common.Endpoints.STATIC_ROOT
 import com.readingbat.common.Endpoints.WS_ROOT
 import com.readingbat.common.Endpoints.classSummaryEndpoint
 import com.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
@@ -34,6 +33,7 @@ import com.readingbat.common.FormFields.CORRECT_ANSWERS_PARAM
 import com.readingbat.common.FormFields.GROUP_NAME_PARAM
 import com.readingbat.common.FormFields.LANGUAGE_NAME_PARAM
 import com.readingbat.common.Message
+import com.readingbat.common.StaticAssets
 import com.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.readingbat.common.TwClasses
@@ -123,7 +123,7 @@ internal object ChallengeGroupPage {
             TwClasses.FUNC_ITEM2,
             ) {
             if (activeTeachingClassCode.isNotEnabled)
-              img { src = pathOf(STATIC_ROOT, if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
+              img { src = StaticAssets.urlOf(if (allCorrect) GREEN_CHECK else WHITE_CHECK) }
 
             val challengePath = pathOf(CHALLENGE_ROOT, languageName, groupName, challengeName)
             a(classes = "text-[110%] pl-0.5") {

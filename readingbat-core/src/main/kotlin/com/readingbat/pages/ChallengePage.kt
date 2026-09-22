@@ -39,7 +39,6 @@ import com.readingbat.common.Endpoints.CHALLENGE_ENDPOINT
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.readingbat.common.Endpoints.CLEAR_CHALLENGE_ANSWERS_ENDPOINT
 import com.readingbat.common.Endpoints.PLAYGROUND_ROOT
-import com.readingbat.common.Endpoints.STATIC_ROOT
 import com.readingbat.common.Endpoints.WS_ROOT
 import com.readingbat.common.Endpoints.classSummaryEndpoint
 import com.readingbat.common.FormFields.CHALLENGE_ANSWERS_PARAM
@@ -61,6 +60,7 @@ import com.readingbat.common.ParameterIds.NEXTPREVCHANCE_ID
 import com.readingbat.common.ParameterIds.SPINNER_ID
 import com.readingbat.common.ParameterIds.STATUS_ID
 import com.readingbat.common.ParameterIds.SUCCESS_ID
+import com.readingbat.common.StaticAssets
 import com.readingbat.common.StaticFileNames.DISLIKE_CLEAR_FILE
 import com.readingbat.common.StaticFileNames.DISLIKE_COLOR_FILE
 import com.readingbat.common.StaticFileNames.LIKE_CLEAR_FILE
@@ -172,7 +172,7 @@ internal object ChallengePage {
         head {
           link {
             rel = "stylesheet"
-            href = pathOf(STATIC_ROOT, PRISM, "$languageName-prism.css")
+            href = StaticAssets.urlOf(PRISM, "$languageName-prism.css")
             type = CSS.toString()
           }
 
@@ -202,7 +202,7 @@ internal object ChallengePage {
 
           backLink(CHALLENGE_ROOT, languageName.value, groupName.value)
 
-          script { src = pathOf(STATIC_ROOT, PRISM, "$languageName-prism.js") }
+          script { src = StaticAssets.urlOf(PRISM, "$languageName-prism.js") }
 
           if (activeTeachingClassCode.isEnabled && enrollees.isNotEmpty())
             enableWebSockets(activeTeachingClassCode, funcInfo.challengeMd5)
@@ -647,7 +647,7 @@ internal object ChallengePage {
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_CLEAR.toDoubleQuoted()})"
               img {
                 style = "height:${imgSize}px; width:${imgSize}px"
-                src = pathOf(STATIC_ROOT, LIKE_CLEAR_FILE)
+                src = StaticAssets.urlOf(LIKE_CLEAR_FILE)
                 alt = ""
               }
             }
@@ -660,7 +660,7 @@ internal object ChallengePage {
               onClick = "$LIKE_DISLIKE_FUNC(${LIKE_COLOR.toDoubleQuoted()})"
               img {
                 style = "height:${imgSize}px; width:${imgSize}px"
-                src = pathOf(STATIC_ROOT, LIKE_COLOR_FILE)
+                src = StaticAssets.urlOf(LIKE_COLOR_FILE)
                 alt = ""
               }
             }
@@ -673,7 +673,7 @@ internal object ChallengePage {
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_CLEAR.toDoubleQuoted()})"
               img {
                 style = "height:${imgSize}px; width:${imgSize}px"
-                src = pathOf(STATIC_ROOT, DISLIKE_CLEAR_FILE)
+                src = StaticAssets.urlOf(DISLIKE_CLEAR_FILE)
                 alt = ""
               }
             }
@@ -686,7 +686,7 @@ internal object ChallengePage {
               onClick = "$LIKE_DISLIKE_FUNC(${DISLIKE_COLOR.toDoubleQuoted()})"
               img {
                 style = "height:${imgSize}px; width:${imgSize}px"
-                src = pathOf(STATIC_ROOT, DISLIKE_COLOR_FILE)
+                src = StaticAssets.urlOf(DISLIKE_COLOR_FILE)
                 alt = ""
               }
             }

@@ -21,6 +21,7 @@ import com.pambrose.common.util.pathOf
 import com.pambrose.common.util.pluralize
 import com.pambrose.common.util.toDoubleQuoted
 import com.pambrose.common.util.toRootPath
+import com.readingbat.BuildConfig
 import com.readingbat.common.ClassCode
 import com.readingbat.common.Constants.ADMIN_FUNC
 import com.readingbat.common.Constants.CORRECT_COLOR
@@ -31,7 +32,6 @@ import com.readingbat.common.Constants.WRONG_COLOR
 import com.readingbat.common.Constants.YES
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
-import com.readingbat.common.Endpoints.STATIC_ROOT
 import com.readingbat.common.Endpoints.TAILWIND_CSS_ENDPOINT
 import com.readingbat.common.Endpoints.TOS_ENDPOINT
 import com.readingbat.common.FormFields.RETURN_PARAM
@@ -39,6 +39,7 @@ import com.readingbat.common.Message
 import com.readingbat.common.Message.Companion.EMPTY_MESSAGE
 import com.readingbat.common.Property
 import com.readingbat.common.Property.ANALYTICS_ID
+import com.readingbat.common.StaticAssets
 import com.readingbat.common.TwClasses
 import com.readingbat.common.User
 import com.readingbat.common.WsProtocol
@@ -148,33 +149,36 @@ internal object PageUtils {
     }
 
     // From: https://favicon.io/emoji-favicons/glasses/
-    val prefix = pathOf(STATIC_ROOT, ICONS)
+    // Each href is built separately rather than concatenated onto a shared prefix: the URLs carry a
+    // cache-busting query, which has to stay at the end.
     link {
       rel = "apple-touch-icon"
       sizes = "180x180"
-      href = "$prefix/apple-touch-icon.png"
+      href = StaticAssets.urlOf(ICONS, "apple-touch-icon.png")
     }
     link {
       rel = "icon"
       type = "image/png"
       sizes = "32x32"
-      href = "$prefix/favicon-32x32.png"
+      href = StaticAssets.urlOf(ICONS, "favicon-32x32.png")
     }
     link {
       rel = "icon"
       type = "image/png"
       sizes = "16x16"
-      href = "$prefix/favicon-16x16.png"
+      href = StaticAssets.urlOf(ICONS, "favicon-16x16.png")
     }
     link {
       rel = "manifest"
-      href = "$prefix/site.webmanifest"
+      href = StaticAssets.urlOf(ICONS, "site.webmanifest")
     }
 
-    // Tailwind CSS v4 — built by ./gradlew :readingbat-core:tailwindBuild
+    // Tailwind CSS v4 — built by ./gradlew :readingbat-core:tailwindBuild. Always served locally by
+    // the explicit route in UserRoutes, never from a configured CDN: it is rebuilt every release and
+    // is only ever in sync with the code that emits the class names.
     link {
       rel = "stylesheet"
-      href = TAILWIND_CSS_ENDPOINT
+      href = "$TAILWIND_CSS_ENDPOINT?v=${BuildConfig.CORE_VERSION}"
       type = CSS.toString()
     }
 
@@ -260,7 +264,7 @@ internal object PageUtils {
       }
     }
 
-    div(classes = "pt-1.5 min-w-screen clear-both") {
+    div(classes = "pt-1.5 clear-both") {
       nav {
         attributes["aria-label"] = "Languages"
         ul {
@@ -277,7 +281,8 @@ internal object PageUtils {
       }
     }
 
-    div(classes = "border-t border-black clear-both") {
+    // -mx-2 cancels the body's 8px margin so the rule runs edge to edge under the tabs.
+    div(classes = "-mx-2 border-t border-black clear-both") {
     }
   }
 

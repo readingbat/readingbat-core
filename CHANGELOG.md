@@ -4,6 +4,57 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.4.0] - 2026-09-21
+
+A rendering-correctness and maintenance release, with one breaking API change. The language tabs did not read as tabs in Safari — the selected tab left a hairline exactly where the divider was supposed to disappear — and the divider itself stopped short of both screen edges while the page quietly scrolled sideways. All three are fixed, the tab strip is now inset from the page edge, and the geometry is guarded by the suite's first WebKit-based tests.
+
+The release also stops depending on a CDN for static assets. Every image, icon, and Prism file the app references was already packaged in the jar, but `Endpoints.STATIC_ROOT` was an absolute CDN URL, which meant the route meant to serve them mounted at an unreachable path — so the app served none of them. They are now served from the jar, with the CDN available as a configuration override. **`Endpoints.STATIC_ROOT` has been removed**; see Removed below.
+
+### Fixed
+
+- **The selected language tab left a hairline in WebKit.** The folder-tab effect works by having the selected tab paint its white background over the 1px divider below the strip, nudged into place with `#selected { position: relative; top: 1px }`. That only lands correctly if the tab's painted box ends exactly where the divider begins. `nav li` was `display: inline`, and an inline box is only as tall as the font's ascent plus descent — which Blink rounds to whole pixels (bottom 159, divider 158–159, exact cover) and WebKit leaves fractional (bottom **159.64**, divider **159–160**). The surviving 0.36px is ~0.7 device pixels at 2×: a line that looks thinner but never disappears. The tabs are now bottom-aligned inline-blocks, whose box ends at the line box bottom — where the divider starts — in every engine
+- **The divider below the tab strip stopped 8px short of each screen edge.** It is a block inside `<body>`, which carries an 8px margin. It now carries `-mx-2` to cancel that gutter and spans the viewport exactly
+- **Static assets were unreachable from the app.** `staticResources(STATIC_ROOT, "static")` mounts the classpath `static` package *at whatever `STATIC_ROOT` is*, and that constant became an absolute CDN URL in 1.3.0 — so the route has registered an unreachable path for eight releases and `https://www.readingbat.com/static/white-check.jpg` returned the HTML not-found page. Nothing noticed because that page answers **200**, exactly like a real asset. The tree now mounts at `/static` via a shared `staticAssetRoutes()` used by both the server and the Kotest test module, so the two cannot drift again
+- **`site.webmanifest` pointed its icons at the wrong place.** The srcs were root-relative (`/android-chrome-192x192.png`) while the files live under `icons/`, so they 404'd from the app and were already broken on the CDN (403 at its root). They are now relative, resolving against the manifest's own URL under any prefix. The empty `name`/`short_name`, which made the manifest invalid, are filled in
+- **Images were being compressed.** `deflate` declared its own condition (`minimumSize`), and Ktor applies its default content-type exclusions only when neither the plugin nor the encoder declares any — so deflate opted itself out of the image/video/audio exclusions entirely. At priority 10.0 it also outranked gzip, so essentially every response, PNGs and JPEGs included, went through it. Conditions moved to the plugin level and `deflate` dropped to 0.9
+- **The page scrolled sideways by 23px.** The tab-strip container carried `min-w-screen` (`min-width: 100vw`), and `100vw` includes the scrollbar — 1665px inside a 1650px viewport, so `scrollWidth` (1673) exceeded `clientWidth` (1650). Beyond the stray scrollbar, this also undid the fix above: scroll right and the full-width divider ran out again. Removed; the strip's natural width is identical
+
+### Added
+
+- `STATIC_URL_PREFIX` (env var, or `readingbat.site.staticUrlPrefix`) sets the URL prefix pages emit for static assets. It defaults to `/static` — served from the jar — and accepts a CDN origin to restore the previous behavior without a rebuild. Route registration never uses it, so a CDN-configured deployment still serves the files itself
+- `StaticAssetServingTest` and `StaticAssetsTest`. The serving spec checks two things that are not the same and had both gone unchecked: that every file packaged under `static/` is served as itself (asserting content type and byte length, since status cannot distinguish an asset from the not-found page), and that every `/static` URL the pages actually emit resolves — the latter being what would have caught this bug, since the route was fine and the emitted URL was not
+- Static assets are served with a one-year `max-age` and an ETag, and `ConditionalHeaders` is installed so those become real 304s. Safe only because every emitted URL now carries `?v=<version>`: the filenames are not content-hashed, so without it a replaced image would sit behind warm caches with no way to invalidate it
+- `PlaywrightTabsTest`, four geometric regression tests that run in **both Chromium and WebKit**: the selected tab's painted box must reach past the divider's bottom edge, and the divider must start at 0, end at the viewport width, and leave the document with no horizontal overflow. The spec launches both engines deliberately — the hairline was invisible to Chromium at every font size probed, so a Chromium-only test could not have caught it. These are the first WebKit tests in the suite
+
+### Changed
+
+- The language tab strip is inset 37px from the left — one tab gap (the 25px + 6px margins plus the ~5.6px word space between two inline-block tabs) — so the first tab is spaced from the page edge the way the tabs are spaced from each other
+- `.gitattributes` now sets `* text=auto` so the index normalizes to LF, and drops the `binary` attribute from `gradlew` and `*.bat`, which had been suppressing both diffs and the `eol` conversion those same lines requested. `gradlew.bat` is re-normalized to CRLF as a result (82 lines, no content change). The generated `static/tailwind.css` is marked `linguist-generated` and the vendored `static/prism/**` `linguist-vendored`, so GitHub collapses them in diffs
+- Static assets are served from the jar by default; the CDN is now a deployment option rather than a dependency
+- `Vary: Accept-Encoding` is now sent. Ktor's Compression plugin emits no `Vary` of its own, and static responses are `Cache-Control: public`, so without it a shared cache could hand a compressed representation to a client that never negotiated one
+- Dropped the `excludePrefix` from the HTTPS redirect: it compared a request path against a CDN URL and so had never matched. The assets are same-origin now, and exempting them from the redirect would only invite mixed content
+- Documentation: `CLAUDE.md` gains a Static Assets section (build URLs with `StaticAssets.urlOf`, and a missing asset answers 200 so checks must assert content type, not status) plus the two rendering lessons — never rest a pixel-exact effect on an inline box, and `100vw` includes the scrollbar. `README.md`, `llms.txt`, and the configuration docs cover `STATIC_URL_PREFIX`. Also corrects `TestData.kt`'s path in `CLAUDE.md`, which omitted the `com/readingbat/` package directory
+- `DESIGN.md` records the tab geometry as design rules: why the tabs must be bottom-aligned inline-blocks, why the rule runs full-bleed, and the 37px inset
+- Bumped version to 3.4.0
+
+### Removed
+
+- **`Endpoints.STATIC_ROOT`.** It conflated two different things — the path the static tree mounts at and the URL prefix pages emit — which is what made the route unreachable. Replaced by `Endpoints.STATIC_PATH` (always the local route path `/static`) and the `STATIC_URL_PREFIX` property (the emitted prefix). This is a source-breaking change for anything compiled against the published artifact; the constant was deleted rather than redefined so that call sites fail loudly instead of silently changing meaning, which is how the original bug shipped
+
+### Dependencies
+
+- Gradle 9.6.1 → 9.7.1
+- Ktor 3.5.2 → 3.6.0
+- Exposed 1.3.1 → 1.5.0
+- Flyway 13.1.0 → 13.7.0
+- Kotest 6.2.3 → 6.2.5
+- Playwright 1.61.0 → 1.63.0
+- Cloud SQL socket factory 1.29.0 → 1.30.0
+- Resend 4.13.0 → 4.26.0
+- prometheus-proxy 4.0.0 → 4.0.1
+- detekt 2.0.0-alpha.5 → 2.0.0-alpha.6, buildconfig 6.0.10 → 6.1.1, versions plugin 0.57.0 → 0.64.0
+- Website: zensical 0.0.52 → 0.0.63, pymdown-extensions 11.0.1 → 12.0.1, Pygments 2.20.0 → 2.21.0, deepmerge 2.1.0 → 3.0.1, click 8.4.2 → 8.5.0
+
 ## [3.3.1] - 2026-08-01
 
 An accessibility, performance, and maintenance release. The headline fix is that answer grading was communicated by fill color alone and was never announced to assistive technology — it now carries text and a live region. Also lands image-weight reductions, a design-system record, a stale-artifact guard in CI, and a dependency refresh. No configuration or upgrade steps are required; this is a drop-in bump from 3.3.0.

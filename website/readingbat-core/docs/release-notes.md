@@ -6,6 +6,40 @@ icon: lucide/tag
 
 For the complete, commit-level history see [`CHANGELOG.md`](https://github.com/readingbat/readingbat-core/blob/master/CHANGELOG.md) in the repository.
 
+## v3.4.0 — 2026-09-21
+
+Rendering-correctness and maintenance release, with one breaking API change. The language tabs did not read as tabs in Safari, the rule beneath them stopped short of both screen edges, and the app depended on a CDN for images it already carried in its own jar. No configuration or upgrade steps for the app itself; `Endpoints.STATIC_ROOT` has been removed, which is source-breaking for anything compiled against the published artifact.
+
+### Rendering
+
+- **The selected tab is open in every browser** — the folder-tab effect works by having the selected tab paint its white background over the 1px divider below the strip, nudged down with `top: 1px`. That only lands if the tab's painted box ends exactly where the divider begins, and `nav li` was `display: inline`, so its height came from the font's ascent plus descent. Blink rounds that to whole pixels and covered the rule exactly; WebKit leaves it fractional — box bottom **159.64** against a divider at **159–160** — so 0.36px of black survived, about 0.7 device pixels at 2×. A line that looks thinner but never disappears. The tabs are now bottom-aligned inline-blocks, whose box ends at the line box bottom, which is where the divider starts, in every engine.
+- **The rule beneath the tabs runs edge to edge** — it is a block inside `<body>`, whose 8px margin clipped it at both ends. It now carries a negative margin that cancels that gutter. A structural rule that stops short of the edge reads as a mistake rather than as a margin.
+- **The page no longer scrolls sideways** — the tab-strip container was `min-width: 100vw`, and `100vw` counts the scrollbar: 1665px inside a 1650px viewport, 23px of stray horizontal scroll. It also undid the fix above the moment you scrolled right.
+- **The tab strip is inset from the page edge** by 37px — one tab gap — so the first tab is spaced from the edge the way the tabs are spaced from each other.
+
+### Static Assets
+
+- **Served from the jar, not a CDN** — all 29 assets were already packaged in the jar, but `Endpoints.STATIC_ROOT` was an absolute CDN URL and `staticResources` mounts the tree at whatever that constant is, so the route has been unreachable since 1.3.0. Nothing noticed because a missing asset returns the not-found page with a **200** status. They now serve from `/static` with a one-year cache, an ETag, and a `?v=<version>` on every URL so a replaced image is never stranded behind a warm cache.
+- **The CDN is now optional** — `STATIC_URL_PREFIX` (env var, or `readingbat.site.staticUrlPrefix`) sets the prefix pages emit. Point it at a CDN origin to restore the old behavior with no rebuild; the app keeps serving the files itself either way.
+- **`Endpoints.STATIC_ROOT` is gone** — it conflated the mount path with the emitted URL prefix, which is what made the route unreachable. Replaced by `Endpoints.STATIC_PATH` and the new property. Deleted rather than redefined, so call sites fail loudly instead of silently changing meaning.
+- **`site.webmanifest` icons fixed** — root-relative srcs against files under `icons/`: 404 from the app, already 403 on the CDN. Now relative, resolving under any prefix.
+- **Images are no longer compressed** — `deflate` declared its own condition, which under Ktor's rules opted it out of the default image/video/audio exclusions, and its priority put it ahead of gzip. Every response, images included, went through it.
+
+### Testing
+
+- **The suite now tests in two engines** — `PlaywrightTabsTest` asserts both promises the tab strip makes (the selected tab covers the divider; the divider spans the viewport with no overflow) in Chromium *and* WebKit. The hairline was invisible to Chromium at every font size probed, so a Chromium-only test could never have caught it. These are the first WebKit tests in the project.
+
+### Changed
+
+- **The design record covers the tab geometry** — `DESIGN.md` now states why the tabs must be bottom-aligned inline-blocks, why the rule runs full-bleed, and where the 37px inset comes from.
+- **Line endings are normalized in the index** — `.gitattributes` gained `* text=auto` and dropped the `binary` attribute from `gradlew` and `*.bat`, which had been suppressing both diffs and the `eol` conversion those same lines asked for. The generated `static/tailwind.css` and the vendored `static/prism/**` are now marked so GitHub collapses them in diffs.
+
+### Dependencies
+
+Gradle 9.6.1 → 9.7.1 · Ktor 3.5.2 → 3.6.0 · Exposed 1.3.1 → 1.5.0 · Flyway 13.1.0 → 13.7.0 · Kotest 6.2.3 → 6.2.5 · Playwright 1.61.0 → 1.63.0 · Cloud SQL socket factory 1.29.0 → 1.30.0 · Resend 4.13.0 → 4.26.0 · prometheus-proxy 4.0.0 → 4.0.1 · detekt alpha.5 → alpha.6 · buildconfig 6.0.10 → 6.1.1 · versions plugin 0.57.0 → 0.64.0 · zensical 0.0.52 → 0.0.63
+
+[Full changelog: 3.3.1…3.4.0](https://github.com/readingbat/readingbat-core/compare/3.3.1...3.4.0)
+
 ## v3.3.1 — 2026-08-01
 
 Accessibility, performance, and maintenance release. The headline fix is that answer grading — the single most important thing the app tells a student — was communicated by fill color alone and was never announced to assistive technology. No configuration or upgrade steps — a drop-in bump from 3.3.0.
