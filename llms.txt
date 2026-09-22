@@ -8,6 +8,7 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 
 - Kotlin 2.4.10 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.6.0 (CIO engine), Exposed ORM 1.5.0 with kotlinx-datetime, PostgreSQL
 - Kotlinx.html for server-side HTML generation (no templates)
+- Static assets (images, icons, Prism files, tailwind.css) are packaged in the jar and served at `/static`; a CDN is optional via `STATIC_URL_PREFIX`
 - Kotest 6.2.5 for testing, Playwright for E2E tests in Chromium and WebKit (`PlaywrightTabsTest` runs in both because layout bugs can be engine-specific)
 - Gradle 9.7.1 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle`, `jvm`) versions; parallel project execution and configuration cache enabled
 - Kover 0.9.9 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
@@ -48,6 +49,7 @@ Dual configuration system:
 - `Property` (sealed class): HOCON-based properties from Ktor's ApplicationConfig
 - `EnvVar` (enum): Environment variables that override HOCON values
 - Secrets loaded from `secrets/secrets.env` (not committed)
+- `STATIC_URL_PREFIX` (env var, or `readingbat.site.staticUrlPrefix`) sets the URL prefix pages emit for static assets. Defaults to `/static` — served from the jar. Route registration always uses the local `Endpoints.STATIC_PATH`, so a CDN-configured deployment still serves the files itself
 
 ## Database
 
@@ -58,6 +60,12 @@ Migrations managed by Flyway in `src/main/resources/db/migration/`.
 ## Routing
 
 Type-safe routing via Ktor `@Resource` annotations in `Locations.kt`: Language -> Language.Group -> Language.Group.Challenge (nested resources mapping to URL paths like `/content/java/Warmup-1/hello`).
+
+## Static Assets
+
+Images, icons, Prism files, and `tailwind.css` live in `src/main/resources/static/` and are served from the jar by `staticAssetRoutes()` (registered by both `ReadingBatServer` and the Kotest `testModule`, so the two cannot drift). Page code builds asset URLs with `StaticAssets.urlOf(...)`, which applies the configured prefix and appends `?v=<version>`; the filenames are not content-hashed, and that query is what makes the one-year `max-age` safe. `Endpoints.STATIC_PATH` is for route registration and request matching only — never for emitted URLs.
+
+Note that a missing asset answers **200** with the HTML not-found page, so status alone cannot distinguish a served asset from a missing one; assert on content type or byte length instead.
 
 ## Authentication
 

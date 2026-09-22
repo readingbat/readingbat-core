@@ -33,6 +33,7 @@ The release also stops depending on a CDN for static assets. Every image, icon, 
 - Static assets are served from the jar by default; the CDN is now a deployment option rather than a dependency
 - `Vary: Accept-Encoding` is now sent. Ktor's Compression plugin emits no `Vary` of its own, and static responses are `Cache-Control: public`, so without it a shared cache could hand a compressed representation to a client that never negotiated one
 - Dropped the `excludePrefix` from the HTTPS redirect: it compared a request path against a CDN URL and so had never matched. The assets are same-origin now, and exempting them from the redirect would only invite mixed content
+- Documentation: `CLAUDE.md` gains a Static Assets section (build URLs with `StaticAssets.urlOf`, and a missing asset answers 200 so checks must assert content type, not status) plus the two rendering lessons — never rest a pixel-exact effect on an inline box, and `100vw` includes the scrollbar. `README.md`, `llms.txt`, and the configuration docs cover `STATIC_URL_PREFIX`. Also corrects `TestData.kt`'s path in `CLAUDE.md`, which omitted the `com/readingbat/` package directory
 - `DESIGN.md` records the tab geometry as design rules: why the tabs must be bottom-aligned inline-blocks, why the rule runs full-bleed, and the 37px inset
 - Bumped version to 3.4.0
 

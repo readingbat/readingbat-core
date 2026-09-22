@@ -22,6 +22,7 @@ A Kotlin-based framework for creating interactive programming challenges and edu
 - **User Management**: Complete authentication system with class/teacher support
 - **Progress Tracking**: Detailed analytics and progress monitoring
 - **Security**: Signed + encrypted session cookies, per-IP rate limiting, verified-email OAuth, and class-ownership authorization
+- **Self-Contained Deployment**: Images, icons, and syntax-highlighting assets ship inside the jar and are served by the app — a CDN is optional, not required
 - **Accessible by Default**: Answer results are announced via live regions and labeled with text, never signalled by color alone; controls carry accessible names and text meets WCAG 2.1 AA contrast
 - **Scalable Architecture**: Multi-server deployment ready with database persistence
 
@@ -34,6 +35,7 @@ ReadingBat Core is built using modern Kotlin technologies:
 - **Authentication**: OAuth (GitHub, Google, verified-email required) with signed + encrypted session cookies
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
 - **Build System**: Gradle 9.7 with Kotlin DSL, multi-module structure, and configuration cache enabled
+- **Static Assets**: Served from the jar at `/static` with long-lived cache headers; `STATIC_URL_PREFIX` can point pages at a CDN instead
 - **Serialization**: kotlinx.serialization for JSON processing
 - **Testing**: Kotest framework with Playwright for E2E testing, run in Chromium and WebKit
 
@@ -110,6 +112,10 @@ export SESSION_SECRET="$(openssl rand -hex 32)"
 # Optional: OAuth (auto-configured when credentials are present)
 export GITHUB_OAUTH="your_github_token"
 export IPGEOLOCATION_KEY="your_geo_key"
+
+# Optional: serve static assets from a CDN instead of from the jar.
+# Defaults to /static, i.e. served by the app itself.
+export STATIC_URL_PREFIX="https://static.example.com"
 ```
 
 > **`SESSION_SECRET`** keys the HMAC signature and AES encryption applied to the authentication and
@@ -207,6 +213,8 @@ Required environment variables for production:
   without it, and rotating it invalidates existing sessions (users are logged out once).
 - `AGENT_ENABLED=true` (for monitoring)
 - `RESEND_API_KEY` (for email notifications)
+- `STATIC_URL_PREFIX` — *optional*; defaults to `/static`, serving images and icons from the jar.
+  Set it to a CDN origin to serve them from there instead. The app serves them either way.
 
 ## 🧪 Testing
 
