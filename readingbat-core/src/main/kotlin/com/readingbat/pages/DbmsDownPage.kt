@@ -19,7 +19,7 @@ package com.readingbat.pages
 
 import com.pambrose.common.util.pathOf
 import com.readingbat.common.Constants.DBMS_DOWN
-import com.readingbat.common.Endpoints.STATIC_ROOT
+import com.readingbat.common.StaticAssets
 import com.readingbat.common.TwClasses
 import com.readingbat.pages.PageUtils.backLink
 import com.readingbat.pages.PageUtils.bodyTitle
@@ -45,7 +45,7 @@ internal object DbmsDownPage {
           bodyTitle()
           p {
             img(classes = TwClasses.CENTER) {
-              src = pathOf(STATIC_ROOT, "dbmsdown.jpg")
+              src = StaticAssets.urlOf("dbmsdown.jpg")
               alt = ""
               width = "427"
               height = "320"

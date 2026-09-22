@@ -92,6 +92,23 @@ All HTML pages are generated server-side using Kotlinx.html (no templates). Each
 `com.readingbat.pages` with a companion object function pattern (e.g., `ChallengePage.challengePage()`).
 JavaScript for client-side interactivity is generated in `pages/js/`.
 
+### Static Assets
+
+Images, icons, Prism files, and `tailwind.css` are served from the jar at `/static` by
+`staticAssetRoutes()`, registered by both `ReadingBatServer` and the Kotest `testModule` so the two
+cannot drift. A CDN is now only a deployment option — set `STATIC_URL_PREFIX` (env var or
+`readingbat.site.staticUrlPrefix`) to an origin and pages point there instead, while the app keeps
+serving the files itself either way.
+
+- **Build asset URLs with `StaticAssets.urlOf(...)`**, never `pathOf(STATIC_PATH, ...)`. Only the
+  helper applies the configured prefix and the `?v=<version>` cache-buster that makes the one-year
+  `max-age` safe — the filenames are not content-hashed, so a hardcoded path is an asset that cannot
+  be invalidated. `Endpoints.STATIC_PATH` is for route registration and request matching only.
+- **A missing asset answers 200, not 404** — the StatusPages handler returns the HTML not-found page
+  with a 200 status. Any check of an asset must assert on content type or byte length; status tells
+  you nothing. This is why the route could sit mounted at an absolute URL, serving nothing, for
+  eight releases.
+
 ### Styling
 
 `DESIGN.md` and `PRODUCT.md` are the design record — read them before changing anything visual.

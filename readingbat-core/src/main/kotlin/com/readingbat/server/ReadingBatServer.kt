@@ -24,7 +24,6 @@ import com.pambrose.common.util.getBanner
 import com.pambrose.common.util.randomId
 import com.readingbat.BuildConfig
 import com.readingbat.common.Constants.UNKNOWN_USER_ID
-import com.readingbat.common.Endpoints.STATIC_ROOT
 import com.readingbat.common.EnvVar
 import com.readingbat.common.EnvVar.CLOUD_SQL_CONNECTION_NAME
 import com.readingbat.common.EnvVar.SCRIPT_CLASSPATH
@@ -56,6 +55,7 @@ import com.readingbat.server.ReadingBatServer.metrics
 import com.readingbat.server.ServerUtils.logToShim
 import com.readingbat.server.routes.AdminRoutes.adminRoutes
 import com.readingbat.server.routes.oauthRoutes
+import com.readingbat.server.routes.staticAssetRoutes
 import com.readingbat.server.routes.sysAdminRoutes
 import com.readingbat.server.routes.userRoutes
 import com.readingbat.server.ws.LoggingWs
@@ -353,7 +353,7 @@ fun Application.module() {
       wsRoutes(metrics) { content.load() }
     }
 
-    staticResources(STATIC_ROOT, "static")
+    staticAssetRoutes()
     staticResources("/", "public")
   }
 }

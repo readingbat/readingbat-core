@@ -69,6 +69,7 @@ enum class EnvVar(val maskFunc: EnvVar.() -> String = { getEnv(UNASSIGNED) }) {
   IPGEOLOCATION_KEY({ getEnvOrNull()?.maskSecret() ?: UNASSIGNED }),
   SCRIPT_CLASSPATH,
   OAUTH_CALLBACK_URL_PREFIX,
+  STATIC_URL_PREFIX,
   RESEND_API_KEY({ getEnvOrNull()?.maskSecret() ?: UNASSIGNED }),
   RESEND_SENDER_EMAIL,
   REDIRECT_HOSTNAME,

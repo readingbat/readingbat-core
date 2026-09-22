@@ -2,7 +2,7 @@
 
 ## v3.4.0 — 2026-09-21
 
-A rendering-correctness and maintenance release. The language tabs did not read as tabs in Safari, and the rule beneath them stopped short of both screen edges. No configuration or upgrade steps are required; this is a drop-in bump from 3.3.1.
+A rendering-correctness and maintenance release, with one breaking API change. The language tabs did not read as tabs in Safari, the rule beneath them stopped short of both screen edges, and the app was depending on a CDN for images it already had in its own jar. No configuration or upgrade steps are required for the app itself; **`Endpoints.STATIC_ROOT` has been removed**, which is source-breaking for anything compiled against the published artifact.
 
 ### Highlights
 
@@ -10,6 +10,10 @@ A rendering-correctness and maintenance release. The language tabs did not read 
 - **The rule beneath the tabs runs edge to edge.** It is a block inside `<body>`, whose 8px margin was clipping it at both ends; it now carries a negative margin that cancels that gutter. A structural rule that stops short of the edge reads as a mistake rather than as a margin.
 - **The page no longer scrolls sideways.** The tab-strip container was `min-width: 100vw`, and `100vw` counts the scrollbar — 1665px inside a 1650px viewport, 23px of stray horizontal scroll. It also undid the fix above the moment you scrolled right.
 - **The tab strip is inset from the page edge** by 37px — one tab gap — so the first tab is spaced from the edge the way the tabs are spaced from each other.
+- **Static assets now come from the jar, not a CDN.** All 29 of them — images, icons, Prism files — were already packaged in the jar, but `Endpoints.STATIC_ROOT` was an absolute CDN URL and `staticResources` mounts the tree *at whatever that constant is*, so the route has been unreachable since 1.3.0 and the app served none of them. Nothing noticed, because a missing asset returns the not-found page with a **200** status, indistinguishable from success unless you look at the content type. They are served from `/static` now, with a one-year cache, an ETag, and a `?v=<version>` on every URL so a replaced image is never stranded behind a warm cache.
+- **The CDN is now an option, not a dependency.** `STATIC_URL_PREFIX` (env var or `readingbat.site.staticUrlPrefix`) sets the prefix pages emit; point it at a CDN origin and the previous behavior returns with no rebuild. The app keeps serving the files itself either way.
+- **`site.webmanifest` icons were broken everywhere.** Root-relative srcs against files that live under `icons/` — 404 from the app, and already 403 on the CDN. Now relative, so they resolve under any prefix.
+- **Images were being compressed.** `deflate` declared a condition of its own, which under Ktor's rules opted it out of the default image/video/audio exclusions entirely, and its priority put it ahead of gzip — so every response, PNGs and JPEGs included, went through an encoder with no content-type exclusions. Fixed, and pinned by a test.
 - **The suite now tests in two engines.** `PlaywrightTabsTest` asserts both promises — the selected tab covers the divider, and the divider spans the viewport with no overflow — in Chromium *and* WebKit. The hairline was invisible to Chromium at every font size probed, so a Chromium-only test could never have caught it. These are the first WebKit tests in the project.
 
 ### Dependencies

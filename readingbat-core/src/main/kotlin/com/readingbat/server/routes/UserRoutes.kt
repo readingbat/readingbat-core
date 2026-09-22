@@ -41,7 +41,7 @@ import com.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
 import com.readingbat.common.Endpoints.ROBOTS_ENDPOINT
 import com.readingbat.common.Endpoints.ROOT
 import com.readingbat.common.Endpoints.SESSIONS_ENDPOINT
-import com.readingbat.common.Endpoints.STATIC_ROOT
+import com.readingbat.common.Endpoints.STATIC_PATH
 import com.readingbat.common.Endpoints.STUDENT_SUMMARY_ENDPOINT
 import com.readingbat.common.Endpoints.SYSTEM_ADMIN_ENDPOINT
 import com.readingbat.common.Endpoints.TAILWIND_CSS_ENDPOINT
@@ -87,6 +87,8 @@ import com.readingbat.server.ServerUtils.safeRedirectPath
 import com.readingbat.server.routes.ResourceContent.getResourceAsText
 import io.ktor.http.ContentType
 import io.ktor.http.ContentType.Text.CSS
+import io.ktor.http.HttpHeaders
+import io.ktor.server.response.header
 import io.ktor.server.routing.Routing
 import io.ktor.server.routing.get
 import io.ktor.server.routing.post
@@ -258,12 +260,18 @@ fun Routing.userRoutes(metrics: Metrics, contentSrc: () -> ReadingBatContent) {
     redirectTo { safeRedirectPath(queryParam(RETURN_PARAM, "/")) }
   }
 
+  // Wins over the static asset tree even though that is registered later: Ktor scores a constant
+  // path segment above a tailcard. Kept as an explicit route so the one file with per-release
+  // content stays local and keeps its charset (staticResources emits a bare "text/css").
   get(TAILWIND_CSS_ENDPOINT) {
+    call.response.header(HttpHeaders.CacheControl, STATIC_CACHE_CONTROL)
     respondWith(CSS) { getResourceAsText("/static/tailwind.css") }
   }
 
+  // Deliberately STATIC_PATH, not the configurable prefix: bouncing the browser's implicit favicon
+  // request to a CDN costs a DNS + TLS handshake, and the local copy is always present.
   get(FAV_ICON_ENDPOINT) {
-    redirectTo { pathOf(STATIC_ROOT, ICONS, "favicon.ico") }
+    redirectTo { pathOf(STATIC_PATH, ICONS, "favicon.ico") }
   }
 
   get(ROBOTS_ENDPOINT) {

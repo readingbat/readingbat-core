@@ -34,6 +34,7 @@ import com.readingbat.common.Endpoints.PING_ENDPOINT
 import com.readingbat.common.Endpoints.PRIVACY_POLICY_ENDPOINT
 import com.readingbat.common.Endpoints.ROBOTS_ENDPOINT
 import com.readingbat.common.Endpoints.ROOT
+import com.readingbat.common.Endpoints.STATIC_PREFIX
 import com.readingbat.common.Endpoints.TOS_ENDPOINT
 import com.readingbat.common.OAuthReturnUrl
 import com.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
@@ -125,7 +126,7 @@ internal object Intercepts {
   val publicPrefixes =
     [
       "$OAUTH_PREFIX/",
-      "/$STATIC/",
+      STATIC_PREFIX,
     ]
 
   // Paths that must remain available before the DSL content has finished loading.
@@ -140,7 +141,7 @@ internal object Intercepts {
 
   val readinessAllowedPrefixes =
     [
-      "/$STATIC/",
+      STATIC_PREFIX,
     ]
 
   @Suppress("unused")
@@ -298,7 +299,7 @@ internal fun Application.intercepts() {
   if (isSaveRequestsEnabled()) {
     monitor.subscribe(RoutingCallStarted) { call ->
       val path = call.request.path()
-      if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
+      if (!path.startsWith(STATIC_PREFIX) && path != PING_ENDPOINT) {
         call.callId
           .also { callId ->
             if (callId != null) {
@@ -310,7 +311,7 @@ internal fun Application.intercepts() {
 
     monitor.subscribe(RoutingCallFinished) { call ->
       val path = call.request.path()
-      if (!path.startsWith("/$STATIC/") && path != PING_ENDPOINT) {
+      if (!path.startsWith(STATIC_PREFIX) && path != PING_ENDPOINT) {
         call.callId
           .also { callId ->
             if (callId != null) {
@@ -344,4 +345,4 @@ fun updateServerRequest(callId: String, start: TimeMark) {
   }
 }
 
-fun PipelineContext<Unit, PipelineCall>.isStaticCall() = context.request.path().startsWith("/$STATIC/")
+fun PipelineContext<Unit, PipelineCall>.isStaticCall() = context.request.path().startsWith(STATIC_PREFIX)

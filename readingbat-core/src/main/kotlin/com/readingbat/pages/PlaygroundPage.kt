@@ -20,7 +20,7 @@ package com.readingbat.pages
 import com.pambrose.common.util.decode
 import com.pambrose.common.util.pathOf
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
-import com.readingbat.common.Endpoints.STATIC_ROOT
+import com.readingbat.common.StaticAssets
 import com.readingbat.common.StaticFileNames.RUN_BUTTON
 import com.readingbat.common.TwClasses
 import com.readingbat.common.User
@@ -116,7 +116,7 @@ internal object PlaygroundPage {
             +"Click on"
             img(classes = "align-bottom") {
               height = "25"
-              src = pathOf(STATIC_ROOT, RUN_BUTTON)
+              src = StaticAssets.urlOf(RUN_BUTTON)
               alt = "the Run button"
             }
             +" to run the code"

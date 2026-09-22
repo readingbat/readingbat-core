@@ -22,8 +22,8 @@ import com.readingbat.common.ClassCodeRepository.fetchEnrollees
 import com.readingbat.common.Constants.MSG
 import com.readingbat.common.Constants.OAUTH_ERROR
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
-import com.readingbat.common.Endpoints.STATIC_ROOT
 import com.readingbat.common.Message
+import com.readingbat.common.StaticAssets
 import com.readingbat.common.StaticFileNames.GREEN_CHECK
 import com.readingbat.common.StaticFileNames.WHITE_CHECK
 import com.readingbat.common.TwClasses
@@ -111,9 +111,9 @@ internal object LanguageGroupPage {
 
               if (activeTeachingClassCode.isNotEnabled) {
                 if (cnt == 0) {
-                  img { src = pathOf(STATIC_ROOT, WHITE_CHECK) }
+                  img { src = StaticAssets.urlOf(WHITE_CHECK) }
                 } else {
-                  repeat(if (maxFound) cnt - 1 else cnt) { img { src = pathOf(STATIC_ROOT, GREEN_CHECK) } }
+                  repeat(if (maxFound) cnt - 1 else cnt) { img { src = StaticAssets.urlOf(GREEN_CHECK) } }
                   if (maxFound) rawHtml("&hellip;")
                 }
               }

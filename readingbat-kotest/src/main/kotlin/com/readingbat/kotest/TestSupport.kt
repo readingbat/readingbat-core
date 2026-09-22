@@ -37,6 +37,7 @@ import com.readingbat.server.Installs.installs
 import com.readingbat.server.Locations.locations
 import com.readingbat.server.ReadingBatServer
 import com.readingbat.server.routes.AdminRoutes.adminRoutes
+import com.readingbat.server.routes.staticAssetRoutes
 import com.readingbat.server.routes.sysAdminRoutes
 import com.readingbat.server.routes.userRoutes
 import com.readingbat.server.ws.WsCommon.wsRoutes
@@ -51,7 +52,6 @@ import io.ktor.http.ContentType.Application.FormUrlEncoded
 import io.ktor.http.HttpHeaders.ContentType
 import io.ktor.http.formUrlEncode
 import io.ktor.server.application.Application
-import io.ktor.server.http.content.staticResources
 import io.ktor.server.routing.routing
 import io.ktor.server.testing.ApplicationTestBuilder
 import kotlinx.coroutines.runBlocking
@@ -207,7 +207,7 @@ object TestSupport {
       userRoutes(ReadingBatServer.metrics) { content }
       sysAdminRoutes(ReadingBatServer.metrics) { }
       wsRoutes(ReadingBatServer.metrics) { content }
-      staticResources(Endpoints.STATIC_ROOT, "static")
+      staticAssetRoutes()
     }
   }
 }

@@ -25,7 +25,7 @@ import com.readingbat.common.Constants.STATIC
 import com.readingbat.common.Constants.UNKNOWN
 import com.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
 import com.readingbat.common.Endpoints.PING_ENDPOINT
-import com.readingbat.common.Endpoints.STATIC_ROOT
+import com.readingbat.common.Endpoints.STATIC_PREFIX
 import com.readingbat.common.Endpoints.WS_ROOT
 import com.readingbat.common.EnvVar
 import com.readingbat.common.Property
@@ -43,6 +43,11 @@ import com.readingbat.server.ConfigureOAuth.configureGoogleOAuth
 import com.readingbat.server.ReadingBatServer.serverSessionId
 import com.readingbat.server.ServerUtils.fetchEmailFromCache
 import io.github.oshai.kotlinlogging.KotlinLogging
+import io.ktor.http.ContentType.Audio
+import io.ktor.http.ContentType.Image
+import io.ktor.http.ContentType.MultiPart
+import io.ktor.http.ContentType.Text
+import io.ktor.http.ContentType.Video
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpHeaders.Location
 import io.ktor.http.HttpStatusCode
@@ -56,8 +61,10 @@ import io.ktor.server.plugins.callid.CallId
 import io.ktor.server.plugins.calllogging.CallLogging
 import io.ktor.server.plugins.compression.Compression
 import io.ktor.server.plugins.compression.deflate
+import io.ktor.server.plugins.compression.excludeContentType
 import io.ktor.server.plugins.compression.gzip
 import io.ktor.server.plugins.compression.minimumSize
+import io.ktor.server.plugins.conditionalheaders.ConditionalHeaders
 import io.ktor.server.plugins.defaultheaders.DefaultHeaders
 import io.ktor.server.plugins.forwardedheaders.ForwardedHeaders
 import io.ktor.server.plugins.forwardedheaders.XForwardedHeaders
@@ -87,7 +94,7 @@ import kotlin.time.Duration.Companion.seconds
  */
 object Installs {
   private val logger = KotlinLogging.logger {}
-  private val excludedEndpoints = ["/$STATIC/", "$WS_ROOT/"]
+  private val excludedEndpoints = [STATIC_PREFIX, "$WS_ROOT/"]
 
   /**
    * Paths excluded from rate limiting: static assets, WebSocket upgrades, and health pings.
@@ -156,22 +163,35 @@ object Installs {
         host = redirectHostname
         permanentRedirect = false
 
-        excludePrefix("$STATIC_ROOT/")
+        // No excludePrefix for static assets: they are same-origin now, so exempting them from the
+        // HTTPS redirect would only invite mixed content on an HTTP-origin page.
         excludeSuffix(FAV_ICON_ENDPOINT)
       }
     } else {
       logger.info { "Not installing HerokuHttpsRedirect" }
     }
 
+    // Conditions belong at the top level, not on an encoder. Ktor applies its default exclusions
+    // (images, video, audio, multipart, event-stream) only when neither the plugin nor the encoder
+    // declares conditions of its own, so deflate's `minimumSize` used to opt it out of all of them —
+    // and at priority 10.0 it outranked gzip, so every response, images included, went through an
+    // encoder with no content-type exclusions at all. Image.Any rather than Image.JPEG/PNG because
+    // Ktor's own defaults miss image/x-icon. The explicit minimumSize is required: once these
+    // conditions exist, the per-encoder defaults stop applying and gzip would lose its size floor.
     install(Compression) {
+      excludeContentType(Image.Any, Video.Any, Audio.Any, MultiPart.Any, Text.EventStream)
+      minimumSize(1024)
       gzip {
         priority = 1.0
       }
       deflate {
-        priority = 10.0
-        minimumSize(1024) // condition
+        priority = 0.9
       }
     }
+
+    // Turns the ETags that staticAssetRoutes attaches into real headers and 304s. A no-op for HTML
+    // responses, which carry no versions.
+    install(ConditionalHeaders)
 
     // Rate limiting is enforced in production only, mirroring the other production-gated
     // hardening here (HSTS, secure cookies, HTTPS redirect). The limiter is global and keyed per
@@ -226,6 +246,10 @@ object Installs {
       header("X-Frame-Options", "DENY")
       header("Referrer-Policy", "strict-origin-when-cross-origin")
       header("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+      // Ktor's Compression plugin emits no Vary of its own, and static responses are now
+      // `Cache-Control: public` — without this a shared cache could hand a compressed
+      // representation to a client that never negotiated one.
+      header(HttpHeaders.Vary, HttpHeaders.AcceptEncoding)
       if (production) {
         header("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
       }

@@ -18,7 +18,7 @@
 package com.readingbat.pages
 
 import com.pambrose.common.util.pathOf
-import com.readingbat.common.Endpoints.STATIC_ROOT
+import com.readingbat.common.StaticAssets
 import com.readingbat.common.TwClasses
 import com.readingbat.pages.PageUtils.backLink
 import com.readingbat.pages.PageUtils.bodyTitle
@@ -48,7 +48,7 @@ internal object ErrorPage {
 
           p {
             img(classes = TwClasses.CENTER) {
-              src = pathOf(STATIC_ROOT, "bscod-small.jpg")
+              src = StaticAssets.urlOf("bscod-small.jpg")
               alt = ""
               width = "512"
               height = "320"

@@ -8,7 +8,7 @@ For the complete, commit-level history see [`CHANGELOG.md`](https://github.com/r
 
 ## v3.4.0 — 2026-09-21
 
-Rendering-correctness and maintenance release. The language tabs did not read as tabs in Safari, and the rule beneath them stopped short of both screen edges. No configuration or upgrade steps — a drop-in bump from 3.3.1.
+Rendering-correctness and maintenance release, with one breaking API change. The language tabs did not read as tabs in Safari, the rule beneath them stopped short of both screen edges, and the app depended on a CDN for images it already carried in its own jar. No configuration or upgrade steps for the app itself; `Endpoints.STATIC_ROOT` has been removed, which is source-breaking for anything compiled against the published artifact.
 
 ### Rendering
 
@@ -16,6 +16,14 @@ Rendering-correctness and maintenance release. The language tabs did not read as
 - **The rule beneath the tabs runs edge to edge** — it is a block inside `<body>`, whose 8px margin clipped it at both ends. It now carries a negative margin that cancels that gutter. A structural rule that stops short of the edge reads as a mistake rather than as a margin.
 - **The page no longer scrolls sideways** — the tab-strip container was `min-width: 100vw`, and `100vw` counts the scrollbar: 1665px inside a 1650px viewport, 23px of stray horizontal scroll. It also undid the fix above the moment you scrolled right.
 - **The tab strip is inset from the page edge** by 37px — one tab gap — so the first tab is spaced from the edge the way the tabs are spaced from each other.
+
+### Static Assets
+
+- **Served from the jar, not a CDN** — all 29 assets were already packaged in the jar, but `Endpoints.STATIC_ROOT` was an absolute CDN URL and `staticResources` mounts the tree at whatever that constant is, so the route has been unreachable since 1.3.0. Nothing noticed because a missing asset returns the not-found page with a **200** status. They now serve from `/static` with a one-year cache, an ETag, and a `?v=<version>` on every URL so a replaced image is never stranded behind a warm cache.
+- **The CDN is now optional** — `STATIC_URL_PREFIX` (env var, or `readingbat.site.staticUrlPrefix`) sets the prefix pages emit. Point it at a CDN origin to restore the old behavior with no rebuild; the app keeps serving the files itself either way.
+- **`Endpoints.STATIC_ROOT` is gone** — it conflated the mount path with the emitted URL prefix, which is what made the route unreachable. Replaced by `Endpoints.STATIC_PATH` and the new property. Deleted rather than redefined, so call sites fail loudly instead of silently changing meaning.
+- **`site.webmanifest` icons fixed** — root-relative srcs against files under `icons/`: 404 from the app, already 403 on the CDN. Now relative, resolving under any prefix.
+- **Images are no longer compressed** — `deflate` declared its own condition, which under Ktor's rules opted it out of the default image/video/audio exclusions, and its priority put it ahead of gzip. Every response, images included, went through it.
 
 ### Testing
 

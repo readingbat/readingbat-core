@@ -19,7 +19,6 @@ package com.readingbat.pages
 
 import com.pambrose.common.util.pathOf
 import com.readingbat.common.Endpoints.ABOUT_ENDPOINT
-import com.readingbat.common.Endpoints.STATIC_ROOT
 import com.readingbat.common.Endpoints.TEACHER_PREFS_ENDPOINT
 import com.readingbat.common.Endpoints.USER_PREFS_ENDPOINT
 import com.readingbat.common.FormFields.CREATE_CLASS
@@ -27,6 +26,7 @@ import com.readingbat.common.FormFields.JOIN_A_CLASS
 import com.readingbat.common.FormFields.NO_ACTIVE_CLASS
 import com.readingbat.common.FormFields.RETURN_PARAM
 import com.readingbat.common.FormFields.UPDATE_ACTIVE_CLASS
+import com.readingbat.common.StaticAssets
 import com.readingbat.common.TwClasses
 import com.readingbat.common.User
 import com.readingbat.common.User.Companion.queryActiveTeachingClassCode
@@ -242,7 +242,7 @@ internal object HelpPage {
 
                   img {
                     style = "$s; height:${h5}px"
-                    src = pathOf(STATIC_ROOT, help, "teacher-classes.png")
+                    src = StaticAssets.urlOf(help, "teacher-classes.png")
                   }
 
                   li {
@@ -264,7 +264,7 @@ internal object HelpPage {
                   }
                   img {
                     style = "$s; height:${h6}px"
-                    src = pathOf(STATIC_ROOT, help, "challenge-feedback.png")
+                    src = StaticAssets.urlOf(help, "challenge-feedback.png")
                   }
 
                   li {
@@ -275,19 +275,19 @@ internal object HelpPage {
                   }
                   img {
                     style = "$s; height:${h4}px"
-                    src = pathOf(STATIC_ROOT, help, "group-summary.png")
+                    src = StaticAssets.urlOf(help, "group-summary.png")
                   }
 
                   li { +"Click on the class link to see a class summary." }
                   img {
                     style = "$s; height:${h4}px"
-                    src = pathOf(STATIC_ROOT, help, "class-summary.png")
+                    src = StaticAssets.urlOf(help, "class-summary.png")
                   }
 
                   li { +"Click on your student link to see a student overview." }
                   img {
                     style = "$s; height:${h5}px"
-                    src = pathOf(STATIC_ROOT, help, "student-summary.png")
+                    src = StaticAssets.urlOf(help, "student-summary.png")
                   }
                 }
               }

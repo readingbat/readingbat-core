@@ -237,6 +237,18 @@ sealed class Property(
       },
     )
 
+  /**
+   * URL prefix the pages emit for static assets. Defaults to [Endpoints.STATIC_PATH], i.e. served
+   * from this app's own classpath. Set it to a CDN origin (e.g. `https://static.readingbat.com`) to
+   * serve them from there instead — no rebuild required. Never used for route registration; the
+   * static tree always mounts at [Endpoints.STATIC_PATH].
+   */
+  object STATIC_URL_PREFIX :
+    Property(
+      propertyValue = "$READINGBAT.$SITE.staticUrlPrefix",
+      initFunc = { setProperty(EnvVar.STATIC_URL_PREFIX.getEnv(configValue(it, Endpoints.STATIC_PATH))) },
+    )
+
   object RESEND_API_KEY :
     Property(
       propertyValue = "$READINGBAT.$SITE.resendApiKey",
@@ -469,6 +481,7 @@ sealed class Property(
         DSL_VARIABLE_NAME,
         PROXY_HOSTNAME,
         OAUTH_CALLBACK_URL_PREFIX,
+        STATIC_URL_PREFIX,
         RESEND_API_KEY,
         RESEND_SENDER_EMAIL,
         ANALYTICS_ID,

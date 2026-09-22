@@ -99,9 +99,16 @@ object Endpoints {
   const val ROOT = "/"
   const val WS_ROOT = "/ws"
 
-  // const val STATIC_ROOT = "https://readingbat-static.sfo2.cdn.digitaloceanspaces.com"
+  /**
+   * The local path the static asset tree is mounted at. Always a path, never a URL — [staticResources]
+   * mounts the classpath `static` package here, and a URL would register an unreachable route. The
+   * prefix pages *emit* is a separate, configurable value; see `Property.STATIC_URL_PREFIX`.
+   */
+  const val STATIC_PATH = "/$STATIC"
 
-  const val STATIC_ROOT = "https://static.readingbat.com"
+  /** [STATIC_PATH] with a trailing slash, for `startsWith` checks on request paths. */
+  const val STATIC_PREFIX = "$STATIC_PATH/"
+
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"
   const val ADMIN_PREFS_ENDPOINT = "/admin-prefs"
@@ -153,7 +160,7 @@ object Endpoints {
   const val THUMBS_UP = "&#128077;"
   const val THUMBS_DOWN = "&#128078;"
 
-  const val TAILWIND_CSS_ENDPOINT = "/$STATIC/tailwind.css"
+  const val TAILWIND_CSS_ENDPOINT = "$STATIC_PATH/tailwind.css"
 
   const val EMAIL_CSS_FILE_PATH = "css/email.css"
 
