@@ -158,7 +158,10 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
   These replaced the old Cypress specs.
 - **Layout and visual regressions need more than Chromium.** `PlaywrightTabsTest` launches Chromium *and* WebKit and
   asserts tab-strip geometry in both, because the hairline it guards against was invisible to Chromium at every font
-  size probed. Playwright's Java driver downloads all three browsers, so a WebKit spec costs nothing extra to run.
+  size probed. The Java driver downloads all three browser binaries, but **not** the OS libraries they need: WebKit
+  will not launch on `ubuntu-latest` without libgtk-4, gstreamer and friends, which the test workflow installs via
+  `playwright install-deps webkit`. Chromium happens to run without that step, so a new WebKit spec is free locally on
+  macOS and fails in CI until those deps are present.
 
 ### Key Dependencies
 

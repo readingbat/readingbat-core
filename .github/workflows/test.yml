@@ -37,6 +37,16 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
+      # Playwright's Java driver downloads the browser binaries but not the OS libraries they need,
+      # and WebKit needs a long list of them (libgtk-4, gstreamer, flite) that ubuntu-latest does not
+      # carry. Chromium happens to run without this; WebKit does not, and PlaywrightTabsTest asserts
+      # in both. The version is read from the catalog so it cannot drift from the playwright
+      # dependency, the same way the Makefile derives GRADLE_VERSION.
+      - name: Install WebKit system dependencies
+        run: |
+          version=$(grep -m1 -E '^playwright = "' gradle/libs.versions.toml | cut -d'"' -f2)
+          npx --yes playwright@"$version" install-deps webkit
+
       - name: Build and test
         run: ./gradlew build koverXmlReport
         env:
