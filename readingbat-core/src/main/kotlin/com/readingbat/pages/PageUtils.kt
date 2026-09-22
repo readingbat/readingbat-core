@@ -260,7 +260,7 @@ internal object PageUtils {
       }
     }
 
-    div(classes = "pt-1.5 min-w-screen clear-both") {
+    div(classes = "pt-1.5 clear-both") {
       nav {
         attributes["aria-label"] = "Languages"
         ul {
@@ -277,7 +277,8 @@ internal object PageUtils {
       }
     }
 
-    div(classes = "border-t border-black clear-both") {
+    // -mx-2 cancels the body's 8px margin so the rule runs edge to edge under the tabs.
+    div(classes = "-mx-2 border-t border-black clear-both") {
     }
   }
 

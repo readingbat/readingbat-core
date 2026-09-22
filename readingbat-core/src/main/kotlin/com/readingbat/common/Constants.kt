@@ -99,6 +99,8 @@ object Endpoints {
   const val ROOT = "/"
   const val WS_ROOT = "/ws"
 
+  // const val STATIC_ROOT = "https://readingbat-static.sfo2.cdn.digitaloceanspaces.com"
+
   const val STATIC_ROOT = "https://static.readingbat.com"
   const val CHALLENGE_ROOT = "/content"
   const val PLAYGROUND_ROOT = "/playground"

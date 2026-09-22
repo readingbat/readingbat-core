@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - List Makefile targets: `make help` (self-documenting index — every target with a `## description` annotation)
 
-Gradle 9.6.1 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
+Gradle 9.7.1 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
 catalog (`gradle/libs.versions.toml`) is the single source of truth for plugin, dependency, **and toolchain** versions —
 the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.versions.jvm`) and by the Makefile (the
 `upgrade-wrapper` target derives `GRADLE_VERSION` from the `gradle-wrapper` key in the catalog). Project version comes from `gradle.properties`
@@ -107,6 +107,14 @@ JavaScript for client-side interactivity is generated in `pages/js/`.
   links, hover, or emphasis.
 - Do not emit an inline `style` for a color that a Tailwind class already sets. The inline value wins, so re-toning the
   token becomes a silent no-op — the exact bug that hid `HEADER_COLOR` across 13 call sites.
+- **Never rest a pixel-exact effect on an inline box.** An inline box is only as tall as the font's ascent plus descent:
+  Blink rounds that to whole pixels, WebKit leaves it fractional. The selected language tab hides the divider by
+  covering it with its own background nudged `top: 1px`, which lined up in Chrome and left a 0.36px hairline in Safari.
+  The tabs are bottom-aligned inline-blocks so the box ends at the line box bottom in every engine; `PlaywrightTabsTest`
+  guards it.
+- **`100vw` includes the scrollbar.** `w-screen` / `min-w-screen` on a block inside the body's 8px margin is wider than
+  the viewport and scrolls the page sideways — `min-w-screen` on the tab strip cost 23px of stray horizontal scroll. To
+  make a block span the viewport, cancel the body gutter with `-mx-2` instead.
 
 ### Testing
 
@@ -127,10 +135,13 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
 - `testModule()` — sets up a Ktor test application with content
 - `forEachLanguage` / `forEachGroup` / `forEachChallenge` — DSL for iterating content
 - `answerAllWith()` / `answerAllWithCorrectAnswer()` — integration test helpers for checking answers via HTTP
-- Test content is defined in `readingbat-core/src/test/kotlin/TestData.kt`
+- Test content is defined in `readingbat-core/src/test/kotlin/com/readingbat/TestData.kt`
 - Browser tests use Playwright (`com.microsoft.playwright:playwright`) and live in
   `readingbat-core/src/test/kotlin/com/readingbat/playwright/` (e.g., `PlaywrightAuthTest`, `PlaywrightEndpointTest`).
   These replaced the old Cypress specs.
+- **Layout and visual regressions need more than Chromium.** `PlaywrightTabsTest` launches Chromium *and* WebKit and
+  asserts tab-strip geometry in both, because the hairline it guards against was invisible to Chromium at every font
+  size probed. Playwright's Java driver downloads all three browsers, so a WebKit spec costs nothing extra to run.
 
 ### Key Dependencies
 

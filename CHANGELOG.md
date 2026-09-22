@@ -4,6 +4,41 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.4.0] - 2026-09-21
+
+A rendering-correctness and maintenance release. The language tabs did not read as tabs in Safari — the selected tab left a hairline exactly where the divider was supposed to disappear — and the divider itself stopped short of both screen edges while the page quietly scrolled sideways. All three are fixed, the tab strip is now inset from the page edge, and the geometry is guarded by the suite's first WebKit-based tests. Also refreshes the toolchain and dependencies. No configuration or upgrade steps are required; this is a drop-in bump from 3.3.1.
+
+### Fixed
+
+- **The selected language tab left a hairline in WebKit.** The folder-tab effect works by having the selected tab paint its white background over the 1px divider below the strip, nudged into place with `#selected { position: relative; top: 1px }`. That only lands correctly if the tab's painted box ends exactly where the divider begins. `nav li` was `display: inline`, and an inline box is only as tall as the font's ascent plus descent — which Blink rounds to whole pixels (bottom 159, divider 158–159, exact cover) and WebKit leaves fractional (bottom **159.64**, divider **159–160**). The surviving 0.36px is ~0.7 device pixels at 2×: a line that looks thinner but never disappears. The tabs are now bottom-aligned inline-blocks, whose box ends at the line box bottom — where the divider starts — in every engine
+- **The divider below the tab strip stopped 8px short of each screen edge.** It is a block inside `<body>`, which carries an 8px margin. It now carries `-mx-2` to cancel that gutter and spans the viewport exactly
+- **The page scrolled sideways by 23px.** The tab-strip container carried `min-w-screen` (`min-width: 100vw`), and `100vw` includes the scrollbar — 1665px inside a 1650px viewport, so `scrollWidth` (1673) exceeded `clientWidth` (1650). Beyond the stray scrollbar, this also undid the fix above: scroll right and the full-width divider ran out again. Removed; the strip's natural width is identical
+
+### Added
+
+- `PlaywrightTabsTest`, four geometric regression tests that run in **both Chromium and WebKit**: the selected tab's painted box must reach past the divider's bottom edge, and the divider must start at 0, end at the viewport width, and leave the document with no horizontal overflow. The spec launches both engines deliberately — the hairline was invisible to Chromium at every font size probed, so a Chromium-only test could not have caught it. These are the first WebKit tests in the suite
+
+### Changed
+
+- The language tab strip is inset 37px from the left — one tab gap (the 25px + 6px margins plus the ~5.6px word space between two inline-block tabs) — so the first tab is spaced from the page edge the way the tabs are spaced from each other
+- `.gitattributes` now sets `* text=auto` so the index normalizes to LF, and drops the `binary` attribute from `gradlew` and `*.bat`, which had been suppressing both diffs and the `eol` conversion those same lines requested. `gradlew.bat` is re-normalized to CRLF as a result (82 lines, no content change). The generated `static/tailwind.css` is marked `linguist-generated` and the vendored `static/prism/**` `linguist-vendored`, so GitHub collapses them in diffs
+- `DESIGN.md` records the tab geometry as design rules: why the tabs must be bottom-aligned inline-blocks, why the rule runs full-bleed, and the 37px inset
+- Bumped version to 3.4.0
+
+### Dependencies
+
+- Gradle 9.6.1 → 9.7.1
+- Ktor 3.5.2 → 3.6.0
+- Exposed 1.3.1 → 1.5.0
+- Flyway 13.1.0 → 13.7.0
+- Kotest 6.2.3 → 6.2.5
+- Playwright 1.61.0 → 1.63.0
+- Cloud SQL socket factory 1.29.0 → 1.30.0
+- Resend 4.13.0 → 4.26.0
+- prometheus-proxy 4.0.0 → 4.0.1
+- detekt 2.0.0-alpha.5 → 2.0.0-alpha.6, buildconfig 6.0.10 → 6.1.1, versions plugin 0.57.0 → 0.64.0
+- Website: zensical 0.0.52 → 0.0.63, pymdown-extensions 11.0.1 → 12.0.1, Pygments 2.20.0 → 2.21.0, deepmerge 2.1.0 → 3.0.1, click 8.4.2 → 8.5.0
+
 ## [3.3.1] - 2026-08-01
 
 An accessibility, performance, and maintenance release. The headline fix is that answer grading was communicated by fill color alone and was never announced to assistive technology — it now carries text and a live region. Also lands image-weight reductions, a design-system record, a stale-artifact guard in CI, and a dependency refresh. No configuration or upgrade steps are required; this is a drop-in bump from 3.3.0.
