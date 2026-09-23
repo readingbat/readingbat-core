@@ -162,6 +162,11 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
   will not launch on `ubuntu-latest` without libgtk-4, gstreamer and friends, which the test workflow installs via
   `playwright install-deps webkit`. Chromium happens to run without that step, so a new WebKit spec is free locally on
   macOS and fails in CI until those deps are present.
+- **Never measure memory inside a test task.** Kover attaches the IntelliJ coverage agent to every `Test`
+  task, and its `ClassFinder` holds a strong reference to every classloader it sees. Script evaluation creates
+  a classloader per eval, so heap climbs about 1 MB per Kotlin eval under `./gradlew test` — and not at all in
+  production or `./gradlew run`. That phantom leak survived a full investigation before a GC-root trace showed
+  the agent holding it (#128). Disable Kover instrumentation for the task, or measure outside Gradle.
 
 ### Key Dependencies
 

@@ -28,6 +28,7 @@ import com.readingbat.dsl.agentLaunchId
 import com.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.readingbat.server.Intercepts.requestTimingMap
 import com.readingbat.server.ws.ChallengeWs.answerWsConnections
+import io.prometheus.client.hotspot.DefaultExports
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -190,6 +191,11 @@ class Metrics {
 
   /** Initializes sampler gauges that periodically report cache sizes and active session counts. */
   fun init(contentSource: () -> com.readingbat.dsl.ReadingBatContent) {
+    // JVM heap, GC, thread and class-loading collectors. Until these existed the only memory signal
+    // this server produced was the OOM itself. Heap that fails to fall back after a GC is the symptom
+    // to watch. DefaultExports guards against double registration internally.
+    DefaultExports.initialize()
+
     gauge {
       name("server_start_time_seconds")
       labelNames(AGENT_ID)

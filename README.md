@@ -215,6 +215,11 @@ Required environment variables for production:
 - `RESEND_API_KEY` (for email notifications)
 - `STATIC_URL_PREFIX` — *optional*; defaults to `/static`, serving images and icons from the jar.
   Set it to a CDN origin to serve them from there instead. The app serves them either way.
+- `JAVA_TOOL_OPTIONS` — *optional but recommended*:
+  `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<writable dir>`. The flags cost nothing until an
+  OOM and are the only way to learn what was holding memory when one happens. Point the path at a
+  volume that outlives the process — a container restart otherwise takes the dump with it. The
+  server logs at startup whether dumps are enabled.
 
 ## 🧪 Testing
 
