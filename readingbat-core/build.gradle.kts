@@ -12,6 +12,9 @@ description = "Ktor web server, DSL engine, and database layer for ReadingBat pr
 
 application {
   mainClass = "TestMain"
+  // Capture the evidence if a local run dies of an OOM: without a dump there is no record of what
+  // was holding memory.
+  applicationDefaultJvmArgs = listOf("-XX:+HeapDumpOnOutOfMemoryError", "-XX:HeapDumpPath=build")
 }
 
 dependencies {
@@ -26,6 +29,7 @@ dependencies {
   implementation(libs.bundles.exposed)
 
   implementation(libs.simple.client)
+  implementation(libs.simple.client.hotspot)
 
   runtimeOnly(libs.python.scripting)
   runtimeOnly(libs.kotlin.scripting)
@@ -114,3 +118,4 @@ if (isMac) {
 tasks.register("stage") {
   dependsOn(tasks.named("build"))
 }
+

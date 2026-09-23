@@ -60,6 +60,7 @@ import com.readingbat.server.routes.sysAdminRoutes
 import com.readingbat.server.routes.userRoutes
 import com.readingbat.server.ws.LoggingWs
 import com.readingbat.server.ws.WsCommon.wsRoutes
+import com.sun.management.HotSpotDiagnosticMXBean
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -73,6 +74,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.jetbrains.exposed.v1.jdbc.Database
+import java.lang.management.ManagementFactory
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import javax.script.ScriptEngineManager
@@ -275,6 +277,36 @@ internal fun runInitialContentLoad(load: () -> Unit): Boolean =
     .isSuccess
 
 /**
+ * Reports whether the JVM will write a heap dump on `OutOfMemoryError`.
+ *
+ * A dump taken at the moment of an OOM is the only record of what was holding memory, and the flags
+ * cost nothing until then. Enable with
+ * `JAVA_TOOL_OPTIONS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/some/writable/dir"`, and
+ * make sure that directory survives the process, or a container restart takes the evidence with it.
+ *
+ * Logged rather than enforced: the flags cost nothing until an OOM, but they are set by whoever
+ * launches the JVM, not by this code, so the most this can do is say what it sees.
+ */
+private fun logHeapDumpConfig() {
+  runCatching {
+    val bean = ManagementFactory.getPlatformMXBean(HotSpotDiagnosticMXBean::class.java)
+    val enabled = bean.getVMOption("HeapDumpOnOutOfMemoryError").value.toBoolean()
+    val path = bean.getVMOption("HeapDumpPath").value.ifBlank { "the working directory" }
+
+    if (enabled)
+      logger.info { "Heap dump on OutOfMemoryError is enabled, writing to: $path" }
+    else
+      logger.warn {
+        "Heap dump on OutOfMemoryError is disabled -- an OOM will leave no evidence behind. " +
+          "Enable with JAVA_TOOL_OPTIONS=\"-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<dir>\""
+      }
+  }.onFailure {
+    // Not a HotSpot JVM, or the option is unavailable -- nothing to report.
+    logger.debug { "Unable to read heap dump configuration: ${it.message}" }
+  }
+}
+
+/**
  * Ktor application module entry point. Initializes HOCON properties, the database,
  * Prometheus agent, metrics, DSL content, plugin installations, request intercepts,
  * and all route registrations (user, admin, OAuth, WebSocket, static resources).
@@ -285,6 +317,8 @@ fun Application.module() {
   // Verify all the script engines loaded
   logger.info { "Loaded script engines: ${ScriptEngineManager().engineFactories.map { it.engineName }}" }
   check(ScriptEngineManager().engineFactories.count() == 3) { "Missing script engines" }
+
+  logHeapDumpConfig()
 
   adminUsersRef.store((ADMIN_USERS.configValueOrNull(this)?.getList() ?: emptyList()).toHashSet())
 

@@ -120,6 +120,7 @@ precedence when defined:
 | `RESEND_SENDER_EMAIL` | Resend sender email address | No |
 | `IPGEOLOCATION_KEY` | IP geolocation API key | Yes |
 | `STATIC_URL_PREFIX` | URL prefix for static assets (default `/static`) | No |
+| `JAVA_TOOL_OPTIONS` | JVM flags; set `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<dir>` | No |
 | `AGENT_ENABLED` | Enable Prometheus proxy agent | No |
 | `REDIRECT_HOSTNAME` | Hostname for redirects | No |
 | `OAUTH_CALLBACK_URL_PREFIX` | OAuth callback URL prefix | No |
