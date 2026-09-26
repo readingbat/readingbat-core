@@ -284,8 +284,8 @@ internal fun runInitialContentLoad(load: () -> Unit): Boolean =
  * `JAVA_TOOL_OPTIONS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/some/writable/dir"`, and
  * make sure that directory survives the process, or a container restart takes the evidence with it.
  *
- * Logged rather than enforced: the flags cost nothing until an OOM, but they are set by whoever
- * launches the JVM, not by this code, so the most this can do is say what it sees.
+ * Logged rather than enforced: the flags are set by whoever launches the JVM, not by this code, so
+ * the most this can do is say what it sees.
  */
 private fun logHeapDumpConfig() {
   runCatching {
