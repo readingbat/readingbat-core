@@ -80,8 +80,8 @@ internal object ChallengeGroupWs {
           incoming.cancel()
         }
 
-        metrics.wsClassStatisticsCount.labels(agentLaunchId()).inc()
-        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).inc()
+        metrics.wsClassStatisticsCount.labelValues(agentLaunchId()).inc()
+        metrics.wsClassStatisticsGauge.labelValues(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_class_statistics") {
           val content = contentSrc()
@@ -189,7 +189,7 @@ internal object ChallengeGroupWs {
                     " ($numCalls | $totAttemptedAtLeastOne | $totAllCorrect | $avgCorrectFmt | " +
                       "$incorrectAttempts | $likes/$dislikes)"
 
-                  metrics.wsClassStatisticsResponseCount.labels(agentLaunchId()).inc()
+                  metrics.wsClassStatisticsResponseCount.labelValues(agentLaunchId()).inc()
 
                   val json = ChallengeStats(challengeName.value, msg).toJson()
                   logger.debug { "Sending data $json" }
@@ -209,7 +209,7 @@ internal object ChallengeGroupWs {
         // In case exited early
         closeChannels()
         close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
-        metrics.wsClassStatisticsGauge.labels(agentLaunchId()).dec()
+        metrics.wsClassStatisticsGauge.labelValues(agentLaunchId()).dec()
         logger.debug { "Closed class statistics websocket" }
       }
     }

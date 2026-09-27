@@ -74,8 +74,8 @@ internal object StudentSummaryWs {
           incoming.cancel()
         }
 
-        metrics.wsStudentSummaryCount.labels(agentLaunchId()).inc()
-        metrics.wsStudentSummaryGauge.labels(agentLaunchId()).inc()
+        metrics.wsStudentSummaryCount.labelValues(agentLaunchId()).inc()
+        metrics.wsStudentSummaryGauge.labelValues(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_student_summary") {
           val content = contentSrc()
@@ -149,7 +149,7 @@ internal object StudentSummaryWs {
                         student.likeDislikeEmoji(likeDislike),
                       ).toJson()
 
-                    metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
+                    metrics.wsClassSummaryResponseCount.labelValues(agentLaunchId()).inc()
                     logger.debug { "Sending data $json" }
                     if (!finished.load())
                       outgoing.send(Frame.Text(json))
@@ -170,7 +170,7 @@ internal object StudentSummaryWs {
         // In case exited early
         closeChannels()
         close(CloseReason(GOING_AWAY, "Client disconnected"))
-        metrics.wsStudentSummaryGauge.labels(agentLaunchId()).dec()
+        metrics.wsStudentSummaryGauge.labelValues(agentLaunchId()).dec()
         logger.debug { "Closed student summary websocket" }
       }
     }

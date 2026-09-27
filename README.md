@@ -34,7 +34,7 @@ ReadingBat Core is built using modern Kotlin technologies:
 - **Database**: PostgreSQL with Exposed ORM (`exposed-kotlin-datetime`) and HikariCP connection pooling
 - **Authentication**: OAuth (GitHub, Google, verified-email required) with signed + encrypted session cookies
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
-- **Build System**: Gradle 9.7 with Kotlin DSL, multi-module structure, and configuration cache enabled
+- **Build System**: Gradle 9.8 with Kotlin DSL, multi-module structure, and configuration cache enabled
 - **Static Assets**: Served from the jar at `/static` with long-lived cache headers; `STATIC_URL_PREFIX` can point pages at a CDN instead
 - **Serialization**: kotlinx.serialization for JSON processing
 - **Testing**: Kotest framework with Playwright for E2E testing, run in Chromium and WebKit
@@ -154,6 +154,9 @@ make uberjar        # Create standalone JAR
 make uber           # Build and run JAR
 ```
 
+`make run` and `make uber` both start the JVM with `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=build`,
+so a local run that dies of an OOM leaves a heap dump in `build/`.
+
 ### Testing
 
 ```bash
@@ -240,7 +243,10 @@ Required environment variables for production:
 
 ReadingBat Core includes comprehensive monitoring:
 
-- **Prometheus Metrics**: Application metrics and JVM stats
+- **Prometheus Metrics**: Application metrics plus JVM heap, GC, thread, and class-loading metrics
+  (Prometheus Java client 1.x), served on `:8083/metrics` by default
+- **Heap Dumps on OOM**: The server logs at startup whether an `OutOfMemoryError` will write a heap
+  dump, and warns when it will not (see `JAVA_TOOL_OPTIONS` above)
 - **Request Tracking**: Detailed request logging and timing
 - **User Analytics**: Challenge completion and progress tracking
 - **Database Monitoring**: Connection pool and query performance

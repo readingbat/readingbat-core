@@ -58,36 +58,36 @@ object Locations {
 
   fun Routing.locations(metrics: Metrics, content: () -> ReadingBatContent) {
     get<Language> { languageLoc ->
-      metrics.languageGroupRequestCount.labels(agentLaunchId(), GET, languageLoc.languageTypeStr, FALSE_STR).inc()
+      metrics.languageGroupRequestCount.labelValues(agentLaunchId(), GET, languageLoc.languageTypeStr, FALSE_STR).inc()
       language(content(), languageLoc)
     }
     get<Language.Group> { groupLoc ->
-      metrics.challengeGroupRequestCount.labels(agentLaunchId(), GET, groupLoc.languageTypeStr, FALSE_STR).inc()
+      metrics.challengeGroupRequestCount.labelValues(agentLaunchId(), GET, groupLoc.languageTypeStr, FALSE_STR).inc()
       group(content(), groupLoc)
     }
     get<Language.Group.Challenge> { challengeLoc ->
-      metrics.challengeRequestCount.labels(agentLaunchId(), GET, challengeLoc.languageTypeStr, FALSE_STR).inc()
+      metrics.challengeRequestCount.labelValues(agentLaunchId(), GET, challengeLoc.languageTypeStr, FALSE_STR).inc()
       challenge(content(), challengeLoc)
     }
     get<PlaygroundRequest> { request ->
-      metrics.playgroundRequestCount.labels(agentLaunchId(), GET, FALSE_STR).inc()
+      metrics.playgroundRequestCount.labelValues(agentLaunchId(), GET, FALSE_STR).inc()
       playground(content(), request)
     }
 
     locationsPost<Language> { languageLoc ->
-      metrics.languageGroupRequestCount.labels(agentLaunchId(), POST, languageLoc.languageTypeStr, TRUE_STR).inc()
+      metrics.languageGroupRequestCount.labelValues(agentLaunchId(), POST, languageLoc.languageTypeStr, TRUE_STR).inc()
       language(content(), languageLoc)
     }
     locationsPost<Language.Group> { groupLoc ->
-      metrics.challengeGroupRequestCount.labels(agentLaunchId(), POST, groupLoc.languageTypeStr, TRUE_STR).inc()
+      metrics.challengeGroupRequestCount.labelValues(agentLaunchId(), POST, groupLoc.languageTypeStr, TRUE_STR).inc()
       group(content(), groupLoc)
     }
     locationsPost<Language.Group.Challenge> { challengeLoc ->
-      metrics.challengeRequestCount.labels(agentLaunchId(), POST, challengeLoc.languageTypeStr, TRUE_STR).inc()
+      metrics.challengeRequestCount.labelValues(agentLaunchId(), POST, challengeLoc.languageTypeStr, TRUE_STR).inc()
       challenge(content(), challengeLoc)
     }
     locationsPost<PlaygroundRequest> { request ->
-      metrics.playgroundRequestCount.labels(agentLaunchId(), POST, TRUE_STR).inc()
+      metrics.playgroundRequestCount.labelValues(agentLaunchId(), POST, TRUE_STR).inc()
       playground(content(), request)
     }
   }

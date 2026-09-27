@@ -28,8 +28,7 @@ dependencies {
 
   implementation(libs.bundles.exposed)
 
-  implementation(libs.simple.client)
-  implementation(libs.simple.client.hotspot)
+  implementation(libs.prometheus.jvm.metrics)
 
   runtimeOnly(libs.python.scripting)
   runtimeOnly(libs.kotlin.scripting)

@@ -247,7 +247,7 @@ internal fun Application.readContentDsl(fileName: String, variableName: String, 
         }
         .apply { clearContentMap() },
     )
-    metrics.contentLoadedCount.labels(agentLaunchId()).inc()
+    metrics.contentLoadedCount.labelValues(agentLaunchId()).inc()
   }.also { dur ->
     "Loaded content using $variableName in $fileName in ${dur.inWholeSeconds}s"
       .also {

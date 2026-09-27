@@ -28,7 +28,7 @@ import com.readingbat.dsl.agentLaunchId
 import com.readingbat.server.GeoInfo.Companion.geoInfoMap
 import com.readingbat.server.Intercepts.requestTimingMap
 import com.readingbat.server.ws.ChallengeWs.answerWsConnections
-import io.prometheus.client.hotspot.DefaultExports
+import io.prometheus.metrics.instrumentation.jvm.JvmMetrics
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
 
@@ -193,14 +193,16 @@ class Metrics {
   fun init(contentSource: () -> com.readingbat.dsl.ReadingBatContent) {
     // JVM heap, GC, thread and class-loading collectors. Until these existed the only memory signal
     // this server produced was the OOM itself. Heap that fails to fall back after a GC is the symptom
-    // to watch. DefaultExports guards against double registration internally.
-    DefaultExports.initialize()
+    // to watch. Registered in the 1.x PrometheusRegistry because that is the registry common-utils'
+    // MetricsService serves -- anything in the old 0.x CollectorRegistry is never scraped. JvmMetrics
+    // guards against double registration internally.
+    JvmMetrics.builder().register()
 
     gauge {
       name("server_start_time_seconds")
       labelNames(AGENT_ID)
       help("Server start time in seconds")
-    }.labels(agentLaunchId()).setToCurrentTime()
+    }.labelValues(agentLaunchId()).set(System.currentTimeMillis() / 1000.0) // 1.x dropped setToCurrentTime()
 
     SamplerGaugeCollector(
       "request_timing_map_size",
@@ -285,7 +287,7 @@ class Metrics {
 
   /** Measures and records the duration of an endpoint request for Prometheus monitoring. */
   suspend fun measureEndpointRequest(endpoint: String, body: suspend () -> Unit) {
-    val timer = endpointRequestDuration.labels(agentLaunchId(), endpoint).startTimer()
+    val timer = endpointRequestDuration.labelValues(agentLaunchId(), endpoint).startTimer()
     try {
       body()
     } finally {

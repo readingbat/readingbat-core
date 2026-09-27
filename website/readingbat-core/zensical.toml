@@ -99,8 +99,8 @@ link = "https://github.com/readingbat/readingbat-core"
 
 # Emoji / icon shortcodes
 [project.markdown_extensions.pymdownx.emoji]
-emoji_index = "material.extensions.emoji.twemoji"
-emoji_generator = "material.extensions.emoji.to_svg"
+emoji_index = "zensical.extensions.emoji.twemoji"
+emoji_generator = "zensical.extensions.emoji.to_svg"
 
 # Snippets — resolve paths relative to the docs dir and the code examples dir
 [project.markdown_extensions.pymdownx.snippets]

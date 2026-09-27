@@ -22,7 +22,7 @@ import com.readingbat.kotest.TestSupport.initTestProperties
 import com.readingbat.server.ReadingBatServer
 import io.kotest.core.spec.style.StringSpec
 import io.kotest.matchers.collections.shouldContainAll
-import io.prometheus.client.CollectorRegistry
+import io.prometheus.metrics.model.registry.PrometheusRegistry
 
 /**
  * `Metrics.init` registers the JVM collectors, so heap, GC and thread state are scrapeable.
@@ -37,19 +37,20 @@ class JvmMetricsTest : StringSpec() {
       initTestProperties()
       ReadingBatServer.metrics.init { TestData.readTestContent() }
 
+      // The registry common-utils' MetricsService serves on :8083/metrics. A collector registered
+      // anywhere else -- such as the old 0.x CollectorRegistry -- is never scraped.
       val exported =
-        CollectorRegistry.defaultRegistry
-          .metricFamilySamples()
-          .asSequence()
-          .map { it.name }
+        PrometheusRegistry.defaultRegistry
+          .scrape()
+          .map { it.metadata.prometheusName }
           .toSet()
 
       exported shouldContainAll
         [
-          "jvm_memory_bytes_used", // the heap gauge to alert on
+          "jvm_memory_used_bytes", // the heap gauge to alert on; was jvm_memory_bytes_used in 0.x
           "jvm_gc_collection_seconds",
           "jvm_threads_current",
-          "jvm_classes_loaded",
+          "jvm_classes_currently_loaded", // was jvm_classes_loaded in 0.x
         ]
     }
   }

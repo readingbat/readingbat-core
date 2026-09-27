@@ -100,9 +100,10 @@ object Endpoints {
   const val WS_ROOT = "/ws"
 
   /**
-   * The local path the static asset tree is mounted at. Always a path, never a URL — [staticResources]
-   * mounts the classpath `static` package here, and a URL would register an unreachable route. The
-   * prefix pages *emit* is a separate, configurable value; see `Property.STATIC_URL_PREFIX`.
+   * The local path the static asset tree is mounted at. Always a path, never a URL —
+   * [staticAssetRoutes][com.readingbat.server.routes.staticAssetRoutes] mounts the classpath `static`
+   * package here, and a URL would register an unreachable route. The prefix pages *emit* is a
+   * separate, configurable value; see `Property.STATIC_URL_PREFIX`.
    */
   const val STATIC_PATH = "/$STATIC"
 

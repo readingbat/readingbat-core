@@ -6,14 +6,15 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 
 ## Key Technologies
 
-- Kotlin 2.4.10 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.6.0 (CIO engine), Exposed ORM 1.5.0 with kotlinx-datetime, PostgreSQL
+- Kotlin 2.4.20 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.6.0 (CIO engine), Exposed ORM 1.5.0 with kotlinx-datetime, PostgreSQL
 - Kotlinx.html for server-side HTML generation (no templates)
 - Static assets (images, icons, Prism files, tailwind.css) are packaged in the jar and served at `/static`; a CDN is optional via `STATIC_URL_PREFIX`
 - Kotest 6.2.5 for testing, Playwright for E2E tests in Chromium and WebKit (`PlaywrightTabsTest` runs in both because layout bugs can be engine-specific)
-- Gradle 9.7.1 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle`, `jvm`) versions; parallel project execution and configuration cache enabled
+- Gradle 9.8.0 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle-wrapper`, `jvm`) versions; parallel project execution and configuration cache enabled
 - Kover 0.9.9 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
 - Detekt 2.0 alpha (`dev.detekt` plugin) for static analysis; Kotlinter for ktlint style
-- common-utils 3.2.2 (shared utility BOM from `com.github.pambrose`)
+- common-utils 5.0.0 (shared utility BOM from `com.github.pambrose`)
+- Prometheus Java client 1.x (`io.prometheus.metrics.*`) for application and JVM metrics, served on `:8083/metrics` by default. Record with `labelValues(...)` (the 0.x `labels(...)` is gone) and register collectors in `PrometheusRegistry.defaultRegistry` — that is the registry common-utils' `MetricsService` serves, so a collector in the old 0.x `CollectorRegistry` compiles and runs but is never scraped
 - Java 17 toolchain
 
 ## Project Structure
@@ -39,7 +40,7 @@ The core abstraction is a Kotlin DSL (`readingBatContent { }`) that defines prog
 
 - `ReadingBatContent` holds three `LanguageGroup`s: java, python, kotlin
 - Each `LanguageGroup` contains `ChallengeGroup`s, each containing `Challenge`s
-- Content can be loaded from local files (`FileSystemSource`) or GitHub repos (`GitHubContent`)
+- Content can be loaded from local files (`FileSystemSource`) or GitHub repos (`GitHubContent`). `FileSystemSource.file(path)` resolves against the source's own `pathPrefix` (common-utils 4+), so pass paths relative to the source root — prepending `pathPrefix` doubles it
 - `ContentDsl.kt` handles reading and evaluating DSL code via Kotlin scripting
 
 ## Configuration
@@ -50,6 +51,7 @@ Dual configuration system:
 - `EnvVar` (enum): Environment variables that override HOCON values
 - Secrets loaded from `secrets/secrets.env` (not committed)
 - `STATIC_URL_PREFIX` (env var, or `readingbat.site.staticUrlPrefix`) sets the URL prefix pages emit for static assets. Defaults to `/static` — served from the jar. Route registration always uses the local `Endpoints.STATIC_PATH`, so a CDN-configured deployment still serves the files itself
+- `JAVA_TOOL_OPTIONS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<dir>"` is recommended in production; the server logs at startup whether an OOM will write a heap dump, and warns when it will not
 
 ## Database
 
@@ -84,11 +86,12 @@ Extensive use of Kotlin `@JvmInline value class` for type safety: LanguageName, 
 - List all Makefile targets: `make help`
 - Build: `make build` or `./gradlew build -xtest`
 - Test: `make tests` or `./gradlew check`
-- Run: `make run` or `./gradlew run`
+- Run: `make run` or `./gradlew run` (local runs, and `make uber`, write a heap dump to `build/` on OOM)
 - Lint: `make lint` (Kotlinter + detekt in one Gradle invocation)
 - Format: `./gradlew formatKotlinMain formatKotlinTest`
-- Coverage: `make coverage` (HTML), `./gradlew koverXmlReport` (CI/Codecov), `make coverage-verify` (thresholds), `make coverage-packages` (per-package breakdown via `scripts/coverage_packages.py`)
+- Coverage: `make coverage` (HTML), `./gradlew koverXmlReport` (CI/Codecov), `make coverage-verify` (thresholds), `make coverage-packages` (per-package breakdown via `scripts/coverage_packages.py`). Kover instruments every `Test` task and its agent holds every classloader it sees, so never measure memory under `./gradlew test` — script evaluation appears to leak ~1 MB per Kotlin eval there and does not in production
 - DB migrate: `make dbmigrate` (also `make dbinfo`, `make dbclean`, `make dbvalidate`)
+- Docs site: `make site` serves it with zensical (config in `website/readingbat-core/zensical.toml`, which must name extensions as `zensical.extensions.*` — zensical remaps Material's `material.extensions.*` only in YAML configs)
 
 Project version and group are defined in `gradle.properties`. Override the version on the CLI with `-PoverrideVersion=...`. Secrets in `secrets/secrets.env` are loaded via a Gradle `ValueSource` and registered as task inputs on `Test`/`JavaExec`, so edits invalidate the configuration cache.
 

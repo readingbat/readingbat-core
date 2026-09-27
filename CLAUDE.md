@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - List Makefile targets: `make help` (self-documenting index — every target with a `## description` annotation)
 
-Gradle 9.7.1 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
+Gradle 9.8.0 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
 catalog (`gradle/libs.versions.toml`) is the single source of truth for plugin, dependency, **and toolchain** versions —
 the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.versions.jvm`) and by the Makefile (the
 `upgrade-wrapper` target derives `GRADLE_VERSION` from the `gradle-wrapper` key in the catalog). Project version comes from `gradle.properties`
@@ -46,6 +46,13 @@ the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.ve
 Secrets are loaded from `secrets/secrets.env` (not committed). The root `build.gradle.kts` exposes a `SecretsEnvSource`
 `ValueSource` (registered via `configureSecrets()`) and wires the resulting map as a task input on every `JavaExec` and
 `Test` task. Edits to `secrets/secrets.env` invalidate the configuration cache and trigger a re-run of affected tasks.
+
+### Docs Site
+
+The zensical site lives in `website/readingbat-core/` (`make site` serves it). **Name Markdown extensions in
+`zensical.toml` by `zensical.extensions.*`, never Material's `material.extensions.*`** — zensical remaps the Material
+namespace only in YAML configs, so the TOML path fails with `No module named 'material'`. CI once hid this by also
+installing `mkdocs-material`; it now installs zensical alone, so both builds fail the same way.
 
 ## Project Architecture
 
@@ -171,3 +178,10 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
 ### Key Dependencies
 
 - **common-utils** (BOM from `com.github.pambrose`): `respondWith`/`redirectTo` take a `suspend` block as of 2.9.2
+- **`FileSystemSource.file(path)` resolves against `pathPrefix` itself** since common-utils 4.x, so pass paths relative
+  to the source root. Prepending `pathPrefix` as well doubles it — which is invisible for a `"./"` root and fatal for
+  `"../"` (the Python test content), so a call site can be wrong for months before one language's content breaks.
+- **Metrics use the Prometheus Java client 1.x** (`io.prometheus.metrics.*`, via common-utils 5 and prometheus-proxy
+  4.2): `labelValues(...)`, not `labels(...)`. Register collectors in `PrometheusRegistry.defaultRegistry`, which is
+  what common-utils' `MetricsService` serves on `:8083/metrics` — anything registered with the old 0.x
+  `CollectorRegistry` compiles and runs but is never scraped.

@@ -4,6 +4,43 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.5.0] - 2026-09-27
+
+A monitoring and maintenance release. The server now exports JVM heap, GC, thread, and class-loading metrics, and reports at startup whether an `OutOfMemoryError` will leave a heap dump behind — until now the only memory signal it produced was the OOM itself, and afterwards there was nothing to explain it. Metrics also move to the Prometheus Java client 1.x, which common-utils 5 and prometheus-proxy 4.2 require.
+
+No configuration is required, though enabling heap dumps in production is recommended (see Added). The public `Metrics` properties are now Prometheus 1.x types, which is source-breaking for anything that records to them from outside the library: `labels(...)` becomes `labelValues(...)`.
+
+### Added
+
+- **JVM metrics.** `Metrics.init` registers the Prometheus JVM collectors, so heap, GC, thread, and class-loading state is scrapeable (on `:8083/metrics` by default) alongside the application metrics. Heap that fails to fall back after a GC is the symptom to alert on (`jvm_memory_used_bytes{area="heap"}`). `JvmMetricsTest` asserts the collectors are present in the registry that is actually served, not merely registered somewhere
+- **Heap-dump reporting at startup.** `ReadingBatServer` logs whether the JVM will write a heap dump on `OutOfMemoryError`, and warns when it will not. The flags are set by whoever launches the JVM, so the log line is the difference between setting an env var and knowing it took effect. Enable with `JAVA_TOOL_OPTIONS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<dir>"`, pointing at a volume that outlives the process — a container restart otherwise takes the dump with it
+- Local runs capture a heap dump on OOM: `./gradlew run` and `make uber` write it to `build/`
+
+### Changed
+
+- **Metrics use the Prometheus Java client 1.x** (`io.prometheus.metrics.*`). common-utils 5 and prometheus-proxy 4.2 moved to it, and common-utils' `MetricsService` now serves `PrometheusRegistry.defaultRegistry` — so a collector registered in the old 0.x `CollectorRegistry` still compiles and runs, but is never scraped. That is exactly what would have happened to the new JVM collectors had `DefaultExports.initialize()` been kept; they are registered with `JvmMetrics.builder().register()` instead. The 30 recording sites moved from `labels(...)` to `labelValues(...)`, and `server_start_time_seconds` is now set explicitly because 1.x dropped `setToCurrentTime()`
+- JVM metrics carry their 1.x names — `jvm_memory_used_bytes` and `jvm_classes_currently_loaded`, not the 0.x `jvm_memory_bytes_used` and `jvm_classes_loaded` that most published dashboards and alert examples still use
+- The explicit `simpleclient` and `simpleclient_hotspot` dependencies are replaced by `prometheus-metrics-instrumentation-jvm`
+- `Challenge` passes file-system content paths relative to the source root. Since common-utils 4.x, `FileSystemSource.file(path)` resolves against `pathPrefix` itself, so the existing call — which prepended `pathPrefix` as well — doubled it on the upgrade. That is invisible for a `"./"` root and fatal for `"../"`, which is where the Python test content lives
+- Documentation: `CLAUDE.md` records the `FileSystemSource.file()` path contract and the Prometheus 1.x registry rule, and warns against measuring memory inside a test task — Kover's coverage agent holds a strong reference to every classloader it sees, so script evaluation appears to leak ~1 MB per Kotlin eval under `./gradlew test` and does not leak at all in production (#128). It also gains a Docs Site section on naming zensical extensions. `README.md` and the configuration docs cover `JAVA_TOOL_OPTIONS`; `README.md` and the server docs describe the JVM metrics, the startup heap-dump report, and local-run dumps to `build/`. `llms.txt` picks up the same facts and the new toolchain versions, and corrects the catalog key it names (`gradle` → `gradle-wrapper`)
+- Bumped version to 3.5.0
+
+### Fixed
+
+- The KDoc on `Endpoints.STATIC_PATH` linked `[staticResources]`, which Dokka could not resolve; it now links `staticAssetRoutes`, the function that actually mounts the tree
+- The docs site did not build from the project's own environment (`uv run zensical build` failed with `No module named 'material'`). `zensical.toml` named the emoji extension by its Material for MkDocs path, and zensical only remaps `material.extensions` for YAML configs, not TOML — CI passed only because its workflow also installed `mkdocs-material`. The config now names `zensical.extensions.emoji` directly, and the docs workflow installs zensical alone
+
+### Dependencies
+
+- Gradle 9.7.1 → 9.8.0
+- Kotlin 2.4.10 → 2.4.20
+- common-utils 3.2.2 → 5.0.0
+- prometheus-proxy 4.0.1 → 4.2.0
+- Prometheus Java client 0.16.0 → 1.9.0 (`io.prometheus:simpleclient*` → `io.prometheus:prometheus-metrics-*`)
+- Flyway 13.7.0 → 13.8.0
+- kotlinter 5.6.0 → 5.7.0, buildconfig 6.1.1 → 6.1.2
+- Website: zensical 0.0.63 → 0.0.65, pymdown-extensions 12.0.1 → 12.1, Markdown 3.10.3 → 3.11
+
 ## [3.4.0] - 2026-09-21
 
 A rendering-correctness and maintenance release, with one breaking API change. The language tabs did not read as tabs in Safari — the selected tab left a hairline exactly where the divider was supposed to disappear — and the divider itself stopped short of both screen edges while the page quietly scrolled sideways. All three are fixed, the tab strip is now inset from the page edge, and the geometry is guarded by the suite's first WebKit-based tests.
