@@ -172,7 +172,7 @@ internal object ChallengeWs {
                   scope.launch {
                     runCatching {
                       withTimeoutOrNull(slowConsumerTimeout) {
-                        ctx.metrics.wsStudentAnswerResponseCount.labels(agentLaunchId())?.inc()
+                        ctx.metrics.wsStudentAnswerResponseCount.labelValues(agentLaunchId())?.inc()
                         ctx.wsSession.outgoing.send(Frame.Text(data.jsonArgs))
                       } ?: ctx.wsSession.close(CloseReason(GOING_AWAY, "Slow consumer"))
                     }.onFailure { e ->
@@ -203,8 +203,8 @@ internal object ChallengeWs {
 
         logger.debug { "Opened student answers websocket: ${answerWsConnections.size}" }
 
-        metrics.wsStudentAnswerCount.labels(agentLaunchId())?.inc()
-        metrics.wsStudentAnswerGauge.labels(agentLaunchId())?.inc()
+        metrics.wsStudentAnswerCount.labelValues(agentLaunchId())?.inc()
+        metrics.wsStudentAnswerGauge.labelValues(agentLaunchId())?.inc()
 
         metrics.measureEndpointRequest("/websocket_student_answers") {
           val p = call.parameters
@@ -231,7 +231,7 @@ internal object ChallengeWs {
         answerWsConnections -= answerWsContext
         closeChannels()
         close(CloseReason(GOING_AWAY, "Client disconnected"))
-        metrics.wsStudentAnswerGauge.labels(agentLaunchId())?.dec()
+        metrics.wsStudentAnswerGauge.labelValues(agentLaunchId())?.dec()
         logger.debug { "Closed student answers websocket ${answerWsConnections.size}" }
       }
     }

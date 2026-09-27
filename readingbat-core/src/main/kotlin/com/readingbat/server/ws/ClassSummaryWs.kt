@@ -75,8 +75,8 @@ internal object ClassSummaryWs {
           incoming.cancel()
         }
 
-        metrics.wsClassSummaryCount.labels(agentLaunchId()).inc()
-        metrics.wsClassSummaryGauge.labels(agentLaunchId()).inc()
+        metrics.wsClassSummaryCount.labelValues(agentLaunchId()).inc()
+        metrics.wsClassSummaryGauge.labelValues(agentLaunchId()).inc()
 
         metrics.measureEndpointRequest("/websocket_class_summary") {
           val content = contentSrc()
@@ -147,7 +147,7 @@ internal object ClassSummaryWs {
                           likeDislike = enrollee.likeDislikeEmoji(likeDislike),
                         ).toJson()
 
-                      metrics.wsClassSummaryResponseCount.labels(agentLaunchId()).inc()
+                      metrics.wsClassSummaryResponseCount.labelValues(agentLaunchId()).inc()
                       logger.debug { "Sending data $json" }
                       if (!finished.load())
                         outgoing.send(Frame.Text(json))
@@ -169,7 +169,7 @@ internal object ClassSummaryWs {
         // In case exited early
         closeChannels()
         close(CloseReason(CloseReason.Codes.GOING_AWAY, "Client disconnected"))
-        metrics.wsClassSummaryGauge.labels(agentLaunchId()).dec()
+        metrics.wsClassSummaryGauge.labelValues(agentLaunchId()).dec()
         logger.debug { "Closed class summary websocket" }
       }
     }

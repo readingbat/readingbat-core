@@ -137,7 +137,7 @@ sealed class Challenge(
   // directly instead of bridging through runBlocking. The blocking, CPU-bound script eval runs on
   // Dispatchers.IO so it does not block a request-serving dispatcher thread.
   private suspend fun measureParsing(code: String) =
-    metrics.challengeParseDuration.labels(agentLaunchId(), languageType.toString()).startTimer()
+    metrics.challengeParseDuration.labelValues(agentLaunchId(), languageType.toString()).startTimer()
       .let {
         try {
           withContext(Dispatchers.IO) { computeFunctionInfo(code) }
@@ -159,7 +159,7 @@ sealed class Challenge(
       // Compute outside computeIfAbsent's bin lock: the blocking network fetch + script eval must
       // not hold the ConcurrentHashMap lock. A rare race may compute twice, but putIfAbsent keeps one.
       content.functionInfoMap[challengeId] ?: run {
-        val timer = metrics.challengeRemoteReadDuration.labels(agentLaunchId()).startTimer()
+        val timer = metrics.challengeRemoteReadDuration.labelValues(agentLaunchId()).startTimer()
         val code =
           fetchSourceCodeFromCache() ?: try {
             val path = pathOf((repo as AbstractRepo).rawSourcePrefix, branchName, srcPath, fqName)
@@ -180,7 +180,9 @@ sealed class Challenge(
     } else {
       suspend fun parseCode(): FunctionInfo {
         val fs = repo as FileSystemSource
-        val file = fs.file(pathOf(fs.pathPrefix, srcPath, packageNameAsPath, fileName))
+        // Relative to the source root: since common-utils 4.x, file() resolves against pathPrefix
+        // itself, so prepending it here as well doubles it -- harmless for "./", fatal for "../".
+        val file = fs.file(pathOf(srcPath, packageNameAsPath, fileName))
         logger.info { """Fetching "${file.fileName}" from "${Paths.get("").toAbsolutePath()}""" }
         return measureParsing(file.content)
       }

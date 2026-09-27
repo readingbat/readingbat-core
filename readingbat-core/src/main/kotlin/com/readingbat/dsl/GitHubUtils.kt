@@ -61,7 +61,7 @@ internal object GitHubUtils {
     path: String,
     metrics: Metrics,
   ): List<String> {
-    val timer = metrics.githubDirectoryReadDuration.labels(agentLaunchId()).startTimer()
+    val timer = metrics.githubDirectoryReadDuration.labelValues(agentLaunchId()).startTimer()
     try {
       val timedValue =
         measureTimedValue {

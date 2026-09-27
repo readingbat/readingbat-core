@@ -37,7 +37,7 @@ jobs:
         with:
           python-version: 3.x
 
-      - run: pip install zensical mkdocs-material
+      - run: pip install zensical
 
       - run: zensical build --clean
         working-directory: website/readingbat-core

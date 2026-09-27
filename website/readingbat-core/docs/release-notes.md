@@ -6,6 +6,28 @@ icon: lucide/tag
 
 For the complete, commit-level history see [`CHANGELOG.md`](https://github.com/readingbat/readingbat-core/blob/master/CHANGELOG.md) in the repository.
 
+## v3.5.0 — 2026-09-27
+
+Monitoring and maintenance release. Until now the only memory signal the server produced was the OOM itself, and afterwards there was nothing left to explain it. It now exports JVM metrics and says at startup whether an OOM will leave a heap dump behind. No configuration required, though enabling heap dumps in production is recommended. The public `Metrics` properties are now Prometheus 1.x types, which is source-breaking for anything that records to them from outside the library (`labels(...)` → `labelValues(...)`).
+
+### Monitoring
+
+- **JVM metrics are exported** — heap, GC, thread, and class-loading collectors are scrapeable (on `:8083/metrics` by default) alongside the application metrics. Heap that fails to fall back after a GC is the symptom to alert on: `jvm_memory_used_bytes{area="heap"}`.
+- **Startup reports whether an OOM will be diagnosable** — the server logs whether the JVM will write a heap dump on `OutOfMemoryError`, and warns when it will not. Enable with `JAVA_TOOL_OPTIONS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<dir>"`, on a volume that outlives the process; see [Configuration](configuration/index.md). Local runs (`./gradlew run`, `make uber`) now dump to `build/`.
+- **Metrics use the Prometheus Java client 1.x** — required by common-utils 5 and prometheus-proxy 4.2. The metrics endpoint now serves the 1.x `PrometheusRegistry`, so a collector registered in the old 0.x `CollectorRegistry` compiles, runs, and is never scraped. `JvmMetricsTest` checks the JVM collectors against the registry that is actually served. JVM metrics carry their 1.x names (`jvm_memory_used_bytes`, `jvm_classes_currently_loaded`), not the 0.x names most published dashboards still use.
+
+### Changed
+
+- **File-system content paths are relative to the source root** — since common-utils 4.x, `FileSystemSource.file(path)` resolves against `pathPrefix` itself, so prepending it as well doubled the prefix on the upgrade: invisible for a `"./"` root, fatal for `"../"`.
+- **The apparent Kotlin eval leak was the test harness** — under `./gradlew test`, heap climbed about 1 MB per Kotlin script eval because Kover's coverage agent holds every classloader it sees. Production and `./gradlew run` do not leak (#128).
+- **The docs site builds with zensical alone** — `zensical.toml` named the emoji extension by its Material for MkDocs path, which zensical remaps only in YAML configs, so a local `uv run zensical build` failed with `No module named 'material'`. CI had masked it by also installing `mkdocs-material`; the config now names `zensical.extensions.emoji`, and the workflow installs zensical alone.
+
+### Dependencies
+
+Gradle 9.7.1 → 9.8.0 · Kotlin 2.4.10 → 2.4.20 · common-utils 3.2.2 → 5.0.0 · prometheus-proxy 4.0.1 → 4.2.0 · Prometheus Java client 0.16.0 → 1.9.0 · Flyway 13.7.0 → 13.8.0 · kotlinter 5.6.0 → 5.7.0 · buildconfig 6.1.1 → 6.1.2 · zensical 0.0.63 → 0.0.65
+
+[Full changelog: 3.4.0…3.5.0](https://github.com/readingbat/readingbat-core/compare/3.4.0...3.5.0)
+
 ## v3.4.0 — 2026-09-21
 
 Rendering-correctness and maintenance release, with one breaking API change. The language tabs did not read as tabs in Safari, the rule beneath them stopped short of both screen edges, and the app depended on a CDN for images it already carried in its own jar. No configuration or upgrade steps for the app itself; `Endpoints.STATIC_ROOT` has been removed, which is source-breaking for anything compiled against the published artifact.

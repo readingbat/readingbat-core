@@ -144,8 +144,14 @@ ReadingBat exports Prometheus metrics including:
 - Cache size gauges
 - Active session counts
 - Request timing summaries
+- JVM heap, GC, thread, and class-loading metrics (e.g., `jvm_memory_used_bytes`)
 
-All metrics are labeled with the agent launch ID for multi-instance deployments.
+Metrics use the Prometheus Java client 1.x and are served on `:8083/metrics` by default. All application
+metrics are labeled with the agent launch ID for multi-instance deployments.
+
+At startup the server also logs whether the JVM will write a heap dump on `OutOfMemoryError`, and
+warns when it will not. Enable dumps with `JAVA_TOOL_OPTIONS` (see
+[Configuration](../configuration/index.md)).
 
 ## Running the Server
 
@@ -162,3 +168,6 @@ make cc
 
 The server reads its configuration from `application.conf` specified via the
 `-config=` JVM argument.
+
+Local runs (`./gradlew run`, `make run`, and `make uber`) start the JVM with
+`-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=build`, so an OOM leaves a heap dump in `build/`.
