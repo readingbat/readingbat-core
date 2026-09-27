@@ -46,7 +46,7 @@ uberjar: ## Build the executable uberjar
 	./gradlew uberjar
 
 uber: uberjar ## Build and run the uberjar
-	java -jar build/libs/server.jar
+	java -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=build -jar build/libs/server.jar
 
 run: ## Run the application
 	./gradlew run
