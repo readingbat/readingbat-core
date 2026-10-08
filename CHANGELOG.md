@@ -9,17 +9,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ### Added
 
 - **zizmor audits the GitHub Actions workflows.** `make zizmor` runs it locally (with online audits when `GH_TOKEN` or the gh CLI supplies a token), and a new `zizmor` workflow runs it on pushes, pull requests, and weekly — the schedule because online audits such as known-vulnerable-actions change with published advisories, not with this repo. Findings are uploaded to code scanning as SARIF, so they appear in the Security tab and as PR annotations without failing the job; a code scanning merge-protection ruleset can make them blocking
+- **Dependabot keeps the pinned action SHAs current.** A SHA never moves on its own, so `.github/dependabot.yml` bumps each pin together with its `# vX.Y.Z` comment: weekly, as one grouped PR, after a 7-day cooldown so a compromised or yanked release is likely caught before adoption (security updates skip the cooldown)
 
 ### Security
 
 - **The existing workflows pass zizmor.** It found 27 issues across them; all are fixed. Every action is pinned to a full commit SHA with its tag in a trailing comment, each checked against the commit its tag resolves to. `actions/checkout` sets `persist-credentials: false`, so the job token is not left in `.git/config` for later steps. The Tests and Tailwind CSS workflows declare `permissions: contents: read` instead of inheriting the repository default
-- **CodeQL no longer uses a vulnerable action.** `github/codeql-action@v2` is affected by GHSA-vqf5-2xx6-9wfm, and v2 has no patched release, so the workflow moves to v4.38.2, with the canonical language names (`java-kotlin`, `javascript-typescript`). GitHub disabled that workflow for inactivity after its last run in 2023, so it stays off until re-enabled
+- **CodeQL runs as code scanning's default setup.** The CodeQL workflow had been disabled by GitHub for inactivity since 2023 and still pinned `github/codeql-action@v2`, which is affected by GHSA-vqf5-2xx6-9wfm and has no patched release. It is deleted, and GitHub's default setup now analyzes Actions, Java/Kotlin, and Python on pushes, pull requests, and a weekly schedule — with no workflow file to keep current
 
 ### Dependencies
 
 - Gradle 9.8.0 → 9.8.1
-- common-utils 5.0.0 → 5.1.0
-- Flyway 13.8.0 → 13.9.0
+- Kotlin 2.4.20 → 2.4.21
+- common-utils 5.0.0 → 5.1.1
+- Flyway 13.8.0 → 13.10.0
 - PostgreSQL driver 42.7.13 → 42.7.14
 - Resend 4.26.0 → 4.28.0
 - Kover 0.9.9 → 0.9.11, versions plugin 0.64.0 → 0.65.0
