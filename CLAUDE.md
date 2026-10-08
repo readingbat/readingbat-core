@@ -23,6 +23,9 @@ the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.ve
 - **Workflows are audited by zizmor** — `make zizmor` locally, and `.github/workflows/zizmor.yml` in CI, which uploads
   findings to code scanning instead of failing the job. Pin every `uses:` to a full commit SHA with the tag in a trailing
   comment, give each job an explicit `permissions:` block, and set `persist-credentials: false` on `actions/checkout`.
+  Dependabot (`.github/dependabot.yml`) bumps those SHAs and their tag comments weekly, after a 7-day cooldown.
+- **CodeQL runs as code scanning's default setup** — a repository setting, not a workflow. Do not add a CodeQL
+  workflow: GitHub rejects analyses from an advanced setup while default setup is enabled.
 
 ### Kotlin Conventions
 
