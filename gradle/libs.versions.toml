@@ -1,6 +1,6 @@
 [versions]
 # Toolchain versions
-gradle-wrapper = "9.8.0"
+gradle-wrapper = "9.8.1"
 jvm = "17"
 
 # Plugin versions
@@ -8,17 +8,17 @@ buildconfig = "6.1.2"
 detekt = "2.0.0-alpha.6"
 kotlin = "2.4.20"
 kotlinter = "5.7.0"
-kover = "0.9.9"
+kover = "0.9.11"
 dokka = "2.2.0"
 maven-publish = "0.37.0"
-versions = "0.64.0"
+versions = "0.65.0"
 
 # Library versions
 cloud = "1.30.0"
 commons = "1.15.0"
 exposed = "1.5.0"
 flexmark = "0.64.8"
-flyway = "13.8.0"
+flyway = "13.9.0"
 github-api = "1.330"
 hikari = "7.1.0"
 java-scriptengine = "2.0.0"
@@ -29,14 +29,14 @@ logback = "1.5.38"
 logging = "7.0.12"
 pgjdbc = "0.8.9"
 playwright = "1.63.0"
-postgres = "42.7.13"
+postgres = "42.7.14"
 prometheus = "1.9.0"
 prometheus-proxy = "4.2.0"
 python = "2.7.4"
-resend = "4.26.0"
+resend = "4.28.0"
 serialization = "1.11.0"
 testcontainers = "1.21.4"
-utils = "5.0.0"
+utils = "5.1.0"
 
 [libraries]
 # Serialization

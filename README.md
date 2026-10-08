@@ -132,6 +132,7 @@ make help               # Self-documenting index of every Makefile target
 make build              # Build project (skip tests)
 make tests              # Run unit tests
 make lint               # Kotlinter (ktlint) + detekt static analysis
+make zizmor             # Audit GitHub Actions workflows with zizmor
 make coverage           # Generate Kover HTML coverage report
 make coverage-verify    # Enforce coverage thresholds via Kover
 make coverage-packages  # Per-package coverage breakdown from the XML report
