@@ -4,6 +4,27 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **zizmor audits the GitHub Actions workflows.** `make zizmor` runs it locally (with online audits when `GH_TOKEN` or the gh CLI supplies a token), and a new `zizmor` workflow runs it on pushes, pull requests, and weekly — the schedule because online audits such as known-vulnerable-actions change with published advisories, not with this repo. Findings are uploaded to code scanning as SARIF, so they appear in the Security tab and as PR annotations without failing the job; a code scanning merge-protection ruleset can make them blocking
+
+### Security
+
+- **The existing workflows pass zizmor.** It found 27 issues across them; all are fixed. Every action is pinned to a full commit SHA with its tag in a trailing comment, each checked against the commit its tag resolves to. `actions/checkout` sets `persist-credentials: false`, so the job token is not left in `.git/config` for later steps. The Tests and Tailwind CSS workflows declare `permissions: contents: read` instead of inheriting the repository default
+- **CodeQL no longer uses a vulnerable action.** `github/codeql-action@v2` is affected by GHSA-vqf5-2xx6-9wfm, and v2 has no patched release, so the workflow moves to v4.38.2, with the canonical language names (`java-kotlin`, `javascript-typescript`). GitHub disabled that workflow for inactivity after its last run in 2023, so it stays off until re-enabled
+
+### Dependencies
+
+- Gradle 9.8.0 → 9.8.1
+- common-utils 5.0.0 → 5.1.0
+- Flyway 13.8.0 → 13.9.0
+- PostgreSQL driver 42.7.13 → 42.7.14
+- Resend 4.26.0 → 4.28.0
+- Kover 0.9.9 → 0.9.11, versions plugin 0.64.0 → 0.65.0
+- Website: zensical 0.0.65 → 0.0.68, MarkupSafe 3.0.3 → 3.0.4, tomli 2.4.1 → 2.5.0
+
 ## [3.5.0] - 2026-09-27
 
 A monitoring and maintenance release. The server now exports JVM heap, GC, thread, and class-loading metrics, and reports at startup whether an `OutOfMemoryError` will leave a heap dump behind — until now the only memory signal it produced was the OOM itself, and afterwards there was nothing to explain it. Metrics also move to the Prometheus Java client 1.x, which common-utils 5 and prometheus-proxy 4.2 require.
@@ -399,7 +420,7 @@ A security-hardening release. A multi-agent security review surfaced 48 confirme
 - Unnecessary self-imports in `ConfigureOAuth` and `ReadingBatServer`
 - Plaintext `access_token` column from `OAuthLinksTable` — tokens were stored but never read back after OAuth login
 
-## [Unreleased] (3.0.12)
+## [3.1.0] - 2026-04-06
 
 ### Changed
 
@@ -480,7 +501,7 @@ A security-hardening release. A multi-agent security review surfaced 48 confirme
 
 - Initial tracked release
 
-[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.1.4...HEAD
+[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.5.0...HEAD
 [3.1.4]: https://github.com/readingbat/readingbat-core/compare/3.1.3...3.1.4
 [3.1.3]: https://github.com/readingbat/readingbat-core/compare/3.1.2...3.1.3
 [3.0.11]: https://github.com/readingbat/readingbat-core/compare/3.0.10...3.0.11

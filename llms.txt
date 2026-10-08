@@ -10,10 +10,10 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 - Kotlinx.html for server-side HTML generation (no templates)
 - Static assets (images, icons, Prism files, tailwind.css) are packaged in the jar and served at `/static`; a CDN is optional via `STATIC_URL_PREFIX`
 - Kotest 6.2.5 for testing, Playwright for E2E tests in Chromium and WebKit (`PlaywrightTabsTest` runs in both because layout bugs can be engine-specific)
-- Gradle 9.8.0 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle-wrapper`, `jvm`) versions; parallel project execution and configuration cache enabled
-- Kover 0.9.9 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
+- Gradle 9.8.1 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle-wrapper`, `jvm`) versions; parallel project execution and configuration cache enabled
+- Kover 0.9.11 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
 - Detekt 2.0 alpha (`dev.detekt` plugin) for static analysis; Kotlinter for ktlint style
-- common-utils 5.0.0 (shared utility BOM from `com.github.pambrose`)
+- common-utils 5.1.0 (shared utility BOM from `com.github.pambrose`)
 - Prometheus Java client 1.x (`io.prometheus.metrics.*`) for application and JVM metrics, served on `:8083/metrics` by default. Record with `labelValues(...)` (the 0.x `labels(...)` is gone) and register collectors in `PrometheusRegistry.defaultRegistry` — that is the registry common-utils' `MetricsService` serves, so a collector in the old 0.x `CollectorRegistry` compiles and runs but is never scraped
 - Java 17 toolchain
 
@@ -88,6 +88,7 @@ Extensive use of Kotlin `@JvmInline value class` for type safety: LanguageName, 
 - Test: `make tests` or `./gradlew check`
 - Run: `make run` or `./gradlew run` (local runs, and `make uber`, write a heap dump to `build/` on OOM)
 - Lint: `make lint` (Kotlinter + detekt in one Gradle invocation)
+- Workflow audit: `make zizmor` runs zizmor over `.github/` (online audits when `GH_TOKEN` or the gh CLI provides a token); the `zizmor` workflow uploads the same findings to code scanning
 - Format: `./gradlew formatKotlinMain formatKotlinTest`
 - Coverage: `make coverage` (HTML), `./gradlew koverXmlReport` (CI/Codecov), `make coverage-verify` (thresholds), `make coverage-packages` (per-package breakdown via `scripts/coverage_packages.py`). Kover instruments every `Test` task and its agent holds every classloader it sees, so never measure memory under `./gradlew test` — script evaluation appears to leak ~1 MB per Kotlin eval there and does not in production
 - DB migrate: `make dbmigrate` (also `make dbinfo`, `make dbclean`, `make dbvalidate`)

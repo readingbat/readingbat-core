@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - List Makefile targets: `make help` (self-documenting index — every target with a `## description` annotation)
 
-Gradle 9.8.0 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
+Gradle 9.8.1 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
 catalog (`gradle/libs.versions.toml`) is the single source of truth for plugin, dependency, **and toolchain** versions —
 the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.versions.jvm`) and by the Makefile (the
 `upgrade-wrapper` target derives `GRADLE_VERSION` from the `gradle-wrapper` key in the catalog). Project version comes from `gradle.properties`
@@ -20,6 +20,9 @@ the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.ve
 - Format: `./gradlew formatKotlinMain formatKotlinTest`
 - Kotlinter enforces ktlint code style — run format before committing
 - Detekt static analysis via the `dev.detekt` 2.0 alpha plugin; config in `config/detekt/detekt.yml`, run standalone with `make detekt` or refresh the baseline with `make detekt-baseline`
+- **Workflows are audited by zizmor** — `make zizmor` locally, and `.github/workflows/zizmor.yml` in CI, which uploads
+  findings to code scanning instead of failing the job. Pin every `uses:` to a full commit SHA with the tag in a trailing
+  comment, give each job an explicit `permissions:` block, and set `persist-credentials: false` on `actions/checkout`.
 
 ### Kotlin Conventions
 

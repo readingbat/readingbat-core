@@ -1,6 +1,6 @@
 .PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
         coverage coverage-html coverage-xml coverage-log coverage-verify coverage-open coverage-packages coverage-clean \
-        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline depends versions kdocs check-site upgrade-site \
+        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline zizmor depends versions kdocs check-site upgrade-site \
         clean-docs site publish-local publish-local-snapshot publish-snapshot publish-maven-central upgrade-wrapper \
         _check-gpg-env _require-version _require-gradle-version
 
@@ -101,6 +101,12 @@ detekt: ## Run detekt static analysis
 
 detekt-baseline: ## Generate detekt baseline file
 	./gradlew detektBaseline
+
+# Online audits need a GitHub token, taken from GH_TOKEN or the gh CLI. zizmor rejects an empty token
+# outright, so GH_TOKEN is set only when one is found; otherwise zizmor runs its offline audits alone.
+zizmor: ## Audit GitHub Actions workflows with zizmor
+	@token="$${GH_TOKEN:-$$(gh auth token 2>/dev/null)}"; \
+	if [ -n "$$token" ]; then GH_TOKEN="$$token" uvx zizmor@latest .; else uvx zizmor@latest .; fi
 
 depends: ## Show project dependency tree
 	./gradlew dependencies
