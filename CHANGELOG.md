@@ -4,32 +4,9 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [3.5.0] - 2026-10-12
 
-### Added
-
-- **zizmor audits the GitHub Actions workflows.** `make zizmor` runs it locally (with online audits when `GH_TOKEN` or the gh CLI supplies a token), and a new `zizmor` workflow runs it on pushes, pull requests, and weekly — the schedule because online audits such as known-vulnerable-actions change with published advisories, not with this repo. Findings are uploaded to code scanning as SARIF, so they appear in the Security tab and as PR annotations without failing the job; a code scanning merge-protection ruleset can make them blocking
-- **Dependabot keeps the pinned action SHAs current.** A SHA never moves on its own, so `.github/dependabot.yml` bumps each pin together with its `# vX.Y.Z` comment: weekly, as one grouped PR, after a 7-day cooldown so a compromised or yanked release is likely caught before adoption (security updates skip the cooldown)
-
-### Security
-
-- **The existing workflows pass zizmor.** It found 27 issues across them; all are fixed. Every action is pinned to a full commit SHA with its tag in a trailing comment, each checked against the commit its tag resolves to. `actions/checkout` sets `persist-credentials: false`, so the job token is not left in `.git/config` for later steps. The Tests and Tailwind CSS workflows declare `permissions: contents: read` instead of inheriting the repository default
-- **CodeQL runs as code scanning's default setup.** The CodeQL workflow had been disabled by GitHub for inactivity since 2023 and still pinned `github/codeql-action@v2`, which is affected by GHSA-vqf5-2xx6-9wfm and has no patched release. It is deleted, and GitHub's default setup now analyzes Actions, Java/Kotlin, and Python on pushes, pull requests, and a weekly schedule — with no workflow file to keep current
-
-### Dependencies
-
-- Gradle 9.8.0 → 9.8.1
-- Kotlin 2.4.20 → 2.4.21
-- common-utils 5.0.0 → 5.1.1
-- Flyway 13.8.0 → 13.10.0
-- PostgreSQL driver 42.7.13 → 42.7.14
-- Resend 4.26.0 → 4.28.0
-- Kover 0.9.9 → 0.9.11, versions plugin 0.64.0 → 0.65.0
-- Website: zensical 0.0.65 → 0.0.68, MarkupSafe 3.0.3 → 3.0.4, tomli 2.4.1 → 2.5.0
-
-## [3.5.0] - 2026-09-27
-
-A monitoring and maintenance release. The server now exports JVM heap, GC, thread, and class-loading metrics, and reports at startup whether an `OutOfMemoryError` will leave a heap dump behind — until now the only memory signal it produced was the OOM itself, and afterwards there was nothing to explain it. Metrics also move to the Prometheus Java client 1.x, which common-utils 5 and prometheus-proxy 4.2 require.
+A monitoring and maintenance release. The server now exports JVM heap, GC, thread, and class-loading metrics, and reports at startup whether an `OutOfMemoryError` will leave a heap dump behind — until now the only memory signal it produced was the OOM itself, and afterwards there was nothing to explain it. Metrics also move to the Prometheus Java client 1.x, which common-utils 5 and prometheus-proxy 4.2 require. The CI workflows are hardened too: zizmor audits them, every action is pinned to a commit SHA that Dependabot keeps current, and CodeQL moves to code scanning's default setup.
 
 No configuration is required, though enabling heap dumps in production is recommended (see Added). The public `Metrics` properties are now Prometheus 1.x types, which is source-breaking for anything that records to them from outside the library: `labels(...)` becomes `labelValues(...)`.
 
@@ -38,6 +15,8 @@ No configuration is required, though enabling heap dumps in production is recomm
 - **JVM metrics.** `Metrics.init` registers the Prometheus JVM collectors, so heap, GC, thread, and class-loading state is scrapeable (on `:8083/metrics` by default) alongside the application metrics. Heap that fails to fall back after a GC is the symptom to alert on (`jvm_memory_used_bytes{area="heap"}`). `JvmMetricsTest` asserts the collectors are present in the registry that is actually served, not merely registered somewhere
 - **Heap-dump reporting at startup.** `ReadingBatServer` logs whether the JVM will write a heap dump on `OutOfMemoryError`, and warns when it will not. The flags are set by whoever launches the JVM, so the log line is the difference between setting an env var and knowing it took effect. Enable with `JAVA_TOOL_OPTIONS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<dir>"`, pointing at a volume that outlives the process — a container restart otherwise takes the dump with it
 - Local runs capture a heap dump on OOM: `./gradlew run` and `make uber` write it to `build/`
+- **zizmor audits the GitHub Actions workflows.** `make zizmor` runs it locally (with online audits when `GH_TOKEN` or the gh CLI supplies a token), and a new `zizmor` workflow runs it on pushes, pull requests, and weekly — the schedule because online audits such as known-vulnerable-actions change with published advisories, not with this repo. Findings are uploaded to code scanning as SARIF, so they appear in the Security tab and as PR annotations without failing the job; a code scanning merge-protection ruleset can make them blocking
+- **Dependabot keeps the pinned action SHAs current.** A SHA never moves on its own, so `.github/dependabot.yml` bumps each pin together with its `# vX.Y.Z` comment: weekly, as one grouped PR, after a 7-day cooldown so a compromised or yanked release is likely caught before adoption (security updates skip the cooldown)
 
 ### Changed
 
@@ -45,24 +24,37 @@ No configuration is required, though enabling heap dumps in production is recomm
 - JVM metrics carry their 1.x names — `jvm_memory_used_bytes` and `jvm_classes_currently_loaded`, not the 0.x `jvm_memory_bytes_used` and `jvm_classes_loaded` that most published dashboards and alert examples still use
 - The explicit `simpleclient` and `simpleclient_hotspot` dependencies are replaced by `prometheus-metrics-instrumentation-jvm`
 - `Challenge` passes file-system content paths relative to the source root. Since common-utils 4.x, `FileSystemSource.file(path)` resolves against `pathPrefix` itself, so the existing call — which prepended `pathPrefix` as well — doubled it on the upgrade. That is invisible for a `"./"` root and fatal for `"../"`, which is where the Python test content lives
-- Documentation: `CLAUDE.md` records the `FileSystemSource.file()` path contract and the Prometheus 1.x registry rule, and warns against measuring memory inside a test task — Kover's coverage agent holds a strong reference to every classloader it sees, so script evaluation appears to leak ~1 MB per Kotlin eval under `./gradlew test` and does not leak at all in production (#128). It also gains a Docs Site section on naming zensical extensions. `README.md` and the configuration docs cover `JAVA_TOOL_OPTIONS`; `README.md` and the server docs describe the JVM metrics, the startup heap-dump report, and local-run dumps to `build/`. `llms.txt` picks up the same facts and the new toolchain versions, and corrects the catalog key it names (`gradle` → `gradle-wrapper`)
+- `make versions` lists only the dependencies that are behind, any it could not check, and a pending Gradle update, in place of the versions plugin's full report, which listed every up-to-date dependency first. `make versions-all` still prints that full report. Both now run the root project's `dependencyUpdates` alone: it already checks every module's configurations, and the unqualified task printed the same report three times, once per project
+- Documentation: `CLAUDE.md` records the `FileSystemSource.file()` path contract and the Prometheus 1.x registry rule, and warns against measuring memory inside a test task — Kover's coverage agent holds a strong reference to every classloader it sees, so script evaluation appears to leak ~1 MB per Kotlin eval under `./gradlew test` and does not leak at all in production (#128). It also gains a Docs Site section on naming zensical extensions. `README.md` and the configuration docs cover `JAVA_TOOL_OPTIONS`; `README.md` and the server docs describe the JVM metrics, the startup heap-dump report, and local-run dumps to `build/`, and the feature lists in `README.md` and on the docs home page now include monitoring. `llms.txt` picks up the same facts and the new toolchain versions, and corrects the catalog key it names (`gradle` → `gradle-wrapper`). `CLAUDE.md` and `llms.txt` also describe the zizmor audit, the Dependabot-maintained pins, why CodeQL must stay a repository setting rather than a workflow, and the `make versions` / `make versions-all` targets, which `README.md` lists alongside `make zizmor`.
+- `README.md` badges: the docs build, CodeQL, and zizmor join Tests and Tailwind CSS, and a License badge is added. Kotlin, JVM, Ktor, and Gradle badges replace the unversioned `language-Kotlin` one and read their versions from `gradle/libs.versions.toml` on master, so they cannot fall behind the catalog. The static docs-link badge becomes the docs workflow badge, which still links to the site
 - Bumped version to 3.5.0
 
 ### Fixed
 
 - The KDoc on `Endpoints.STATIC_PATH` linked `[staticResources]`, which Dokka could not resolve; it now links `staticAssetRoutes`, the function that actually mounts the tree
 - The docs site did not build from the project's own environment (`uv run zensical build` failed with `No module named 'material'`). `zensical.toml` named the emoji extension by its Material for MkDocs path, and zensical only remaps `material.extensions` for YAML configs, not TOML — CI passed only because its workflow also installed `mkdocs-material`. The config now names `zensical.extensions.emoji` directly, and the docs workflow installs zensical alone
+- The server docs told readers to run `make cc` for a continuous build, a target removed in 3.1.5. They now give the command it ran, `./gradlew build --continuous -x test`
+
+### Security
+
+- **The existing workflows pass zizmor.** It found 27 issues across them; all are fixed. Every action is pinned to a full commit SHA with its tag in a trailing comment, each checked against the commit its tag resolves to. `actions/checkout` sets `persist-credentials: false`, so the job token is not left in `.git/config` for later steps. The Tests and Tailwind CSS workflows declare `permissions: contents: read` instead of inheriting the repository default
+- **CodeQL runs as code scanning's default setup.** The CodeQL workflow had been disabled by GitHub for inactivity since 2023 and still pinned `github/codeql-action@v2`, which is affected by GHSA-vqf5-2xx6-9wfm and has no patched release. It is deleted, and GitHub's default setup now analyzes Actions, Java/Kotlin, and Python on pushes, pull requests, and a weekly schedule — with no workflow file to keep current
 
 ### Dependencies
 
-- Gradle 9.7.1 → 9.8.0
-- Kotlin 2.4.10 → 2.4.20
-- common-utils 3.2.2 → 5.0.0
-- prometheus-proxy 4.0.1 → 4.2.0
+- Gradle 9.7.1 → 9.8.1
+- Kotlin 2.4.10 → 2.4.21
+- common-utils 3.2.2 → 5.1.1
+- prometheus-proxy 4.0.1 → 4.3.0
 - Prometheus Java client 0.16.0 → 1.9.0 (`io.prometheus:simpleclient*` → `io.prometheus:prometheus-metrics-*`)
-- Flyway 13.7.0 → 13.8.0
-- kotlinter 5.6.0 → 5.7.0, buildconfig 6.1.1 → 6.1.2
-- Website: zensical 0.0.63 → 0.0.65, pymdown-extensions 12.0.1 → 12.1, Markdown 3.10.3 → 3.11
+- Exposed 1.5.0 → 1.5.1
+- Flyway 13.7.0 → 13.10.0
+- PostgreSQL driver 42.7.13 → 42.7.14
+- Resend 4.26.0 → 4.28.0
+- Cloud SQL socket factory 1.30.0 → 1.30.1
+- Kover 0.9.9 → 0.9.11, kotlinter 5.6.0 → 5.7.0, buildconfig 6.1.1 → 6.1.2, versions plugin 0.64.0 → 0.66.0
+- GitHub Actions (now pinned to commit SHAs): checkout v4/v6 → v7.0.1, setup-java v4/v5 → v6.0.1, setup-gradle v4/v6 → v6.4.0, setup-python v6 → v7.0.0, upload-pages-artifact v4 → v5.0.0, codecov-action v5 → v7.1.1
+- Website: zensical 0.0.63 → 0.0.70, pymdown-extensions 12.0.1 → 12.2, Markdown 3.10.3 → 3.11, MarkupSafe 3.0.3 → 3.0.4, tomli 2.4.1 → 2.5.0
 
 ## [3.4.0] - 2026-09-21
 

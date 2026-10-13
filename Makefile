@@ -1,6 +1,6 @@
 .PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
         coverage coverage-html coverage-xml coverage-log coverage-verify coverage-open coverage-packages coverage-clean \
-        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline zizmor depends versions kdocs check-site upgrade-site \
+        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline zizmor depends versions versions-all kdocs check-site upgrade-site \
         clean-docs site publish-local publish-local-snapshot publish-snapshot publish-maven-central upgrade-wrapper \
         _check-gpg-env _require-version _require-gradle-version
 
@@ -111,8 +111,13 @@ zizmor: ## Audit GitHub Actions workflows with zizmor
 depends: ## Show project dependency tree
 	./gradlew dependencies
 
-versions: ## Report available dependency updates
-	./gradlew dependencyUpdates --no-configuration-cache --no-parallel
+# The root project's dependencyUpdates already checks every module's configurations. Each module has the task
+# too, so an unqualified `dependencyUpdates` printed the same report once per project.
+versions: ## List the dependencies with newer versions, and any that could not be checked
+	./gradlew :dependencyUpdates --no-configuration-cache --no-parallel
+
+versions-all: ## The plugin's full dependency report, up-to-date dependencies included
+	./gradlew :dependencyUpdates --no-configuration-cache --no-parallel --output-formatter=plain
 
 kdocs: ## Generate Dokka HTML documentation
 	./gradlew dokkaGeneratePublicationHtml

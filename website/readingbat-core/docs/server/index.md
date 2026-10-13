@@ -162,8 +162,8 @@ warns when it will not. Enable dumps with `JAVA_TOOL_OPTIONS` (see
 # Via Make
 make run
 
-# With continuous build (excludes tests)
-make cc
+# Continuous build (excludes tests)
+./gradlew build --continuous -x test
 ```
 
 The server reads its configuration from `application.conf` specified via the

@@ -7,12 +7,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Build and Test
 
 - List Makefile targets: `make help` (self-documenting index — every target with a `## description` annotation)
+- Dependency updates: `make versions` lists only what is behind (plus anything it could not check, and a pending Gradle
+  update); `make versions-all` prints the versions plugin's full report. Both run the root `:dependencyUpdates`, which
+  already checks every module — the unqualified `dependencyUpdates` prints the same report once per project.
 
 Gradle 9.8.1 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
 catalog (`gradle/libs.versions.toml`) is the single source of truth for plugin, dependency, **and toolchain** versions —
 the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.versions.jvm`) and by the Makefile (the
-`upgrade-wrapper` target derives `GRADLE_VERSION` from the `gradle-wrapper` key in the catalog). Project version comes from `gradle.properties`
-(`-PoverrideVersion=...` overrides on the CLI).
+`upgrade-wrapper` target derives `GRADLE_VERSION` from the `gradle-wrapper` key in the catalog). The README's version
+badges read the `kotlin`, `jvm`, `ktor`, and `gradle-wrapper` keys from master, so renaming one breaks its badge. Project
+version comes from `gradle.properties` (`-PoverrideVersion=...` overrides on the CLI).
 
 ### Code Quality
 
@@ -188,6 +192,6 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
   to the source root. Prepending `pathPrefix` as well doubles it — which is invisible for a `"./"` root and fatal for
   `"../"` (the Python test content), so a call site can be wrong for months before one language's content breaks.
 - **Metrics use the Prometheus Java client 1.x** (`io.prometheus.metrics.*`, via common-utils 5 and prometheus-proxy
-  4.2): `labelValues(...)`, not `labels(...)`. Register collectors in `PrometheusRegistry.defaultRegistry`, which is
+  4.2+): `labelValues(...)`, not `labels(...)`. Register collectors in `PrometheusRegistry.defaultRegistry`, which is
   what common-utils' `MetricsService` serves on `:8083/metrics` — anything registered with the old 0.x
   `CollectorRegistry` compiles and runs but is never scraped.
