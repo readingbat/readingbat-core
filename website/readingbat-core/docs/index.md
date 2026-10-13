@@ -17,6 +17,7 @@ real-time feedback via WebSockets.
 - **Real-time feedback** -- WebSocket-powered answer checking and progress tracking
 - **Class management** -- Teachers can create classes and monitor student progress
 - **Flexible configuration** -- HOCON properties with environment variable overrides
+- **Built-in monitoring** -- Prometheus application and JVM metrics, and a startup check that an out-of-memory error will leave a heap dump behind
 
 ## Quick Start
 

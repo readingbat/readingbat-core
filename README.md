@@ -31,6 +31,7 @@ A Kotlin-based framework for creating interactive programming challenges and edu
 - **Self-Contained Deployment**: Images, icons, and syntax-highlighting assets ship inside the jar and are served by the app — a CDN is optional, not required
 - **Accessible by Default**: Answer results are announced via live regions and labeled with text, never signalled by color alone; controls carry accessible names and text meets WCAG 2.1 AA contrast
 - **Scalable Architecture**: Multi-server deployment ready with database persistence
+- **Observable**: Prometheus application and JVM metrics, and a startup check that an out-of-memory error will leave a heap dump behind
 
 ## 🏗️ Architecture
 
