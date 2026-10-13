@@ -23,6 +23,11 @@ github-api = "1.330"
 hikari = "7.1.0"
 java-scriptengine = "2.0.0"
 khealth = "3.0.1"
+# The JSR-223 engine that evaluates Kotlin content and challenges, held back from kotlin: from 2.4.20
+# on, every script state keeps its compiler environment (~27 MB) reachable, and the script pools start
+# a new state for every evaluation. Strict, so the version is published and it overrides the 2.4.21 that
+# common-utils' script-utils-kotlin asks for; lift it once a Kotlin release releases the state.
+kotlin-scripting = { strictly = "2.4.10" }
 kotest = "6.2.5"
 ktor = "3.6.0"
 logback = "1.5.38"
@@ -63,7 +68,7 @@ prometheus-jvm-metrics = { module = "io.prometheus:prometheus-metrics-instrument
 # Script Engines
 java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java-scriptengine" }
 python-scripting = { module = "org.python:jython-standalone", version.ref = "python" }
-kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
+kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin-scripting" }
 
 # Ktor
 ktor-calllogging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }
