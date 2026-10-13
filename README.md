@@ -4,10 +4,16 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.readingbat/readingbat-core?logo=apachemaven)](https://central.sonatype.com/artifact/com.readingbat/readingbat-core)
 [![Tests](https://github.com/readingbat/readingbat-core/actions/workflows/test.yml/badge.svg)](https://github.com/readingbat/readingbat-core/actions/workflows/test.yml)
 [![Tailwind CSS](https://github.com/readingbat/readingbat-core/actions/workflows/tailwind-css.yml/badge.svg)](https://github.com/readingbat/readingbat-core/actions/workflows/tailwind-css.yml)
+[![Docs](https://github.com/readingbat/readingbat-core/actions/workflows/docs.yml/badge.svg)](https://readingbat.github.io/readingbat-core/)
+[![CodeQL](https://github.com/readingbat/readingbat-core/actions/workflows/github-code-scanning/codeql/badge.svg)](https://github.com/readingbat/readingbat-core/actions/workflows/github-code-scanning/codeql)
+[![zizmor](https://github.com/readingbat/readingbat-core/actions/workflows/zizmor.yml/badge.svg)](https://github.com/readingbat/readingbat-core/actions/workflows/zizmor.yml)
 [![codecov](https://codecov.io/gh/readingbat/readingbat-core/branch/master/graph/badge.svg)](https://codecov.io/gh/readingbat/readingbat-core)
-[![Kotlin](https://img.shields.io/badge/%20language-Kotlin-red.svg)](https://kotlinlang.org/)
+[![Kotlin](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Freadingbat%2Freadingbat-core%2Fmaster%2Fgradle%2Flibs.versions.toml&query=%24.versions.kotlin&label=Kotlin&color=7F52FF&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
+[![JVM](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Freadingbat%2Freadingbat-core%2Fmaster%2Fgradle%2Flibs.versions.toml&query=%24.versions.jvm&label=JVM&color=ED8B00&logo=openjdk&logoColor=white)](https://adoptium.net/)
+[![Ktor](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Freadingbat%2Freadingbat-core%2Fmaster%2Fgradle%2Flibs.versions.toml&query=%24.versions.ktor&label=Ktor&color=087CFA&logo=ktor&logoColor=white)](https://ktor.io/)
+[![Gradle](https://img.shields.io/badge/dynamic/toml?url=https%3A%2F%2Fraw.githubusercontent.com%2Freadingbat%2Freadingbat-core%2Fmaster%2Fgradle%2Flibs.versions.toml&query=%24.versions%5B%22gradle-wrapper%22%5D&label=Gradle&color=02303A&logo=gradle&logoColor=white)](https://gradle.org/)
 [![ktlint](https://img.shields.io/badge/ktlint%20code--style-%E2%9D%A4-FF4081)](https://pinterest.github.io/ktlint/)
-[![Docs](https://img.shields.io/badge/docs-readingbat.github.io-blue)](https://readingbat.github.io/readingbat-core/)
+[![License](https://img.shields.io/github/license/readingbat/readingbat-core)](LICENSE)
 
 A Kotlin-based framework for creating interactive programming challenges and educational content, powering the
 [ReadingBat](https://readingbat.com) platform for teaching Java, Kotlin, and Python programming concepts.
@@ -133,6 +139,8 @@ make build              # Build project (skip tests)
 make tests              # Run unit tests
 make lint               # Kotlinter (ktlint) + detekt static analysis
 make zizmor             # Audit GitHub Actions workflows with zizmor
+make versions           # List the dependencies with newer versions, and any that could not be checked
+make versions-all       # The full dependency report, up-to-date dependencies included
 make coverage           # Generate Kover HTML coverage report
 make coverage-verify    # Enforce coverage thresholds via Kover
 make coverage-packages  # Per-package coverage breakdown from the XML report

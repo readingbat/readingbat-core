@@ -1,8 +1,8 @@
 # Release Notes
 
-## v3.5.0 — 2026-09-27
+## v3.5.0 — 2026-10-12
 
-A monitoring and maintenance release. Until now the only memory signal the server produced was the OOM itself, and afterwards there was nothing left to explain it. It now exports JVM metrics and says at startup whether an OOM will leave a heap dump behind. No configuration is required, though enabling heap dumps in production is recommended. The public `Metrics` properties are now Prometheus 1.x types, which is source-breaking for anything that records to them from outside the library (`labels(...)` → `labelValues(...)`).
+A monitoring and maintenance release. Until now the only memory signal the server produced was the OOM itself, and afterwards there was nothing left to explain it. It now exports JVM metrics and says at startup whether an OOM will leave a heap dump behind. The CI workflows are hardened too: audited by zizmor, pinned to commit SHAs that Dependabot keeps current, and scanned by CodeQL's default setup. No configuration is required, though enabling heap dumps in production is recommended. The public `Metrics` properties are now Prometheus 1.x types, which is source-breaking for anything that records to them from outside the library (`labels(...)` → `labelValues(...)`).
 
 ### Highlights
 
@@ -10,10 +10,11 @@ A monitoring and maintenance release. Until now the only memory signal the serve
 - **Startup reports whether an OOM will be diagnosable.** The server logs whether the JVM will write a heap dump on `OutOfMemoryError`, and warns when it will not. The flags belong to whoever launches the JVM, so the log line is the difference between setting an env var and knowing it took effect. Enable with `JAVA_TOOL_OPTIONS="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<dir>"`, on a volume that outlives the process. Local runs (`./gradlew run`, `make uber`) now dump to `build/`.
 - **Metrics move to the Prometheus Java client 1.x.** common-utils 5 and prometheus-proxy 4.2 require it, and the metrics endpoint now serves the 1.x `PrometheusRegistry` — so anything registered in the old 0.x `CollectorRegistry` compiles, runs, and is never scraped. The JVM collectors would have gone silently missing that way; `JvmMetricsTest` now checks them against the registry that is actually served. JVM metrics carry their 1.x names (`jvm_memory_used_bytes`, `jvm_classes_currently_loaded`), not the 0.x names most published dashboards still use.
 - **The apparent Kotlin eval leak was the test harness.** Under `./gradlew test`, heap climbed about 1 MB per Kotlin script eval. A GC-root trace showed Kover's coverage agent holding every classloader it sees; production and `./gradlew run` do not leak (#128). `CLAUDE.md` now warns against measuring memory inside a test task.
+- **The CI workflows are audited and pinned.** zizmor now audits every workflow, locally with `make zizmor` and in CI, where its findings land in code scanning. The 27 issues it found are fixed: every action is pinned to a full commit SHA, checkouts no longer leave the job token in `.git/config`, and each workflow declares its own permissions. Dependabot bumps the pins weekly, as one grouped PR after a 7-day cooldown. CodeQL moves to code scanning's default setup, replacing a workflow that GitHub had disabled since 2023 and that pinned a `codeql-action` release with an unpatched advisory.
 
 ### Dependencies
 
-Gradle 9.7.1 → 9.8.0 · Kotlin 2.4.10 → 2.4.20 · common-utils 3.2.2 → 5.0.0 · prometheus-proxy 4.0.1 → 4.2.0 · Prometheus Java client 0.16.0 → 1.9.0 · Flyway 13.7.0 → 13.8.0 · kotlinter 5.6.0 → 5.7.0 · buildconfig 6.1.1 → 6.1.2 · zensical 0.0.63 → 0.0.65
+Gradle 9.7.1 → 9.8.1 · Kotlin 2.4.10 → 2.4.21 · common-utils 3.2.2 → 5.1.1 · prometheus-proxy 4.0.1 → 4.3.0 · Prometheus Java client 0.16.0 → 1.9.0 · Exposed 1.5.0 → 1.5.1 · Flyway 13.7.0 → 13.10.0 · PostgreSQL driver 42.7.13 → 42.7.14 · Resend 4.26.0 → 4.28.0 · Cloud SQL socket factory 1.30.0 → 1.30.1 · Kover 0.9.9 → 0.9.11 · kotlinter 5.6.0 → 5.7.0 · buildconfig 6.1.1 → 6.1.2 · versions plugin 0.64.0 → 0.66.0 · zensical 0.0.63 → 0.0.70
 
 **Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.4.0...3.5.0
 

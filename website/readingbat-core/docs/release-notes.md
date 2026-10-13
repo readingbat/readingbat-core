@@ -6,9 +6,9 @@ icon: lucide/tag
 
 For the complete, commit-level history see [`CHANGELOG.md`](https://github.com/readingbat/readingbat-core/blob/master/CHANGELOG.md) in the repository.
 
-## v3.5.0 — 2026-09-27
+## v3.5.0 — 2026-10-12
 
-Monitoring and maintenance release. Until now the only memory signal the server produced was the OOM itself, and afterwards there was nothing left to explain it. It now exports JVM metrics and says at startup whether an OOM will leave a heap dump behind. No configuration required, though enabling heap dumps in production is recommended. The public `Metrics` properties are now Prometheus 1.x types, which is source-breaking for anything that records to them from outside the library (`labels(...)` → `labelValues(...)`).
+Monitoring and maintenance release. Until now the only memory signal the server produced was the OOM itself, and afterwards there was nothing left to explain it. It now exports JVM metrics and says at startup whether an OOM will leave a heap dump behind. The CI workflows are hardened too: audited by zizmor, pinned to commit SHAs that Dependabot keeps current, and scanned by CodeQL's default setup. No configuration required, though enabling heap dumps in production is recommended. The public `Metrics` properties are now Prometheus 1.x types, which is source-breaking for anything that records to them from outside the library (`labels(...)` → `labelValues(...)`).
 
 ### Monitoring
 
@@ -22,9 +22,14 @@ Monitoring and maintenance release. Until now the only memory signal the server 
 - **The apparent Kotlin eval leak was the test harness** — under `./gradlew test`, heap climbed about 1 MB per Kotlin script eval because Kover's coverage agent holds every classloader it sees. Production and `./gradlew run` do not leak (#128).
 - **The docs site builds with zensical alone** — `zensical.toml` named the emoji extension by its Material for MkDocs path, which zensical remaps only in YAML configs, so a local `uv run zensical build` failed with `No module named 'material'`. CI had masked it by also installing `mkdocs-material`; the config now names `zensical.extensions.emoji`, and the workflow installs zensical alone.
 
+### CI and tooling
+
+- **The CI workflows are audited and pinned** — zizmor now audits every workflow, locally with `make zizmor` and in CI, where its findings land in code scanning. The 27 issues it found are fixed: every action is pinned to a full commit SHA, checkouts no longer leave the job token in `.git/config`, and each workflow declares its own permissions. Dependabot bumps the pins weekly, as one grouped PR after a 7-day cooldown. CodeQL moves to code scanning's default setup, replacing a workflow that GitHub had disabled since 2023 and that pinned a `codeql-action` release with an unpatched advisory.
+- **`make versions` shows only what is behind** — the dependencies with newer versions and any it could not check, where it used to list every up-to-date dependency first; `make versions-all` still prints that full report. Both run the root project's check alone, which already covers every module, so the report no longer prints three times.
+
 ### Dependencies
 
-Gradle 9.7.1 → 9.8.0 · Kotlin 2.4.10 → 2.4.20 · common-utils 3.2.2 → 5.0.0 · prometheus-proxy 4.0.1 → 4.2.0 · Prometheus Java client 0.16.0 → 1.9.0 · Flyway 13.7.0 → 13.8.0 · kotlinter 5.6.0 → 5.7.0 · buildconfig 6.1.1 → 6.1.2 · zensical 0.0.63 → 0.0.65
+Gradle 9.7.1 → 9.8.1 · Kotlin 2.4.10 → 2.4.21 · common-utils 3.2.2 → 5.1.1 · prometheus-proxy 4.0.1 → 4.3.0 · Prometheus Java client 0.16.0 → 1.9.0 · Exposed 1.5.0 → 1.5.1 · Flyway 13.7.0 → 13.10.0 · PostgreSQL driver 42.7.13 → 42.7.14 · Resend 4.26.0 → 4.28.0 · Cloud SQL socket factory 1.30.0 → 1.30.1 · Kover 0.9.9 → 0.9.11 · kotlinter 5.6.0 → 5.7.0 · buildconfig 6.1.1 → 6.1.2 · versions plugin 0.64.0 → 0.66.0 · zensical 0.0.63 → 0.0.70
 
 [Full changelog: 3.4.0…3.5.0](https://github.com/readingbat/readingbat-core/compare/3.4.0...3.5.0)
 
