@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`make ci` runs the GitHub CI checks locally**, in the order a failure would surface: `ci-css` regenerates the Tailwind CSS and fails if it differs from git (`tailwind-css.yml`; skipped off macOS arm64, where `bin/tailwindcss-v4` cannot run), `ci-build` runs `./gradlew build koverXmlReport` (`test.yml`), `zizmor` audits the workflows (`zizmor.yml`), and `ci-docs` builds the KDocs and the docs site without deploying (`docs.yml`, which otherwise only runs after a merge to master). `make -k ci` keeps going past a failure. The Codecov upload, the Pages deploy, and the checks GitHub runs as apps or repository settings cannot run locally
+
+### Changed
+
+- **Testcontainers moves to 2.x.** 2.x publishes PostgreSQL support as `org.testcontainers:testcontainers-postgresql`; the old `org.testcontainers:postgresql` module stops at 1.21.4, and neither Dependabot nor `make versions` offers a move to a renamed module, so the dependency had been silently stuck there. `TestDatabase` uses the new non-generic `org.testcontainers.postgresql.PostgreSQLContainer`; the `org.testcontainers.containers` class it replaces is deprecated in 2.x
+- The test task no longer pins the Docker API version (`DOCKER_API_VERSION` and `-Dapi.version`, both 1.44). Testcontainers pings Docker at API 1.44 whenever no version is configured, so the pin only restated the default
+- The test task no longer disables Ryuk, Testcontainers' cleanup container, so the PostgreSQL container is removed even when the test JVM is killed. Ryuk was disabled because it could not mount Docker Desktop's raw engine socket, which the old macOS setup routed Testcontainers through; Docker Desktop's regular socket works with both Testcontainers and Ryuk
+- `docs/TEST_CONTAINERS_DOCKER_SETUP.md` is rewritten for a setup that needs no steps. It drops the raw-socket symlink, the `~/.testcontainers.properties` entries, the IntelliJ settings, and the API version pin, explains what a "client version 1.32 is too old" error actually means, and tells anyone who followed the old steps which settings to remove
+- The CI test workflow no longer starts a PostgreSQL service container or passes `DBMS_URL`, `DBMS_USERNAME`, and `DBMS_PASSWORD` to the build. Nothing used them: the only reader of those variables is the connection pool that `Application.module()` creates, no test calls `Application.module()`, and the database tests start their own container through `TestDatabase`. The full suite passes with `DBMS_URL` pointed at a port nothing listens on
+- The test container runs PostgreSQL 17 (`postgres:17-alpine`), up from 16
+
 ### Fixed
 
 - **Kotlin script evaluation no longer exhausts the heap.** 3.5.0 moved the `kotlin-scripting-jsr223` runtime dependency to Kotlin 2.4.21, whose JSR-223 engine (rebuilt on the K2 REPL in 2.4.20) keeps every script state's compiler environment reachable — about 27 MB each, measured in a plain `JavaExec` with no coverage agent, so this is not the Kover artifact behind #128. The script pools start a new state for every evaluation, so heap grew with each Kotlin challenge a server computed, and `readingbat-java-content`'s `ContentTests` ran out of a 2 GB heap partway through its Kotlin sweep. 2.4.10 holds the same workload flat. The dependency now declares `strictly 2.4.10` (the new `kotlin-scripting` catalog version), which is published, so it also overrides the 2.4.21 that common-utils' `script-utils-kotlin` asks for, and consumers get it with no pin of their own. The project itself still builds with Kotlin 2.4.21. Lift the pin once a Kotlin release frees the state
@@ -19,6 +32,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - kotlinx-serialization 1.11.0 → 1.12.0
 - Resend 4.28.0 → 4.29.0
 - Kotest 6.2.5 → 6.2.6, Playwright 1.63.0 → 1.64.0
+- Testcontainers 1.21.4 → 2.0.5 (`org.testcontainers:postgresql` → `org.testcontainers:testcontainers-postgresql`)
 - Website: zensical 0.0.70 → 0.0.71, pymdown-extensions 12.2 → 12.3, Markdown 3.11 → 3.11.2
 
 ## [3.5.0] - 2026-10-12

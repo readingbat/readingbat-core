@@ -20,11 +20,11 @@ package com.readingbat.kotest
 import com.readingbat.common.Property
 import org.flywaydb.core.Flyway
 import org.jetbrains.exposed.v1.jdbc.Database
-import org.testcontainers.containers.PostgreSQLContainer
+import org.testcontainers.postgresql.PostgreSQLContainer
 
 object TestDatabase {
-  private val container: PostgreSQLContainer<*> by lazy {
-    PostgreSQLContainer("postgres:16-alpine")
+  private val container: PostgreSQLContainer by lazy {
+    PostgreSQLContainer("postgres:17-alpine")
       .withDatabaseName("readingbat_test")
       .withUsername("test")
       .withPassword("test")
