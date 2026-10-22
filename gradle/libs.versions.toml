@@ -1,6 +1,6 @@
 [versions]
 # Toolchain versions
-gradle-wrapper = "9.8.1"
+gradle-wrapper = "9.8.2"
 jvm = "17"
 
 # Plugin versions
@@ -16,25 +16,30 @@ versions = "0.66.0"
 # Library versions
 cloud = "1.30.1"
 commons = "1.15.0"
-exposed = "1.5.1"
+exposed = "1.6.0"
 flexmark = "0.64.8"
-flyway = "13.10.0"
+flyway = "13.11.1"
 github-api = "1.330"
 hikari = "7.1.0"
 java-scriptengine = "2.0.0"
 khealth = "3.0.1"
-kotest = "6.2.5"
+# The JSR-223 engine that evaluates Kotlin content and challenges, held back from kotlin: from 2.4.20
+# on, every script state keeps its compiler environment (~27 MB) reachable, and the script pools start
+# a new state for every evaluation. Strict, so the version is published and it overrides the 2.4.21 that
+# common-utils' script-utils-kotlin asks for; lift it once a Kotlin release releases the state.
+kotlin-scripting = { strictly = "2.4.10" }
+kotest = "6.2.6"
 ktor = "3.6.0"
 logback = "1.5.38"
 logging = "7.0.12"
 pgjdbc = "0.8.9"
-playwright = "1.63.0"
+playwright = "1.64.0"
 postgres = "42.7.14"
-prometheus = "1.9.0"
+prometheus = "1.10.0"
 prometheus-proxy = "4.3.0"
 python = "2.7.4"
-resend = "4.28.0"
-serialization = "1.11.0"
+resend = "4.29.0"
+serialization = "1.12.0"
 testcontainers = "1.21.4"
 utils = "5.1.1"
 
@@ -63,7 +68,7 @@ prometheus-jvm-metrics = { module = "io.prometheus:prometheus-metrics-instrument
 # Script Engines
 java-scripting = { module = "ch.obermuhlner:java-scriptengine", version.ref = "java-scriptengine" }
 python-scripting = { module = "org.python:jython-standalone", version.ref = "python" }
-kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin" }
+kotlin-scripting = { module = "org.jetbrains.kotlin:kotlin-scripting-jsr223", version.ref = "kotlin-scripting" }
 
 # Ktor
 ktor-calllogging = { module = "io.ktor:ktor-server-call-logging", version.ref = "ktor" }

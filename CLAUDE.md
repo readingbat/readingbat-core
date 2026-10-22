@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
   update); `make versions-all` prints the versions plugin's full report. Both run the root `:dependencyUpdates`, which
   already checks every module — the unqualified `dependencyUpdates` prints the same report once per project.
 
-Gradle 9.8.1 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
+Gradle 9.8.2 with `org.gradle.parallel=true` and `org.gradle.configuration-cache=true` enabled by default. The version
 catalog (`gradle/libs.versions.toml`) is the single source of truth for plugin, dependency, **and toolchain** versions —
 the `gradle-wrapper` and `jvm` keys are read by `build.gradle.kts` (via `libs.versions.jvm`) and by the Makefile (the
 `upgrade-wrapper` target derives `GRADLE_VERSION` from the `gradle-wrapper` key in the catalog). The README's version
