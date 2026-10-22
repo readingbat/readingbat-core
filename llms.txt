@@ -10,7 +10,7 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 - Kotlinx.html for server-side HTML generation (no templates)
 - Static assets (images, icons, Prism files, tailwind.css) are packaged in the jar and served at `/static`; a CDN is optional via `STATIC_URL_PREFIX`
 - Kotest 6.2.5 for testing, Playwright for E2E tests in Chromium and WebKit (`PlaywrightTabsTest` runs in both because layout bugs can be engine-specific)
-- Gradle 9.8.1 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle-wrapper`, `jvm`) versions; parallel project execution and configuration cache enabled
+- Gradle 9.8.2 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle-wrapper`, `jvm`) versions; parallel project execution and configuration cache enabled
 - Kover 0.9.11 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
 - Detekt 2.0 alpha (`dev.detekt` plugin) for static analysis; Kotlinter for ktlint style
 - common-utils 5.1.1 (shared utility BOM from `com.github.pambrose`)

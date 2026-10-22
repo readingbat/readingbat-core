@@ -10,6 +10,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - **Kotlin script evaluation no longer exhausts the heap.** 3.5.0 moved the `kotlin-scripting-jsr223` runtime dependency to Kotlin 2.4.21, whose JSR-223 engine (rebuilt on the K2 REPL in 2.4.20) keeps every script state's compiler environment reachable — about 27 MB each, measured in a plain `JavaExec` with no coverage agent, so this is not the Kover artifact behind #128. The script pools start a new state for every evaluation, so heap grew with each Kotlin challenge a server computed, and `readingbat-java-content`'s `ContentTests` ran out of a 2 GB heap partway through its Kotlin sweep. 2.4.10 holds the same workload flat. The dependency now declares `strictly 2.4.10` (the new `kotlin-scripting` catalog version), which is published, so it also overrides the 2.4.21 that common-utils' `script-utils-kotlin` asks for, and consumers get it with no pin of their own. The project itself still builds with Kotlin 2.4.21. Lift the pin once a Kotlin release frees the state
 
+### Dependencies
+
+- Gradle 9.8.1 → 9.8.2
+- Exposed 1.5.1 → 1.6.0
+- Flyway 13.10.0 → 13.11.1
+- Prometheus Java client 1.9.0 → 1.10.0
+- kotlinx-serialization 1.11.0 → 1.12.0
+- Resend 4.28.0 → 4.29.0
+- Kotest 6.2.5 → 6.2.6, Playwright 1.63.0 → 1.64.0
+- Website: zensical 0.0.70 → 0.0.71, pymdown-extensions 12.2 → 12.3, Markdown 3.11 → 3.11.2
+
 ## [3.5.0] - 2026-10-12
 
 A monitoring and maintenance release. The server now exports JVM heap, GC, thread, and class-loading metrics, and reports at startup whether an `OutOfMemoryError` will leave a heap dump behind — until now the only memory signal it produced was the OOM itself, and afterwards there was nothing to explain it. Metrics also move to the Prometheus Java client 1.x, which common-utils 5 and prometheus-proxy 4.2 require. The CI workflows are hardened too: zizmor audits them, every action is pinned to a commit SHA that Dependabot keeps current, and CodeQL moves to code scanning's default setup.
