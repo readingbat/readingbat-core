@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added
+
+- **`make ci` runs the GitHub CI checks locally**, in the order a failure would surface: `ci-css` regenerates the Tailwind CSS and fails if it differs from git (`tailwind-css.yml`; skipped off macOS arm64, where `bin/tailwindcss-v4` cannot run), `ci-build` runs `./gradlew build koverXmlReport` (`test.yml`), `zizmor` audits the workflows (`zizmor.yml`), and `ci-docs` builds the KDocs and the docs site without deploying (`docs.yml`, which otherwise only runs after a merge to master). `make -k ci` keeps going past a failure. The Codecov upload, the Pages deploy, and the checks GitHub runs as apps or repository settings cannot run locally
+
 ### Changed
 
 - **Testcontainers moves to 2.x.** 2.x publishes PostgreSQL support as `org.testcontainers:testcontainers-postgresql`; the old `org.testcontainers:postgresql` module stops at 1.21.4, and neither Dependabot nor `make versions` offers a move to a renamed module, so the dependency had been silently stuck there. `TestDatabase` uses the new non-generic `org.testcontainers.postgresql.PostgreSQLContainer`; the `org.testcontainers.containers` class it replaces is deprecated in 2.x

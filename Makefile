@@ -1,4 +1,4 @@
-.PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests remote-tests \
+.PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests ci ci-css ci-build ci-docs remote-tests \
         coverage coverage-html coverage-xml coverage-log coverage-verify coverage-open coverage-packages coverage-clean \
         dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline zizmor depends versions versions-all kdocs check-site upgrade-site \
         clean-docs site publish-local publish-local-snapshot publish-snapshot publish-maven-central upgrade-wrapper \
@@ -53,6 +53,32 @@ run: ## Run the application
 
 tests: ## Run all tests
 	./gradlew check
+
+# ci runs what the GitHub workflows run, in the order a failure would surface; `make -k ci` keeps going past a
+# failure. Not reproducible locally: the Codecov upload, the Pages deploy, and the checks GitHub runs as apps or
+# repository settings (CodeQL default setup, Codacy, GitGuardian).
+ci: ci-css ci-build zizmor ci-docs ## Run the GitHub CI checks locally: CSS freshness, build and tests, zizmor, docs
+
+# Like tailwind-css.yml, this compares the regenerated stylesheet with git, so one that is regenerated but not yet
+# staged or committed fails. bin/tailwindcss-v4 is a macOS arm64 binary, which is why that workflow runs on macOS.
+ci-css: ## Fail if the checked-in Tailwind CSS is stale (tailwind-css.yml)
+	@if [ "$$(uname -s)-$$(uname -m)" != "Darwin-arm64" ]; then \
+		echo "Skipping the Tailwind CSS check: bin/tailwindcss-v4 runs only on macOS arm64"; exit 0; \
+	fi; \
+	./gradlew :readingbat-core:tailwindBuild || exit 1; \
+	css=readingbat-core/src/main/resources/static/tailwind.css; \
+	if git diff --quiet -- "$$css"; then echo "$$css is up to date with its source."; \
+	else echo "ERROR: $$css is out of date. Commit the regenerated file." >&2; git diff --stat -- "$$css"; exit 1; fi
+
+# On Linux, the WebKit tests also need the OS libraries test.yml installs with `npx playwright install-deps webkit`.
+ci-build: ## Build, lint, test, and write the coverage XML (test.yml)
+	./gradlew build koverXmlReport
+
+# docs.yml runs only on pushes to master, so a broken site build otherwise surfaces after the merge.
+ci-docs: ## Build the KDocs and the docs site without deploying (docs.yml)
+	./gradlew dokkaGenerateHtml
+	(cd $(SITE_DIR) && uv run zensical build --clean)
+	cp -r readingbat-core/build/dokka/html/* $(SITE_DIR)/site/kdocs/
 
 coverage: coverage-html coverage-xml ## Generate HTML and XML coverage reports
 
