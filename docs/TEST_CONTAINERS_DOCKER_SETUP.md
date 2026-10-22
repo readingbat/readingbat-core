@@ -1,125 +1,76 @@
 # Testcontainers + Docker Desktop Setup (macOS)
 
-Testcontainers is used in integration tests (e.g., `EnrollmentTest`) to run PostgreSQL in a Docker container.
-Docker Desktop 4.x on macOS requires additional configuration due to API version mismatches and
-sandboxed socket paths.
+Testcontainers is used in integration tests (e.g., `EnrollmentTest`) to run PostgreSQL in a Docker container,
+through `TestDatabase` in `readingbat-kotest`. With Docker Desktop running, the tests need no setup: no
+`~/.testcontainers.properties`, no environment variables, and no IntelliJ run configuration changes.
 
 ## Prerequisites
 
 - Docker Desktop installed and running
 - Docker CLI working (`docker version` should succeed)
 
-## Setup Steps
+## How Testcontainers finds Docker
 
-### 1. Create a symlink to Docker's raw engine socket
+Testcontainers uses `DOCKER_HOST` (or `docker.host` in `~/.testcontainers.properties`) when one is set, and
+otherwise looks for a socket, starting with `/var/run/docker.sock`. On a Mac where that path links to Docker
+Desktop's `~/.docker/run/docker.sock`, it connects with no configuration at all.
 
-Docker Desktop exposes two sockets:
-
-- **CLI proxy socket** (`~/.docker/run/docker.sock`) — used by the Docker CLI, but returns empty
-  API responses that break Testcontainers' docker-java library.
-- **Raw engine socket** (`~/Library/Containers/com.docker.docker/Data/docker.raw.sock`) — the actual
-  Docker Engine API, which works correctly with docker-java.
-
-The raw socket is inside Docker Desktop's macOS sandbox container directory. Accessing it directly
-from apps like IntelliJ or terminal emulators triggers macOS permission prompts. Creating a symlink
-in a non-sandboxed location avoids this:
-
-```bash
-ln -sf ~/Library/Containers/com.docker.docker/Data/docker.raw.sock ~/.docker/docker-raw.sock
-```
-
-This symlink persists across reboots. Verify it works:
-
-```bash
-curl -s --unix-socket ~/.docker/docker-raw.sock http://localhost/info | python3 -c "import sys,json; d=json.load(sys.stdin); print('ServerVersion:', d.get('ServerVersion'))"
-```
-
-### 2. Create `~/.testcontainers.properties`
-
-```properties
-testcontainers.reuse.enable=true
-docker.host=unix://<absolute-path-to-home>/.docker/docker-raw.sock
-ryuk.disabled=true
-```
-
-Replace `<absolute-path-to-home>` with your actual home directory path (e.g., `/Users/yourname`).
-
-**What each property does:**
-
-| Property | Purpose |
-|---|---|
-| `testcontainers.reuse.enable=true` | Reuses containers across test runs for faster iteration |
-| `docker.host` | Points Testcontainers to the raw Docker socket instead of the CLI proxy |
-| `ryuk.disabled=true` | Disables Ryuk (cleanup container) which fails to mount the raw socket inside the Docker VM |
-
-### 3. Gradle test configuration (already in repo)
-
-The following is already configured in `build.gradle.kts` and requires no manual setup:
-
-```kotlin
-tasks.test {
-    environment("DOCKER_API_VERSION", "1.44")
-    environment("TESTCONTAINERS_RYUK_DISABLED", "true")
-    jvmArgs("-Dapi.version=1.44")
-}
-```
-
-This pins the Docker API version to 1.44 because docker-java 3.4.2 (bundled with Testcontainers 1.21.1)
-defaults to API version 1.32, which Docker Desktop 4.x rejects (minimum supported is 1.44).
-
-## Running in IntelliJ
-
-When running tests from IntelliJ, the JVM args from Gradle may not apply. Add these to your
-IntelliJ run configuration's VM options if needed:
-
-```
--Dapi.version=1.44
-```
-
-And these environment variables:
-
-```
-DOCKER_API_VERSION=1.44
-TESTCONTAINERS_RYUK_DISABLED=true
-```
+Ryuk, Testcontainers' cleanup container, runs by default and removes the PostgreSQL container when the test
+JVM exits, even if the JVM is killed.
 
 ## Troubleshooting
 
 ### "Could not find a valid Docker environment"
 
 - Verify Docker Desktop is running: `docker version`
-- Verify the symlink exists and works:
+- Point Testcontainers at Docker Desktop's socket explicitly, either in your shell or IntelliJ run
+  configuration:
   ```bash
-  ls -la ~/.docker/docker-raw.sock
-  curl -s --unix-socket ~/.docker/docker-raw.sock http://localhost/info
+  export DOCKER_HOST=unix://$HOME/.docker/run/docker.sock
   ```
-- Check `~/.testcontainers.properties` has the correct `docker.host` path
+  or in `~/.testcontainers.properties`, with your absolute home directory path:
+  ```properties
+  docker.host=unix:///Users/yourname/.docker/run/docker.sock
+  ```
 
 ### "client version 1.32 is too old"
 
-The API version pin isn't reaching the JVM. Ensure `jvmArgs("-Dapi.version=1.44")` is set in the
-Gradle test task or IntelliJ run configuration.
+Testcontainers pings Docker at API 1.44 first and retries at 1.32 only when that ping fails, so this
+error means Docker never answered the first ping and the retry was rejected. Fix the connection, not
+the version: see "Could not find a valid Docker environment" above. Pinning `api.version` does not
+help, because the 1.32 retry applies to a pinned version too.
 
-### "error while creating mount source path ... docker.raw.sock"
+### Settings left over from the old setup
 
-Ryuk is trying to mount the raw socket. Ensure `TESTCONTAINERS_RYUK_DISABLED=true` is set.
+Earlier versions of this page had you link Docker Desktop's raw engine socket
+(`~/Library/Containers/com.docker.docker/Data/docker.raw.sock`) to `~/.docker/docker-raw.sock`, point
+`docker.host` at it, disable Ryuk because it could not mount that socket, and pin the Docker API version
+to 1.44. None of that is needed any more: Docker Desktop's regular socket works with Testcontainers, Ryuk
+works through it, and Testcontainers picks the API version itself.
 
-### macOS "would like to access data from other apps" prompt
+If you followed the old steps, remove these lines from `~/.testcontainers.properties` and delete the
+symlink with `rm ~/.docker/docker-raw.sock`:
 
-The symlink is either missing or still pointing to a path inside
-`~/Library/Containers/com.docker.docker/`. Recreate it:
-
-```bash
-ln -sf ~/Library/Containers/com.docker.docker/Data/docker.raw.sock ~/.docker/docker-raw.sock
+```properties
+docker.host=unix:///Users/yourname/.docker/docker-raw.sock
+ryuk.disabled=true
 ```
+
+`testcontainers.reuse.enable=true`, which the old page also recommended, is harmless but does nothing
+here, because `TestDatabase` never opts in with `withReuse(true)`. Testcontainers writes a
+`docker.client.strategy` line into the file itself; leave that one alone.
 
 ## Version Notes
 
-This setup was tested with:
+Verified with:
 
-- Docker Desktop 4.63.0 (Docker Engine 29.2.1, API 1.53)
-- Testcontainers 1.21.1 (docker-java 3.4.2)
+- Docker Desktop 4.96.2 (Docker Engine 29.9.2, API 1.56)
+- Testcontainers 2.0.5 (docker-java 3.7.1)
 - macOS (Apple Silicon)
 
-The API version pin may become unnecessary with a future Testcontainers release that bundles
-a docker-java version supporting API >= 1.44.
+With no `~/.testcontainers.properties` and no environment variables, and again with `DOCKER_HOST` set to
+`~/.docker/run/docker.sock`, Testcontainers connected, started Ryuk, and ran PostgreSQL, and no
+containers were left behind.
+
+The raw-socket setup this page used to describe was written for Docker Desktop 4.63.0 and
+Testcontainers 1.21.1.

@@ -148,7 +148,7 @@ The `TestDatabase` object provides a Testcontainers-based PostgreSQL setup:
 val dataSource = TestDatabase.connectAndMigrate()
 ```
 
-This uses a PostgreSQL 16 Alpine container and applies all migration scripts
+This uses a PostgreSQL 17 Alpine container and applies all migration scripts
 from `src/main/resources/db/migration/`.
 
 ## Build Commands

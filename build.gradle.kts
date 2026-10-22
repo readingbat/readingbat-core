@@ -197,12 +197,6 @@ fun Project.configureTesting() {
   tasks.test {
     useJUnitPlatform()
 
-    // Docker Desktop 4.x+ requires API version >= 1.44, but docker-java defaults to 1.32
-    val dockerApiVersion = "1.44"
-    environment("DOCKER_API_VERSION", dockerApiVersion)
-    environment("TESTCONTAINERS_RYUK_DISABLED", "true")
-    jvmArgs("-Dapi.version=$dockerApiVersion")
-
     testLogging {
       events = setOf(TestLogEvent.PASSED, TestLogEvent.SKIPPED, TestLogEvent.FAILED, TestLogEvent.STANDARD_ERROR)
       exceptionFormat = TestExceptionFormat.FULL
