@@ -7,6 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Build and Test
 
 - List Makefile targets: `make help` (self-documenting index — every target with a `## description` annotation)
+- Run what GitHub CI runs: `make ci` — `ci-css` (Tailwind CSS freshness, macOS arm64 only), `ci-build`
+  (`./gradlew build koverXmlReport`), `zizmor`, and `ci-docs` (KDocs and the docs site, which CI builds only after a
+  merge to master). `make -k ci` keeps going past a failure. Run one build at a time per checkout: a second build
+  rewrites `readingbat-core`'s jar under the first one's tests, and Flyway then fails every database test with
+  `ZipFile invalid LOC header` while reading the migrations.
 - Dependency updates: `make versions` lists only what is behind (plus anything it could not check, and a pending Gradle
   update); `make versions-all` prints the versions plugin's full report. Both run the root `:dependencyUpdates`, which
   already checks every module — the unqualified `dependencyUpdates` prints the same report once per project.
@@ -49,7 +54,9 @@ version comes from `gradle.properties` (`-PoverrideVersion=...` overrides on the
 ### Database
 
 - Migration SQL lives in `src/main/resources/db/migration/`
-- Requires PostgreSQL running locally (Docker setup in README.md)
+- Running the server requires PostgreSQL locally (Docker setup in README.md). The tests do not: `TestDatabase` starts
+  a PostgreSQL 17 container through Testcontainers 2.x, so they need only a running Docker daemon — no Docker API pin,
+  Ryuk left on, and no database service in CI. `docs/TEST_CONTAINERS_DOCKER_SETUP.md` covers troubleshooting.
 
 ### Secrets
 
@@ -195,3 +202,14 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
   4.2+): `labelValues(...)`, not `labels(...)`. Register collectors in `PrometheusRegistry.defaultRegistry`, which is
   what common-utils' `MetricsService` serves on `:8083/metrics` — anything registered with the old 0.x
   `CollectorRegistry` compiles and runs but is never scraped.
+- **The Kotlin scripting runtime is pinned `strictly` to 2.4.10** (the `kotlin-scripting` catalog version), apart from
+  the `kotlin` the project builds with. From 2.4.20 the JSR-223 engine keeps every script state's compiler
+  environment (~27 MB) reachable, and the script pools start a new state for every evaluation, so heap grows with
+  every Kotlin challenge evaluated. Do not move it with a Kotlin bump. Lift it only once a Kotlin release frees the
+  state, and check that against `readingbat-java-content`'s `ContentTests` on a 2 GB heap: on 2.4.21 its Kotlin sweep
+  dies with `OutOfMemoryError`, on 2.4.10 it stays under 600 MB. The strict version is published, so consumers
+  inherit the pin.
+- **A renamed module never shows up as outdated.** Dependabot and `make versions` only look for newer versions of the
+  module already named, which is how Testcontainers sat on `org.testcontainers:postgresql` 1.21.4 after 2.x moved
+  PostgreSQL support to `org.testcontainers:testcontainers-postgresql`. When a dependency's version stops moving,
+  check the library's own release notes.

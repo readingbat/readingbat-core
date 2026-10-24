@@ -149,7 +149,8 @@ val dataSource = TestDatabase.connectAndMigrate()
 ```
 
 This uses a PostgreSQL 17 Alpine container and applies all migration scripts
-from `src/main/resources/db/migration/`.
+from `src/main/resources/db/migration/`. Testcontainers needs only a running Docker
+daemon; there is no database to install or configure.
 
 ## Build Commands
 
@@ -158,6 +159,9 @@ from `src/main/resources/db/migration/`.
 make tests
 # or
 ./gradlew check
+
+# Run what GitHub CI runs: CSS freshness, build and tests, zizmor, and the docs build
+make ci
 
 # Run a single test class
 ./gradlew :readingbat-core:test --tests "EndpointTest"

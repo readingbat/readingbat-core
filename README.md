@@ -138,6 +138,7 @@ export STATIC_URL_PREFIX="https://static.example.com"
 make help               # Self-documenting index of every Makefile target
 make build              # Build project (skip tests)
 make tests              # Run unit tests
+make ci                 # Run the GitHub CI checks locally (CSS, build and tests, zizmor, docs)
 make lint               # Kotlinter (ktlint) + detekt static analysis
 make zizmor             # Audit GitHub Actions workflows with zizmor
 make versions           # List the dependencies with newer versions, and any that could not be checked

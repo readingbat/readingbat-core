@@ -4,7 +4,11 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [3.5.1] - 2026-10-23
+
+A memory-fix release. 3.5.0 moved Kotlin script evaluation to Kotlin 2.4.21, whose JSR-223 engine keeps every script state reachable while the script pools start a new state for every evaluation, so heap grew with every Kotlin challenge a server evaluated — enough to exhaust a 2 GB heap over `readingbat-java-content`'s Kotlin challenges. The scripting runtime is pinned back to 2.4.10, and the pin is published, so consumers get it without one of their own. The test setup also moves to Testcontainers 2.x and drops the Docker workarounds and the unused CI database that had built up around it, and `make ci` runs the GitHub checks locally.
+
+No configuration or upgrade steps are required; this is a drop-in bump from 3.5.0. Anything that depends on `org.testcontainers:postgresql` 1.x alongside `readingbat-kotest` should move to `org.testcontainers:testcontainers-postgresql` 2.x as well, since both modules carry `org.testcontainers.containers.PostgreSQLContainer`.
 
 ### Added
 
@@ -18,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - `docs/TEST_CONTAINERS_DOCKER_SETUP.md` is rewritten for a setup that needs no steps. It drops the raw-socket symlink, the `~/.testcontainers.properties` entries, the IntelliJ settings, and the API version pin, explains what a "client version 1.32 is too old" error actually means, and tells anyone who followed the old steps which settings to remove
 - The CI test workflow no longer starts a PostgreSQL service container or passes `DBMS_URL`, `DBMS_USERNAME`, and `DBMS_PASSWORD` to the build. Nothing used them: the only reader of those variables is the connection pool that `Application.module()` creates, no test calls `Application.module()`, and the database tests start their own container through `TestDatabase`. The full suite passes with `DBMS_URL` pointed at a port nothing listens on
 - The test container runs PostgreSQL 17 (`postgres:17-alpine`), up from 16
+- Bumped version to 3.5.1
 
 ### Fixed
 
@@ -31,9 +36,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Prometheus Java client 1.9.0 → 1.10.0
 - kotlinx-serialization 1.11.0 → 1.12.0
 - Resend 4.28.0 → 4.29.0
+- Cloud SQL socket factory 1.30.1 → 1.30.2
 - Kotest 6.2.5 → 6.2.6, Playwright 1.63.0 → 1.64.0
 - Testcontainers 1.21.4 → 2.0.5 (`org.testcontainers:postgresql` → `org.testcontainers:testcontainers-postgresql`)
-- Website: zensical 0.0.70 → 0.0.71, pymdown-extensions 12.2 → 12.3, Markdown 3.11 → 3.11.2
+- Website: zensical 0.0.70 → 0.0.72, pymdown-extensions 12.2 → 12.3, Markdown 3.11 → 3.11.2
 
 ## [3.5.0] - 2026-10-12
 
@@ -526,9 +532,21 @@ A security-hardening release. A multi-agent security review surfaced 48 confirme
 
 - Initial tracked release
 
-[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.5.0...HEAD
+[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.5.1...HEAD
+[3.5.1]: https://github.com/readingbat/readingbat-core/compare/3.5.0...3.5.1
+[3.5.0]: https://github.com/readingbat/readingbat-core/compare/3.4.0...3.5.0
+[3.4.0]: https://github.com/readingbat/readingbat-core/compare/3.3.1...3.4.0
+[3.3.1]: https://github.com/readingbat/readingbat-core/compare/3.3.0...3.3.1
+[3.3.0]: https://github.com/readingbat/readingbat-core/compare/3.2.1...3.3.0
+[3.2.1]: https://github.com/readingbat/readingbat-core/compare/3.2.0...3.2.1
+[3.2.0]: https://github.com/readingbat/readingbat-core/compare/3.1.8...3.2.0
+[3.1.8]: https://github.com/readingbat/readingbat-core/compare/3.1.7...3.1.8
+[3.1.7]: https://github.com/readingbat/readingbat-core/compare/3.1.6...3.1.7
+[3.1.6]: https://github.com/readingbat/readingbat-core/compare/3.1.5...3.1.6
+[3.1.5]: https://github.com/readingbat/readingbat-core/compare/3.1.4...3.1.5
 [3.1.4]: https://github.com/readingbat/readingbat-core/compare/3.1.3...3.1.4
 [3.1.3]: https://github.com/readingbat/readingbat-core/compare/3.1.2...3.1.3
+[3.1.0]: https://github.com/readingbat/readingbat-core/compare/3.0.11...3.1.0
 [3.0.11]: https://github.com/readingbat/readingbat-core/compare/3.0.10...3.0.11
 [3.0.10]: https://github.com/readingbat/readingbat-core/compare/3.0.9...3.0.10
 [3.0.9]: https://github.com/readingbat/readingbat-core/compare/3.0.8...3.0.9

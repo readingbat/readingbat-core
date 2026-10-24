@@ -1,5 +1,25 @@
 # Release Notes
 
+## v3.5.1 — 2026-10-23
+
+A memory-fix release. 3.5.0 moved Kotlin script evaluation to Kotlin 2.4.21, and from 2.4.20 its JSR-223 engine keeps every script state reachable — about 27 MB apiece — while the script pools start a new state for every evaluation. Heap grew with every Kotlin challenge a server evaluated, enough to exhaust a 2 GB heap over `readingbat-java-content`'s Kotlin challenges. 3.5.1 pins the scripting runtime back to 2.4.10. The test setup also moves to Testcontainers 2.x and drops the workarounds that had built up around it. No configuration or upgrade steps are required; this is a drop-in bump from 3.5.0.
+
+### Highlights
+
+- **Kotlin script evaluation no longer exhausts the heap.** `kotlin-scripting-jsr223` now declares `strictly 2.4.10`, and the whole scripting stack resolves to 2.4.10 with it, while the project itself still builds with Kotlin 2.4.21. A strict version is published, so it also overrides the 2.4.21 that common-utils asks for, and consumers get the pin without declaring one of their own. Checked against `readingbat-java-content` with its own workaround removed: on a 2 GB heap, its `ContentTests` Kotlin sweep stays between 300 and 580 MB after GC, where 3.5.0 climbs to 2,043 MB and fails with `OutOfMemoryError`.
+- **Testcontainers moves to 2.x.** PostgreSQL support is now published as `org.testcontainers:testcontainers-postgresql`; the old `org.testcontainers:postgresql` stops at 1.21.4, and neither Dependabot nor `make versions` offers a move to a renamed module, so the dependency had been silently stuck. Anything that depends on the old module alongside `readingbat-kotest` should move too, since both carry `org.testcontainers.containers.PostgreSQLContainer`.
+- **The tests need nothing but a running Docker daemon.** The test task no longer pins the Docker API version, which only restated Testcontainers' own default, and no longer disables Ryuk, so the PostgreSQL container is removed even if the test JVM dies. `docs/TEST_CONTAINERS_DOCKER_SETUP.md` is rewritten to match and lists the old settings to remove. The test database now runs PostgreSQL 17.
+- **CI no longer starts a database nothing uses.** The test workflow's PostgreSQL service container and `DBMS_*` variables fed only the production connection pool, which no test creates; the database tests start their own through Testcontainers.
+- **`make ci` runs the GitHub checks locally:** CSS freshness, the build and tests, zizmor, and the docs build that CI otherwise runs only after a merge to master.
+
+### Dependencies
+
+Kotlin scripting runtime 2.4.21 → 2.4.10 · Gradle 9.8.1 → 9.8.2 · Exposed 1.5.1 → 1.6.0 · Flyway 13.10.0 → 13.11.1 · Prometheus Java client 1.9.0 → 1.10.0 · kotlinx-serialization 1.11.0 → 1.12.0 · Resend 4.28.0 → 4.29.0 · Cloud SQL socket factory 1.30.1 → 1.30.2 · Kotest 6.2.5 → 6.2.6 · Playwright 1.63.0 → 1.64.0 · Testcontainers 1.21.4 → 2.0.5 · zensical 0.0.70 → 0.0.72
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.5.0...3.5.1
+
+---
+
 ## v3.5.0 — 2026-10-12
 
 A monitoring and maintenance release. Until now the only memory signal the server produced was the OOM itself, and afterwards there was nothing left to explain it. It now exports JVM metrics and says at startup whether an OOM will leave a heap dump behind. The CI workflows are hardened too: audited by zizmor, pinned to commit SHAs that Dependabot keeps current, and scanned by CodeQL's default setup. No configuration is required, though enabling heap dumps in production is recommended. The public `Metrics` properties are now Prometheus 1.x types, which is source-breaking for anything that records to them from outside the library (`labels(...)` → `labelValues(...)`).
