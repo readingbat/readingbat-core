@@ -14,7 +14,7 @@ A memory-fix release. 3.5.0 moved Kotlin script evaluation to Kotlin 2.4.21, and
 
 ### Dependencies
 
-Kotlin scripting runtime 2.4.21 → 2.4.10 · Gradle 9.8.1 → 9.8.2 · Exposed 1.5.1 → 1.6.0 · Flyway 13.10.0 → 13.11.1 · Prometheus Java client 1.9.0 → 1.10.0 · kotlinx-serialization 1.11.0 → 1.12.0 · Resend 4.28.0 → 4.29.0 · Cloud SQL socket factory 1.30.1 → 1.30.2 · Kotest 6.2.5 → 6.2.6 · Playwright 1.63.0 → 1.64.0 · Testcontainers 1.21.4 → 2.0.5 · zensical 0.0.70 → 0.0.72
+Kotlin scripting runtime 2.4.21 → 2.4.10 · Gradle 9.8.1 → 9.8.2 · common-utils 5.1.1 → 5.1.2 · Exposed 1.5.1 → 1.6.0 · Flyway 13.10.0 → 13.11.1 · Prometheus Java client 1.9.0 → 1.10.0 · kotlinx-serialization 1.11.0 → 1.12.0 · Resend 4.28.0 → 4.29.0 · Cloud SQL socket factory 1.30.1 → 1.30.2 · Kotest 6.2.5 → 6.2.6 · Playwright 1.63.0 → 1.64.0 · Testcontainers 1.21.4 → 2.0.5 · setup-java action 6.0.1 → 6.1.0 · zizmor action 0.6.4 → 0.7.1 · zensical 0.0.70 → 0.0.72
 
 **Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.5.0...3.5.1
 

@@ -31,6 +31,7 @@ No configuration or upgrade steps are required; this is a drop-in bump from 3.5.
 ### Dependencies
 
 - Gradle 9.8.1 → 9.8.2
+- common-utils 5.1.1 → 5.1.2
 - Exposed 1.5.1 → 1.6.0
 - Flyway 13.10.0 → 13.11.1
 - Prometheus Java client 1.9.0 → 1.10.0
@@ -39,6 +40,7 @@ No configuration or upgrade steps are required; this is a drop-in bump from 3.5.
 - Cloud SQL socket factory 1.30.1 → 1.30.2
 - Kotest 6.2.5 → 6.2.6, Playwright 1.63.0 → 1.64.0
 - Testcontainers 1.21.4 → 2.0.5 (`org.testcontainers:postgresql` → `org.testcontainers:testcontainers-postgresql`)
+- GitHub Actions: setup-java 6.0.1 → 6.1.0, zizmor-action 0.6.4 → 0.7.1
 - Website: zensical 0.0.70 → 0.0.72, pymdown-extensions 12.2 → 12.3, Markdown 3.11 → 3.11.2
 
 ## [3.5.0] - 2026-10-12

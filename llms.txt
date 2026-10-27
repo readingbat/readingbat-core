@@ -15,7 +15,7 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 - Gradle 9.8.2 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle-wrapper`, `jvm`) versions; parallel project execution and configuration cache enabled
 - Kover 0.9.11 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
 - Detekt 2.0 alpha (`dev.detekt` plugin) for static analysis; Kotlinter for ktlint style
-- common-utils 5.1.1 (shared utility BOM from `com.github.pambrose`)
+- common-utils 5.1.2 (shared utility BOM from `com.github.pambrose`)
 - Prometheus Java client 1.x (`io.prometheus.metrics.*`) for application and JVM metrics, served on `:8083/metrics` by default. Record with `labelValues(...)` (the 0.x `labels(...)` is gone) and register collectors in `PrometheusRegistry.defaultRegistry` — that is the registry common-utils' `MetricsService` serves, so a collector in the old 0.x `CollectorRegistry` compiles and runs but is never scraped
 - Java 17 toolchain
 
