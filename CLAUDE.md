@@ -7,6 +7,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ### Build and Test
 
 - List Makefile targets: `make help` (self-documenting index — every target with a `## description` annotation)
+- Run what GitHub CI runs: `make ci` — `ci-css` (Tailwind CSS freshness, macOS arm64 only), `ci-build`
+  (`./gradlew build koverXmlReport`), `zizmor`, and `ci-docs` (KDocs and the docs site, which CI builds only after a
+  merge to master). `make -k ci` keeps going past a failure. Run one build at a time per checkout: a second build
+  rewrites `readingbat-core`'s jar under the first one's tests, and Flyway then fails every database test with
+  `ZipFile invalid LOC header` while reading the migrations.
 - Dependency updates: `make versions` lists only what is behind (plus anything it could not check, and a pending Gradle
   update); `make versions-all` prints the versions plugin's full report. Both run the root `:dependencyUpdates`, which
   already checks every module — the unqualified `dependencyUpdates` prints the same report once per project.
@@ -49,7 +54,9 @@ version comes from `gradle.properties` (`-PoverrideVersion=...` overrides on the
 ### Database
 
 - Migration SQL lives in `src/main/resources/db/migration/`
-- Requires PostgreSQL running locally (Docker setup in README.md)
+- Running the server requires PostgreSQL locally (Docker setup in README.md). The tests do not: `TestDatabase` starts
+  a PostgreSQL 17 container through Testcontainers 2.x, so they need only a running Docker daemon — no Docker API pin,
+  Ryuk left on, and no database service in CI. `docs/TEST_CONTAINERS_DOCKER_SETUP.md` covers troubleshooting.
 
 ### Secrets
 
@@ -102,6 +109,17 @@ The app uses a two-layer configuration pattern where most settings can come from
 - OAuth (GitHub, Google) via `ConfigureOAuth` — providers are auto-configured when credentials are present in env vars,
   not gated on production mode. The `OAuthProvider` enum in `OAuthRoutes.kt` provides type-safe provider identification.
   OAuth logins require a verified email from the provider.
+
+### Request Logging
+
+- **Only logged-in users are recorded.** Every visitor to the public language and group pages gets a browser-session
+  cookie, crawlers and bots included, so anything keyed on the cookie alone tracks bots. `saveServerRequest()` in
+  `Intercepts.kt` returns before writing when the request has no login: no `server_requests` row, no `browser_sessions`
+  row, and no duration `UPDATE`, since only the calls it records are timed. The active-user counts on the admin pages
+  and in the Prometheus metrics therefore count logged-in sessions.
+- **The logging path never runs under `testModule()`.** `intercepts()` installs `requestLogging()` only when
+  `isSaveRequestsEnabled()`, which needs `IPGEOLOCATION_KEY`, and that is unset in tests and CI. A test of request
+  logging must install `requestLogging()` itself, as `RequestLoggingTest` does.
 
 ### Page Generation
 
@@ -184,6 +202,10 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
   a classloader per eval, so heap climbs about 1 MB per Kotlin eval under `./gradlew test` — and not at all in
   production or `./gradlew run`. That phantom leak survived a full investigation before a GC-root trace showed
   the agent holding it (#128). Disable Kover instrumentation for the task, or measure outside Gradle.
+- **Generated call ids repeat across test applications.** `CallId` builds them from the JVM-wide `serverSessionId` and
+  a counter that restarts with every application, so a later test app reuses ids an earlier one wrote to
+  `server_requests`, whose `request_id` is unique. The insert then fails, and request logging swallows the error, so
+  the row just never appears. Send a unique `X-Request-Id` header on any request a test expects to be logged.
 
 ### Key Dependencies
 
@@ -195,3 +217,14 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
   4.2+): `labelValues(...)`, not `labels(...)`. Register collectors in `PrometheusRegistry.defaultRegistry`, which is
   what common-utils' `MetricsService` serves on `:8083/metrics` — anything registered with the old 0.x
   `CollectorRegistry` compiles and runs but is never scraped.
+- **The Kotlin scripting runtime is pinned `strictly` to 2.4.10** (the `kotlin-scripting` catalog version), apart from
+  the `kotlin` the project builds with. From 2.4.20 the JSR-223 engine keeps every script state's compiler
+  environment (~27 MB) reachable, and the script pools start a new state for every evaluation, so heap grows with
+  every Kotlin challenge evaluated. Do not move it with a Kotlin bump. Lift it only once a Kotlin release frees the
+  state, and check that against `readingbat-java-content`'s `ContentTests` on a 2 GB heap: on 2.4.21 its Kotlin sweep
+  dies with `OutOfMemoryError`, on 2.4.10 it stays under 600 MB. The strict version is published, so consumers
+  inherit the pin.
+- **A renamed module never shows up as outdated.** Dependabot and `make versions` only look for newer versions of the
+  module already named, which is how Testcontainers sat on `org.testcontainers:postgresql` 1.21.4 after 2.x moved
+  PostgreSQL support to `org.testcontainers:testcontainers-postgresql`. When a dependency's version stops moving,
+  check the library's own release notes.

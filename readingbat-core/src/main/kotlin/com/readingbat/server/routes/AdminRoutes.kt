@@ -31,9 +31,7 @@ import com.readingbat.common.browserSession
 import com.readingbat.common.isAdminUser
 import com.readingbat.common.userPrincipal
 import com.readingbat.dsl.isDbmsEnabled
-import com.readingbat.dsl.isSaveRequestsEnabled
 import com.readingbat.server.BrowserSessionsTable
-import com.readingbat.server.GeoInfo.Companion.lookupGeoInfo
 import com.readingbat.server.ServerUtils.fetchUser
 import com.readingbat.server.ServerUtils.get
 import io.github.oshai.kotlinlogging.KotlinLogging
@@ -177,24 +175,18 @@ object AdminRoutes {
     }
   }
 
-  /** Creates and assigns a new [BrowserSession] cookie if one is not already present, and triggers geolocation lookup. */
-  suspend fun RoutingContext.assignBrowserSession() {
+  /**
+   * Creates and assigns a new [BrowserSession] cookie if one is not already present. The cookie
+   * alone writes nothing to the database: a session is recorded only once a logged-in user makes
+   * a request, so the geolocation lookup waits for that too.
+   */
+  fun RoutingContext.assignBrowserSession() {
     if (call.request.headers.contains(NO_TRACK_HEADER))
       return
 
     if (call.browserSession == null) {
       val browserSession = BrowserSession(id = randomId(15))
       call.sessions.set(browserSession)
-
-      if (isSaveRequestsEnabled()) {
-        val ipAddress = call.request.origin.remoteHost
-        runCatching {
-          lookupGeoInfo(ipAddress)
-        }.onFailure { e ->
-          logger.warn(e) {}
-        }
-      }
-
       logger.debug { "Created browser session: ${browserSession.id} - ${call.request.origin.remoteHost}" }
     }
   }

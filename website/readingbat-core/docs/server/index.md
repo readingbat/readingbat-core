@@ -93,13 +93,13 @@ Connection pooling is managed by HikariCP.
 | Table | Purpose |
 |-------|---------|
 | `UsersTable` | User accounts with salted password hashes |
-| `BrowserSessionsTable` | Anonymous browser session tracking |
+| `BrowserSessionsTable` | Browser sessions of logged-in users |
 | `UserSessionsTable` | Maps sessions to authenticated users |
 | `UserChallengeInfoTable` | Current answer state per user per challenge |
 | `UserAnswerHistoryTable` | Historical record of all answer attempts |
 | `ClassesTable` | Teacher-created classes |
 | `EnrolleesTable` | Student enrollments in classes |
-| `ServerRequestsTable` | Request logging |
+| `ServerRequestsTable` | Request logging for logged-in users |
 | `GeoInfosTable` | IP geolocation data |
 
 ### Database Commands
@@ -142,7 +142,7 @@ ReadingBat exports Prometheus metrics including:
 - Language page view counts
 - WebSocket connection metrics
 - Cache size gauges
-- Active session counts
+- Active user counts (logged-in sessions only; anonymous visitors and bots are not recorded)
 - Request timing summaries
 - JVM heap, GC, thread, and class-loading metrics (e.g., `jvm_memory_used_bytes`)
 

@@ -19,8 +19,6 @@ package com.readingbat.server
 
 import com.pambrose.common.util.maxLength
 import com.readingbat.common.BrowserSession.Companion.findOrCreateSessionDbmsId
-import com.readingbat.common.Constants.STATIC
-import com.readingbat.common.Constants.UNKNOWN_USER_ID
 import com.readingbat.common.Endpoints.ABOUT_ENDPOINT
 import com.readingbat.common.Endpoints.CHALLENGE_ROOT
 import com.readingbat.common.Endpoints.FAV_ICON_ENDPOINT
@@ -37,7 +35,6 @@ import com.readingbat.common.Endpoints.ROOT
 import com.readingbat.common.Endpoints.STATIC_PREFIX
 import com.readingbat.common.Endpoints.TOS_ENDPOINT
 import com.readingbat.common.OAuthReturnUrl
-import com.readingbat.common.User.Companion.fetchUserDbmsIdFromCache
 import com.readingbat.common.browserSession
 import com.readingbat.common.userPrincipal
 import com.readingbat.dsl.isDbmsEnabled
@@ -60,6 +57,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpHeaders.UserAgent
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
+import io.ktor.server.application.ApplicationCall
 import io.ktor.server.application.ApplicationCallPipeline
 import io.ktor.server.application.ApplicationCallPipeline.ApplicationPhase.Plugins
 import io.ktor.server.application.ApplicationStarted
@@ -81,6 +79,7 @@ import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallFinished
 import io.ktor.server.routing.RoutingRoot.Plugin.RoutingCallStarted
 import io.ktor.server.sessions.sessions
 import io.ktor.server.sessions.set
+import io.ktor.util.AttributeKey
 import io.ktor.util.pipeline.PipelineContext
 import org.jetbrains.exposed.v1.core.eq
 import org.jetbrains.exposed.v1.jdbc.insert
@@ -160,6 +159,9 @@ internal object Intercepts {
     }
 }
 
+// Marks a call that saveServerRequest recorded, so only those calls are timed for the duration update.
+private val savedRequestKey = AttributeKey<Unit>("readingbat.savedRequest")
+
 private fun isBrowsableContentPath(path: String): Boolean {
   if (!path.startsWith("$CHALLENGE_ROOT/") && path != CHALLENGE_ROOT) return false
   val suffix = path.removePrefix(CHALLENGE_ROOT).trimStart('/')
@@ -170,7 +172,8 @@ private fun isBrowsableContentPath(path: String): Boolean {
  * Registers all request intercepts on the Ktor application pipeline.
  *
  * Intercepts handle mandatory authentication (redirecting unauthenticated users to the homepage),
- * request persistence to the database (with geolocation), and request duration tracking.
+ * request persistence to the database for logged-in users (with geolocation), and request
+ * duration tracking.
  * Also subscribes to [ApplicationStarted], [ServerReady], [RoutingCallStarted], and
  * [RoutingCallFinished] events.
  */
@@ -227,59 +230,8 @@ internal fun Application.intercepts() {
   }
 
   // Phase for features. Most features should intercept this phase
-  intercept(Plugins) {
-    if (!isStaticCall())
-      runCatching {
-        val browserSession = call.browserSession
-        if (isSaveRequestsEnabled() && browserSession != null) {
-          val request = call.request
-          val ipAddress = request.origin.remoteHost
-          val userDbmsId =
-            call.fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: fetchUserDbmsIdFromCache(UNKNOWN_USER_ID)
-          val verbVal = request.httpMethod.value
-          val pathVal = request.path()
-          val queryStringVal = request.queryString()
-          // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
-          val userAgentVal = request.headers[UserAgent] ?: ""
-
-          // lookupGeoInfo() performs a (suspending) HTTP call, so it must run OUTSIDE the blocking
-          // JDBC transaction below.
-          val geoInfo = lookupGeoInfo(ipAddress)
-
-          val s = call.callId
-          // Coalesce the session lookup, geo-id resolution, and the insert into a single
-          // transaction so request logging checks out one pooled connection per request instead of
-          // 3-4. findOrCreateSessionDbmsId/queryGeoInfo use readonlyTx, which nests into this outer
-          // transaction and reuses its connection.
-          transaction {
-            val sessionDbmsId = findOrCreateSessionDbmsId(browserSession.id, true)
-            val geoDbmsId =
-              if (geoInfo.requireDbmsLookUp)
-                queryGeoInfo(ipAddress)?.dbmsId ?: error("Missing ip address: $ipAddress")
-              else
-                geoInfo.dbmsId
-
-            logger.debug { "Saving request: $s $ipAddress $userDbmsId $verbVal $pathVal $queryStringVal $geoDbmsId" }
-            with(ServerRequestsTable) {
-              insert { row ->
-                row[requestId] = call.callId ?: "None"
-                row[sessionRef] = sessionDbmsId
-                row[userRef] = userDbmsId
-                row[geoRef] = geoDbmsId
-                row[verb] = verbVal
-                row[path] = pathVal.maxLength(256)
-                row[queryString] = queryStringVal.maxLength(256)
-                row[userAgent] = userAgentVal.maxLength(256)
-                row[duration] = 0
-              }
-            }
-          }
-        }
-      }.onFailure { e ->
-//        logger.warn(e) {}
-        logger.info { "Failure saving request: ${e.message}" }
-      }
-  }
+  if (isSaveRequestsEnabled())
+    requestLogging()
 
   intercept(ApplicationCallPipeline.Call) {
     // Phase for processing a call and sending a response
@@ -295,43 +247,108 @@ internal fun Application.intercepts() {
   monitor.subscribe(ServerReady) { call ->
     logger.info { "Server ready: ${call.config.host}:${call.config.port}" }
   }
+}
 
-  if (isSaveRequestsEnabled()) {
-    monitor.subscribe(RoutingCallStarted) { call ->
-      val path = call.request.path()
-      if (!path.startsWith(STATIC_PREFIX) && path != PING_ENDPOINT) {
-        call.callId
-          .also { callId ->
-            if (callId != null) {
-              requestTimingMap[callId] = clock.markNow()
-            }
-          }
+/**
+ * Records each logged-in user's request in [ServerRequestsTable] via [saveServerRequest] and fills
+ * in its duration when it finishes. [intercepts] installs this only when request saving is enabled.
+ */
+internal fun Application.requestLogging() {
+  intercept(Plugins) {
+    if (!isStaticCall())
+      runCatching {
+        call.saveServerRequest()
+      }.onFailure { e ->
+//        logger.warn(e) {}
+        logger.info { "Failure saving request: ${e.message}" }
       }
-    }
+  }
 
-    monitor.subscribe(RoutingCallFinished) { call ->
-      val path = call.request.path()
-      if (!path.startsWith(STATIC_PREFIX) && path != PING_ENDPOINT) {
-        call.callId
-          .also { callId ->
-            if (callId != null) {
-              requestTimingMap.remove(callId)
-                .also { start ->
-                  if (start != null) {
-                    logger.debug {
-                      val str = call.request.toLogString()
-                      "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} $str"
-                    }
-                    updateServerRequest(callId, start)
-                  }
-                }
-            } else {
-              logger.error { "Null requestId for $path" }
-            }
+  monitor.subscribe(RoutingCallStarted) { call ->
+    val path = call.request.path()
+    // Time only the calls saveServerRequest recorded: an anonymous call has no row to update.
+    if (call.attributes.contains(savedRequestKey) && !path.startsWith(STATIC_PREFIX) && path != PING_ENDPOINT) {
+      call.callId
+        .also { callId ->
+          if (callId != null) {
+            requestTimingMap[callId] = clock.markNow()
           }
+        }
+    }
+  }
+
+  monitor.subscribe(RoutingCallFinished) { call ->
+    val path = call.request.path()
+    if (!path.startsWith(STATIC_PREFIX) && path != PING_ENDPOINT) {
+      call.callId
+        .also { callId ->
+          if (callId != null) {
+            requestTimingMap.remove(callId)
+              .also { start ->
+                if (start != null) {
+                  logger.debug {
+                    val str = call.request.toLogString()
+                    "Logged call ${requestTimingMap.size} ${start.elapsedNow()} ${call.callId} $str"
+                  }
+                  updateServerRequest(callId, start)
+                }
+              }
+          } else {
+            logger.error { "Null requestId for $path" }
+          }
+        }
+    }
+  }
+}
+
+/**
+ * Records this request in [ServerRequestsTable], creating its [BrowserSessionsTable] row on first
+ * sight, but only for a logged-in user. Every visitor to the public pages carries a browser-session
+ * cookie, crawlers and bots included, so an anonymous request writes nothing.
+ */
+internal suspend fun ApplicationCall.saveServerRequest() {
+  val browserSession = browserSession ?: return
+  val userDbmsId = fetchUserDbmsIdFromCache().takeIf { it != -1L } ?: return
+  val ipAddress = request.origin.remoteHost
+  val verbVal = request.httpMethod.value
+  val pathVal = request.path()
+  val queryStringVal = request.queryString()
+  // Use https://ipgeolocation.io/documentation/user-agent-api.html to parse userAgent data
+  val userAgentVal = request.headers[UserAgent] ?: ""
+
+  // lookupGeoInfo() performs a (suspending) HTTP call, so it must run OUTSIDE the blocking
+  // JDBC transaction below.
+  val geoInfo = lookupGeoInfo(ipAddress)
+
+  val s = callId
+  // Coalesce the session lookup, geo-id resolution, and the insert into a single
+  // transaction so request logging checks out one pooled connection per request instead of
+  // 3-4. findOrCreateSessionDbmsId/queryGeoInfo use readonlyTx, which nests into this outer
+  // transaction and reuses its connection.
+  transaction {
+    val sessionDbmsId = findOrCreateSessionDbmsId(browserSession.id, true)
+    val geoDbmsId =
+      if (geoInfo.requireDbmsLookUp)
+        queryGeoInfo(ipAddress)?.dbmsId ?: error("Missing ip address: $ipAddress")
+      else
+        geoInfo.dbmsId
+
+    logger.debug { "Saving request: $s $ipAddress $userDbmsId $verbVal $pathVal $queryStringVal $geoDbmsId" }
+    with(ServerRequestsTable) {
+      insert { row ->
+        row[requestId] = callId ?: "None"
+        row[sessionRef] = sessionDbmsId
+        row[userRef] = userDbmsId
+        row[geoRef] = geoDbmsId
+        row[verb] = verbVal
+        row[path] = pathVal.maxLength(256)
+        row[queryString] = queryStringVal.maxLength(256)
+        row[userAgent] = userAgentVal.maxLength(256)
+        row[duration] = 0
       }
     }
   }
+  attributes.put(savedRequestKey, Unit)
 }
 
 /** Updates the duration column in [ServerRequestsTable] for the given [callId] after the request completes. */

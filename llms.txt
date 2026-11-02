@@ -6,14 +6,16 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 
 ## Key Technologies
 
-- Kotlin 2.4.21 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.6.0 (CIO engine), Exposed ORM 1.5.1 with kotlinx-datetime, PostgreSQL
+- Kotlin 2.4.21 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.6.1 (CIO engine), Exposed ORM 1.6.0 with kotlinx-datetime, PostgreSQL
+- Kotlin JSR-223 scripting runtime pinned `strictly` to 2.4.10 (the `kotlin-scripting` catalog version), apart from the Kotlin the project builds with: from 2.4.20 the engine keeps every script state (~27 MB) reachable and the script pools start one per evaluation, so heap grows with every Kotlin evaluation. The strict version is published, so consumers inherit it
 - Kotlinx.html for server-side HTML generation (no templates)
 - Static assets (images, icons, Prism files, tailwind.css) are packaged in the jar and served at `/static`; a CDN is optional via `STATIC_URL_PREFIX`
-- Kotest 6.2.5 for testing, Playwright for E2E tests in Chromium and WebKit (`PlaywrightTabsTest` runs in both because layout bugs can be engine-specific)
+- Kotest 6.2.6 for testing, Playwright for E2E tests in Chromium and WebKit (`PlaywrightTabsTest` runs in both because layout bugs can be engine-specific)
+- Testcontainers 2.x (`org.testcontainers:testcontainers-postgresql`) starts the PostgreSQL 17 test database through `TestDatabase` in `readingbat-kotest`; the tests need only a running Docker daemon, and CI starts no database of its own
 - Gradle 9.8.2 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle-wrapper`, `jvm`) versions; parallel project execution and configuration cache enabled
 - Kover 0.9.11 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
 - Detekt 2.0 alpha (`dev.detekt` plugin) for static analysis; Kotlinter for ktlint style
-- common-utils 5.1.1 (shared utility BOM from `com.github.pambrose`)
+- common-utils 5.2.0 (shared utility BOM from `com.github.pambrose`)
 - Prometheus Java client 1.x (`io.prometheus.metrics.*`) for application and JVM metrics, served on `:8083/metrics` by default. Record with `labelValues(...)` (the 0.x `labels(...)` is gone) and register collectors in `PrometheusRegistry.defaultRegistry` — that is the registry common-utils' `MetricsService` serves, so a collector in the old 0.x `CollectorRegistry` compiles and runs but is never scraped
 - Java 17 toolchain
 
@@ -55,7 +57,7 @@ Dual configuration system:
 
 ## Database
 
-Exposed ORM with PostgreSQL and `exposed-kotlin-datetime` (using `kotlin.time.Instant` for all timestamp columns). Key tables: UsersTable, BrowserSessionsTable, UserSessionsTable, UserChallengeInfoTable, SessionChallengeInfoTable, UserAnswerHistoryTable, SessionAnswerHistoryTable, ClassesTable, EnrolleesTable, ServerRequestsTable, GeoInfosTable, OAuthLinksTable.
+Exposed ORM with PostgreSQL and `exposed-kotlin-datetime` (using `kotlin.time.Instant` for all timestamp columns). Key tables: UsersTable, BrowserSessionsTable, UserSessionsTable, UserChallengeInfoTable, UserAnswerHistoryTable, ClassesTable, EnrolleesTable, ServerRequestsTable, GeoInfosTable, OAuthLinksTable. Request logging (`requestLogging()` in `Intercepts.kt`) records logged-in users only: every visitor, bots included, gets a browser-session cookie, but a request without a login writes no `server_requests` or `browser_sessions` row and is not timed, so the active-user counts on the admin pages and in the Prometheus metrics count logged-in sessions.
 
 Migrations managed by Flyway in `src/main/resources/db/migration/`.
 
@@ -86,6 +88,7 @@ Extensive use of Kotlin `@JvmInline value class` for type safety: LanguageName, 
 - List all Makefile targets: `make help`
 - Build: `make build` or `./gradlew build -xtest`
 - Test: `make tests` or `./gradlew check`
+- CI locally: `make ci` runs what the GitHub workflows run — `ci-css` (Tailwind CSS freshness, macOS arm64 only), `ci-build` (`./gradlew build koverXmlReport`), `zizmor`, and `ci-docs` (KDocs and the docs site, which CI builds only after a merge to master); `make -k ci` keeps going past a failure
 - Run: `make run` or `./gradlew run` (local runs, and `make uber`, write a heap dump to `build/` on OOM)
 - Lint: `make lint` (Kotlinter + detekt in one Gradle invocation)
 - Dependency updates: `make versions` lists only what is behind (and anything it could not check); `make versions-all` prints the versions plugin's full report. Both run the root `:dependencyUpdates`, which already covers every module
