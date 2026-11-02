@@ -37,9 +37,10 @@ internal data class UserPrincipal(val userId: String, val created: Long = Instan
 /**
  * Represents a browser session identified by a unique [id], stored as a cookie.
  *
- * Browser sessions are tracked independently of user authentication -- every visitor gets one.
- * The session is persisted in [BrowserSessionsTable] and linked to user sessions for tracking
- * active class codes and answer history.
+ * Every visitor gets one, independent of user authentication, but it is persisted in
+ * [BrowserSessionsTable] only once a logged-in user makes a request: anonymous visitors, crawlers
+ * and bots included, are never recorded. A persisted session is linked to user sessions for
+ * tracking active class codes.
  */
 @Serializable
 data class BrowserSession(val id: String, val created: Long = Instant.now().toEpochMilli()) {

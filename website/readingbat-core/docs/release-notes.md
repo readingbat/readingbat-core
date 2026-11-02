@@ -13,6 +13,7 @@ Memory-fix release. 3.5.0 moved Kotlin script evaluation to Kotlin 2.4.21, and f
 ### Fixed
 
 - **Kotlin script evaluation no longer exhausts the heap** — `kotlin-scripting-jsr223` declares `strictly 2.4.10`, and the whole scripting stack resolves to 2.4.10 with it, while the project still builds with Kotlin 2.4.21. The strict version is published, so it also overrides the 2.4.21 that common-utils asks for, and consumers get the pin without declaring one of their own. On a 2 GB heap, `readingbat-java-content`'s Kotlin sweep stays between 300 and 580 MB after GC, where 3.5.0 climbs to 2,043 MB and fails with `OutOfMemoryError`.
+- **Request logging records logged-in users only** — every visitor to the public pages carries a browser-session cookie, and every request that carried one used to be written to `server_requests` and `browser_sessions`, so crawlers and bots that keep cookies filled both tables. A request without a login now writes neither and skips the duration update, and a new anonymous visitor no longer costs an ipgeolocation.io lookup. Active-session counts, on the admin pages and in the Prometheus metrics, now count logged-in sessions only. Rows already in the tables are left alone.
 
 ### Testing
 

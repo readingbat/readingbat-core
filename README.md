@@ -258,7 +258,7 @@ ReadingBat Core includes comprehensive monitoring:
   (Prometheus Java client 1.x), served on `:8083/metrics` by default
 - **Heap Dumps on OOM**: The server logs at startup whether an `OutOfMemoryError` will write a heap
   dump, and warns when it will not (see `JAVA_TOOL_OPTIONS` above)
-- **Request Tracking**: Detailed request logging and timing
+- **Request Tracking**: Detailed request logging and timing for logged-in users (anonymous visitors and bots are not recorded)
 - **User Analytics**: Challenge completion and progress tracking
 - **Database Monitoring**: Connection pool and query performance
 

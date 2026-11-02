@@ -93,13 +93,13 @@ Connection pooling is managed by HikariCP.
 | Table | Purpose |
 |-------|---------|
 | `UsersTable` | User accounts with salted password hashes |
-| `BrowserSessionsTable` | Anonymous browser session tracking |
+| `BrowserSessionsTable` | Browser sessions of logged-in users |
 | `UserSessionsTable` | Maps sessions to authenticated users |
 | `UserChallengeInfoTable` | Current answer state per user per challenge |
 | `UserAnswerHistoryTable` | Historical record of all answer attempts |
 | `ClassesTable` | Teacher-created classes |
 | `EnrolleesTable` | Student enrollments in classes |
-| `ServerRequestsTable` | Request logging |
+| `ServerRequestsTable` | Request logging for logged-in users |
 | `GeoInfosTable` | IP geolocation data |
 
 ### Database Commands
