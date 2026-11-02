@@ -45,7 +45,7 @@ No configuration or upgrade steps are required; this is a drop-in bump from 3.5.
 - Testcontainers 1.21.4 → 2.0.5 (`org.testcontainers:postgresql` → `org.testcontainers:testcontainers-postgresql`)
 - versions plugin 0.66.0 → 0.67.0
 - GitHub Actions: setup-java 6.0.1 → 6.1.0, zizmor-action 0.6.4 → 0.7.1
-- Website: zensical 0.0.70 → 0.0.72, pymdown-extensions 12.2 → 12.3, Markdown 3.11 → 3.11.2
+- Website: zensical 0.0.70 → 0.0.74 (which adds zensical-ui), deepmerge 3.0.1 → 4.0.0, pymdown-extensions 12.2 → 12.3, Markdown 3.11 → 3.11.2
 
 ## [3.5.0] - 2026-10-12
 
