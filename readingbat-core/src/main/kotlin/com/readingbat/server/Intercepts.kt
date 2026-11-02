@@ -159,7 +159,7 @@ internal object Intercepts {
     }
 }
 
-/** Marks a call that [saveServerRequest] recorded, so only those calls are timed for the duration update. */
+// Marks a call that saveServerRequest recorded, so only those calls are timed for the duration update.
 private val savedRequestKey = AttributeKey<Unit>("readingbat.savedRequest")
 
 private fun isBrowsableContentPath(path: String): Boolean {

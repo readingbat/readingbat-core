@@ -105,11 +105,9 @@ class RequestLoggingTest : StringSpec() {
 /** What request logging made of one visit to the probe page. */
 private class Visit(val userRefs: List<Long>, val browserSessions: Long, val timed: Boolean)
 
-/**
- * Sets up a browser session, logged in as [userId] when it is not null, then visits the probe page
- * with it. The probe page carries its own `X-Request-Id`: the generated call ids restart with every
- * test application, so they would collide with rows an earlier test wrote.
- */
+// Sets up a browser session, logged in as userId when it is not null, then visits the probe page
+// with it. The probe page carries its own X-Request-Id: the generated call ids restart with every
+// test application, so they would collide with rows an earlier test wrote.
 private suspend fun ApplicationTestBuilder.visit(userId: String?): Visit {
   application { requestLogging() }
   probeRoutes()
