@@ -46,7 +46,7 @@ val oauthLinksProviderIndex =
 
 val geoInfosUnique = Index([GeoInfosTable.ip], true, "geo_info_unique")
 
-/** Tracks anonymous browser sessions identified by a random session ID cookie. */
+/** Browser sessions of logged-in users, identified by the random session ID cookie. */
 object BrowserSessionsTable : LongIdTable("browser_sessions") {
   val created = timestamp("created")
   val sessionId = text("session_id")
@@ -155,7 +155,7 @@ object GeoInfosTable : LongIdTable("geo_info") {
   val timeZone = text("time_zone")
 }
 
-/** Logs each HTTP request with session, user, geolocation, verb, path, and response duration. */
+/** Logs each HTTP request a logged-in user makes, with session, geolocation, verb, path, and response duration. */
 object ServerRequestsTable : LongIdTable("server_requests") {
   val created = timestamp("created")
   val requestId = text("request_id")
