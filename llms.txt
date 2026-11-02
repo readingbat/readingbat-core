@@ -6,7 +6,7 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 
 ## Key Technologies
 
-- Kotlin 2.4.21 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.6.0 (CIO engine), Exposed ORM 1.6.0 with kotlinx-datetime, PostgreSQL
+- Kotlin 2.4.21 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.6.1 (CIO engine), Exposed ORM 1.6.0 with kotlinx-datetime, PostgreSQL
 - Kotlin JSR-223 scripting runtime pinned `strictly` to 2.4.10 (the `kotlin-scripting` catalog version), apart from the Kotlin the project builds with: from 2.4.20 the engine keeps every script state (~27 MB) reachable and the script pools start one per evaluation, so heap grows with every Kotlin evaluation. The strict version is published, so consumers inherit it
 - Kotlinx.html for server-side HTML generation (no templates)
 - Static assets (images, icons, Prism files, tailwind.css) are packaged in the jar and served at `/static`; a CDN is optional via `STATIC_URL_PREFIX`
@@ -15,7 +15,7 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 - Gradle 9.8.2 multi-module build with version catalog (libs.versions.toml) as the single source of truth for plugin, dependency, and toolchain (`gradle-wrapper`, `jvm`) versions; parallel project execution and configuration cache enabled
 - Kover 0.9.11 for code coverage, uploaded to Codecov from CI (per-area components defined in `codecov.yml`)
 - Detekt 2.0 alpha (`dev.detekt` plugin) for static analysis; Kotlinter for ktlint style
-- common-utils 5.1.2 (shared utility BOM from `com.github.pambrose`)
+- common-utils 5.2.0 (shared utility BOM from `com.github.pambrose`)
 - Prometheus Java client 1.x (`io.prometheus.metrics.*`) for application and JVM metrics, served on `:8083/metrics` by default. Record with `labelValues(...)` (the 0.x `labels(...)` is gone) and register collectors in `PrometheusRegistry.defaultRegistry` — that is the registry common-utils' `MetricsService` serves, so a collector in the old 0.x `CollectorRegistry` compiles and runs but is never scraped
 - Java 17 toolchain
 
