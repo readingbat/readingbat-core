@@ -78,8 +78,7 @@ internal object SessionsPage {
               1.hours to "hour",
               24.hours to "24 hours",
               7.days to "week",
-            ]
-              .map { (duration, label) -> label to activeSessions(duration) }
+            ].map { (duration, label) -> label to activeSessions(duration) }
 
           h3 { +"Active Users" }
           div(classes = TwClasses.INDENT_1EM) {
