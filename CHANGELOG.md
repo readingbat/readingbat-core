@@ -4,7 +4,7 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [3.5.1] - 2026-10-23
+## [3.5.1] - 2026-11-02
 
 A memory-fix release. 3.5.0 moved Kotlin script evaluation to Kotlin 2.4.21, whose JSR-223 engine keeps every script state reachable while the script pools start a new state for every evaluation, so heap grew with every Kotlin challenge a server evaluated — enough to exhaust a 2 GB heap over `readingbat-java-content`'s Kotlin challenges. The scripting runtime is pinned back to 2.4.10, and the pin is published, so consumers get it without one of their own. The test setup also moves to Testcontainers 2.x and drops the Docker workarounds and the unused CI database that had built up around it, and `make ci` runs the GitHub checks locally.
 

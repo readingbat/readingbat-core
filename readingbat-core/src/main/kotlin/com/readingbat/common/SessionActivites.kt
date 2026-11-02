@@ -44,7 +44,8 @@ import kotlin.time.measureTimedValue
  *
  * Provides session activity data by joining server requests, browser sessions, users, and
  * geolocation tables. Supports both detailed session listings (for admin pages) and
- * aggregate active-session counts (for metrics).
+ * aggregate active-session counts (for metrics). Only logged-in users' requests are recorded,
+ * so both cover logged-in sessions only.
  */
 internal object SessionActivites {
   private val logger = KotlinLogging.logger {}

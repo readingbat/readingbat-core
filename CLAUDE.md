@@ -110,6 +110,17 @@ The app uses a two-layer configuration pattern where most settings can come from
   not gated on production mode. The `OAuthProvider` enum in `OAuthRoutes.kt` provides type-safe provider identification.
   OAuth logins require a verified email from the provider.
 
+### Request Logging
+
+- **Only logged-in users are recorded.** Every visitor to the public language and group pages gets a browser-session
+  cookie, crawlers and bots included, so anything keyed on the cookie alone tracks bots. `saveServerRequest()` in
+  `Intercepts.kt` returns before writing when the request has no login: no `server_requests` row, no `browser_sessions`
+  row, and no duration `UPDATE`, since only the calls it records are timed. The active-user counts on the admin pages
+  and in the Prometheus metrics therefore count logged-in sessions.
+- **The logging path never runs under `testModule()`.** `intercepts()` installs `requestLogging()` only when
+  `isSaveRequestsEnabled()`, which needs `IPGEOLOCATION_KEY`, and that is unset in tests and CI. A test of request
+  logging must install `requestLogging()` itself, as `RequestLoggingTest` does.
+
 ### Page Generation
 
 All HTML pages are generated server-side using Kotlinx.html (no templates). Each page has its own file in
@@ -191,6 +202,10 @@ The `readingbat-kotest` module provides `TestSupport` with helpers:
   a classloader per eval, so heap climbs about 1 MB per Kotlin eval under `./gradlew test` — and not at all in
   production or `./gradlew run`. That phantom leak survived a full investigation before a GC-root trace showed
   the agent holding it (#128). Disable Kover instrumentation for the task, or measure outside Gradle.
+- **Generated call ids repeat across test applications.** `CallId` builds them from the JVM-wide `serverSessionId` and
+  a counter that restarts with every application, so a later test app reuses ids an earlier one wrote to
+  `server_requests`, whose `request_id` is unique. The insert then fails, and request logging swallows the error, so
+  the row just never appears. Send a unique `X-Request-Id` header on any request a test expects to be logged.
 
 ### Key Dependencies
 

@@ -1,6 +1,6 @@
 # Release Notes
 
-## v3.5.1 — 2026-10-23
+## v3.5.1 — 2026-11-02
 
 A memory-fix release. 3.5.0 moved Kotlin script evaluation to Kotlin 2.4.21, and from 2.4.20 its JSR-223 engine keeps every script state reachable — about 27 MB apiece — while the script pools start a new state for every evaluation. Heap grew with every Kotlin challenge a server evaluated, enough to exhaust a 2 GB heap over `readingbat-java-content`'s Kotlin challenges. 3.5.1 pins the scripting runtime back to 2.4.10. The test setup also moves to Testcontainers 2.x and drops the workarounds that had built up around it. No configuration or upgrade steps are required; this is a drop-in bump from 3.5.0.
 

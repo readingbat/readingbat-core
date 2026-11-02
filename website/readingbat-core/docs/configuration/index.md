@@ -118,7 +118,7 @@ precedence when defined:
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret | Yes |
 | `RESEND_API_KEY` | Resend email API key | Yes |
 | `RESEND_SENDER_EMAIL` | Resend sender email address | No |
-| `IPGEOLOCATION_KEY` | IP geolocation API key | Yes |
+| `IPGEOLOCATION_KEY` | IP geolocation API key; request logging, which records logged-in users only, is off without it | Yes |
 | `STATIC_URL_PREFIX` | URL prefix for static assets (default `/static`) | No |
 | `JAVA_TOOL_OPTIONS` | JVM flags; set `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<dir>` | No |
 | `AGENT_ENABLED` | Enable Prometheus proxy agent | No |

@@ -142,7 +142,7 @@ ReadingBat exports Prometheus metrics including:
 - Language page view counts
 - WebSocket connection metrics
 - Cache size gauges
-- Active session counts
+- Active user counts (logged-in sessions only; anonymous visitors and bots are not recorded)
 - Request timing summaries
 - JVM heap, GC, thread, and class-loading metrics (e.g., `jvm_memory_used_bytes`)
 

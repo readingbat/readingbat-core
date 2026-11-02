@@ -57,7 +57,7 @@ Dual configuration system:
 
 ## Database
 
-Exposed ORM with PostgreSQL and `exposed-kotlin-datetime` (using `kotlin.time.Instant` for all timestamp columns). Key tables: UsersTable, BrowserSessionsTable, UserSessionsTable, UserChallengeInfoTable, SessionChallengeInfoTable, UserAnswerHistoryTable, SessionAnswerHistoryTable, ClassesTable, EnrolleesTable, ServerRequestsTable, GeoInfosTable, OAuthLinksTable.
+Exposed ORM with PostgreSQL and `exposed-kotlin-datetime` (using `kotlin.time.Instant` for all timestamp columns). Key tables: UsersTable, BrowserSessionsTable, UserSessionsTable, UserChallengeInfoTable, UserAnswerHistoryTable, ClassesTable, EnrolleesTable, ServerRequestsTable, GeoInfosTable, OAuthLinksTable. Request logging (`requestLogging()` in `Intercepts.kt`) records logged-in users only: every visitor, bots included, gets a browser-session cookie, but a request without a login writes no `server_requests` or `browser_sessions` row and is not timed, so the active-user counts on the admin pages and in the Prometheus metrics count logged-in sessions.
 
 Migrations managed by Flyway in `src/main/resources/db/migration/`.
 
