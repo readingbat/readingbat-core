@@ -27,12 +27,11 @@ import com.readingbat.server.GeoInfosTable
 import com.readingbat.server.ServerRequestsTable
 import com.readingbat.server.UsersTable
 import io.github.oshai.kotlinlogging.KotlinLogging
+import org.jetbrains.exposed.v1.core.Column
 import org.jetbrains.exposed.v1.core.Count
-import org.jetbrains.exposed.v1.core.Max
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.countDistinct
 import org.jetbrains.exposed.v1.core.greater
-import org.jetbrains.exposed.v1.datetime.KotlinInstantColumnType
 import org.jetbrains.exposed.v1.jdbc.select
 import kotlin.math.min
 import kotlin.time.Duration
@@ -52,58 +51,56 @@ internal object SessionActivites {
   private val session_id = BrowserSessionsTable.sessionId
   private val fullName = UsersTable.fullName
   private val email = UsersTable.email
-  private val ip = GeoInfosTable.ip
   private val city = GeoInfosTable.city
   private val state = GeoInfosTable.stateProv
   private val country = GeoInfosTable.countryName
-  private val isp = GeoInfosTable.organization
   private val flagUrl = GeoInfosTable.countryFlag
-  private val userAgent = ServerRequestsTable.userAgent
   private val created = ServerRequestsTable.created
+
+  // Login rotates the browser session to a fresh id, and its row is written on the first request
+  // after that, so the row's creation time is when the user logged in.
+  private val loginDate = BrowserSessionsTable.created
 
   /** Data class holding the result of a session activity query, including user, geo, and request info. */
   class QueryInfo(
     val sessionId: String,
     val fullName: FullName,
     val email: Email,
-    val ip: String,
     val city: String,
     val state: String,
     val country: String,
-    val isp: String,
     val flagUrl: String,
-    val userAgent: String,
     val count: Long,
-    val maxDate: Instant,
+    val loginDate: Instant,
   )
 
-  /** Queries active sessions within the last [dayCount] days (max 14), grouped by session and user. */
+  /**
+   * Queries sessions active within the last [dayCount] days (max 14), grouped by session and user,
+   * most recent login first.
+   */
   fun querySessions(dayCount: Int) =
     readonlyTx {
       measureTimedValue {
         val count = Count(UsersTable.id)
-        val maxDate = Max(created, KotlinInstantColumnType())
-        val elems = arrayOf(fullName, email, ip, city, state, country, isp, flagUrl, userAgent)
+        val elems: Array<Column<*>> =
+          arrayOf(loginDate, fullName, email, city, state, country, flagUrl)
 
         (ServerRequestsTable innerJoin BrowserSessionsTable innerJoin UsersTable innerJoin GeoInfosTable)
-          .select(session_id, *elems, count, maxDate)
+          .select(session_id, *elems, count)
           .where { created greater instantExpr("now() - interval '${min(dayCount, 14)} day'") }
-          .groupBy(*(arrayOf(session_id) + elems))
-          .orderBy(maxDate, SortOrder.DESC)
+          .groupBy(session_id, *elems)
+          .orderBy(loginDate, SortOrder.DESC)
           .map { row ->
             QueryInfo(
               sessionId = row[session_id],
               fullName = FullName(row[fullName]),
               email = Email(row[email]),
-              ip = row[ip],
               city = row[city],
               state = row[state],
               country = row[country],
-              isp = row[isp],
               flagUrl = row[flagUrl],
-              userAgent = row[userAgent],
               count = row[count],
-              maxDate = row[maxDate] ?: nowInstant(),
+              loginDate = row[loginDate],
             )
           }
       }.let { (query, duration) ->

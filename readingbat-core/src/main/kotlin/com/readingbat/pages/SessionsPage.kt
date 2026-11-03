@@ -17,8 +17,8 @@
 
 package com.readingbat.pages
 
-import com.pambrose.common.time.format
 import com.pambrose.common.util.pluralize
+import com.readingbat.common.Constants.UNKNOWN
 import com.readingbat.common.Endpoints.ADMIN_PREFS_ENDPOINT
 import com.readingbat.common.FormFields.DAYS_DEFAULT
 import com.readingbat.common.FormFields.DAYS_PARAM
@@ -26,7 +26,6 @@ import com.readingbat.common.FormFields.RETURN_PARAM
 import com.readingbat.common.SessionActivites.activeSessions
 import com.readingbat.common.SessionActivites.querySessions
 import com.readingbat.common.TwClasses
-import com.readingbat.common.nowInstant
 import com.readingbat.pages.PageUtils.backLink
 import com.readingbat.pages.PageUtils.bodyTitle
 import com.readingbat.pages.PageUtils.headDefault
@@ -48,18 +47,34 @@ import kotlinx.html.table
 import kotlinx.html.td
 import kotlinx.html.th
 import kotlinx.html.tr
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.*
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Instant
+import kotlin.time.toJavaInstant
 
 /**
  * Generates the active sessions page at `/sessions`.
  *
  * Displays active user counts across various time windows and a detailed table of
- * recent user sessions including geolocation, user agent, and request counts.
+ * recent user sessions including login date, geolocation, and request counts.
  */
 internal object SessionsPage {
   private val logger = KotlinLogging.logger {}
+  private val loginDateFormat = DateTimeFormatter.ofPattern("MM/dd/yy HH:mm")
+  private val zoneNameFormat = DateTimeFormatter.ofPattern("zzz", Locale.US)
+
+  /** Formats [instant] as `MM/dd/yy HH:mm` in [zone]. */
+  internal fun loginDateText(instant: Instant, zone: ZoneId = ZoneId.systemDefault()): String =
+    loginDateFormat.format(instant.toJavaInstant().atZone(zone))
+
+  /** Joins [city], [state], and [country] with commas, leaving out blank and unknown parts. */
+  internal fun locationText(city: String, state: String, country: String): String =
+    [city, state, country].filter { it.isNotBlank() && it != UNKNOWN }.joinToString(", ")
 
   fun RoutingContext.sessionsPage() =
     createHTML()
@@ -78,6 +93,8 @@ internal object SessionsPage {
               1.hours to "hour",
               24.hours to "24 hours",
               7.days to "week",
+              30.days to "month",
+              365.days to "year",
             ].map { (duration, label) -> label to activeSessions(duration) }
 
           h3 { +"Active Users" }
@@ -105,17 +122,11 @@ internal object SessionsPage {
                 tr {
                   th { +"Session Id" }
                   th { +"User" }
-                  th { +"Last Activity" }
+                  th { +"Date (${ZonedDateTime.now().format(zoneNameFormat)})" }
                   th { +"Requests" }
-                  th { +"Remote Host" }
-                  th { +"City" }
-                  th { +"State" }
-                  th { +"Country" }
-                  th { +"ISP" }
+                  th { +"Location" }
                   th { +"" }
-                  th { +"User Agent" }
                 }
-                val now = nowInstant()
                 rows
                   .forEach { row ->
                     tr {
@@ -129,15 +140,10 @@ internal object SessionsPage {
                           +"Not logged in"
                         }
                       }
-                      td { +(now - row.maxDate).format() }
+                      td { +loginDateText(row.loginDate) }
                       td { +row.count.toString() }
-                      td { +row.ip }
-                      td { +row.city }
-                      td { +row.state }
-                      td { +row.country }
-                      td { +row.isp }
+                      td { +locationText(row.city, row.state, row.country) }
                       td { if ("://" in row.flagUrl) img { src = row.flagUrl } else +"" }
-                      td { +row.userAgent }
                     }
                   }
               }

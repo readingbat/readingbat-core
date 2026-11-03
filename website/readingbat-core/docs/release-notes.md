@@ -6,6 +6,23 @@ icon: lucide/tag
 
 For the complete, commit-level history see [`CHANGELOG.md`](https://github.com/readingbat/readingbat-core/blob/master/CHANGELOG.md) in the repository.
 
+## v3.6.1 — 2026-11-03
+
+Admin-page release. The Sessions page shows when each session logged in and where it was, and no longer splits one session across several rows. Drop-in bump from 3.6.0.
+
+### Changed
+
+- **Login time** — the "Last Activity" column is now "Date", the login time as `MM/dd/yy HH:mm` in the server's time zone (named in the header), and rows are sorted newest login first.
+- **Location** — City, State, and Country are one comma-separated column, leaving out blank and `Unknown` parts.
+- **One row per session** — the Remote Host, ISP, and User Agent columns are gone, and the query no longer groups by them, so a session whose IP or user agent changed is one row with its full request count. A session still shows as two rows if its IP moves to a different city.
+- **A week by default** — the Sessions page covers the last 7 days, up from 2.
+
+### Dependencies
+
+Resend 4.29.0 → 4.30.0
+
+[Full changelog: 3.6.0…3.6.1](https://github.com/readingbat/readingbat-core/compare/3.6.0...3.6.1)
+
 ## v3.6.0 — 2026-11-02
 
 Security release. The server connects to PostgreSQL with the PostgreSQL JDBC driver (`org.postgresql:postgresql`) instead of pgjdbc-ng, whose final release (0.8.9, May 2021) bundles Netty 4.1.63 — one critical and seven high CVEs, never to be fixed there — and the database's TLS connection ran through it.

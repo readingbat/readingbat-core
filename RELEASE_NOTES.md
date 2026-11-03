@@ -1,5 +1,24 @@
 # Release Notes
 
+## v3.6.1 — 2026-11-03
+
+An admin-page release: the Sessions page shows when each session logged in and where it was, and no longer splits one session across several rows. No configuration or upgrade steps are required; this is a drop-in bump from 3.6.0.
+
+### Highlights
+
+- **Login time instead of last activity.** The "Last Activity" column, the time since a session's latest request, is now "Date": the login time as `MM/dd/yy HH:mm` in the server's time zone, which the header names (for example `Date (UTC)`). Rows are sorted newest login first.
+- **One Location column.** City, State, and Country are joined with commas, leaving out blank and `Unknown` parts.
+- **One row per session.** The Remote Host, ISP, and User Agent columns are gone, and the query no longer groups by them, so a session whose IP or user agent changed partway through is one row with its full request count instead of several with the count divided among them. A session still shows as two rows if its IP moves to a different city.
+- **A week of sessions by default.** The Sessions page covers the last 7 days unless the link asks for another span, up from 2.
+
+### Dependencies
+
+Resend 4.29.0 → 4.30.0
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.6.0...3.6.1
+
+---
+
 ## v3.6.0 — 2026-11-02
 
 A security release that replaces the database driver. The server now connects to PostgreSQL with the PostgreSQL JDBC driver (`org.postgresql:postgresql`) instead of pgjdbc-ng, whose final release (0.8.9, May 2021) bundles its own copy of Netty 4.1.63 — one critical and seven high CVEs, none of which pgjdbc-ng will ever pick up a fix for — and the server's TLS connection to the database ran through it.

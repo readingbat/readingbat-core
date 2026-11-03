@@ -221,7 +221,7 @@ internal object FormFields {
   const val ADMIN_ACTION_PARAM = "admin_action"
   const val USER_ID_PARAM = "user_id"
   const val DAYS_PARAM = "days"
-  const val DAYS_DEFAULT = "2"
+  const val DAYS_DEFAULT = "7"
 
   const val LANGUAGE_NAME_PARAM = "language_name_key"
   const val GROUP_NAME_PARAM = "group_name_key"
