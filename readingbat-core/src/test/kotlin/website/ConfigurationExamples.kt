@@ -9,7 +9,7 @@ import com.readingbat.common.Property
 fun propertyExamples() {
   // Read a property with a default value
   val isProduction = Property.IS_PRODUCTION.getProperty(false)
-  val dbmsUrl = Property.DBMS_URL.getProperty("jdbc:pgsql://localhost:5432/readingbat")
+  val dbmsUrl = Property.DBMS_URL.getProperty("jdbc:postgresql://localhost:5432/readingbat")
 
   // Read a string property or null if not set
   val analyticsId = Property.ANALYTICS_ID.getPropertyOrNull()
@@ -28,7 +28,7 @@ fun envVarExamples() {
   val hasDbUrl = EnvVar.DBMS_URL.isDefined()
 
   // Get an environment variable with a fallback default
-  val dbUrl = EnvVar.DBMS_URL.getEnv("jdbc:pgsql://localhost:5432/readingbat")
+  val dbUrl = EnvVar.DBMS_URL.getEnv("jdbc:postgresql://localhost:5432/readingbat")
 
   // Get an environment variable or null
   val maybeKey = EnvVar.IPGEOLOCATION_KEY.getEnvOrNull()
@@ -47,7 +47,7 @@ fun envOverridesPropertyExample() {
   // EnvVar takes precedence when defined; otherwise falls back to Property
   val dbmsUrl =
     EnvVar.DBMS_URL.getEnv(
-      Property.DBMS_URL.getProperty("jdbc:pgsql://localhost:5432/readingbat"),
+      Property.DBMS_URL.getProperty("jdbc:postgresql://localhost:5432/readingbat"),
     )
 
   val oauthClientId =

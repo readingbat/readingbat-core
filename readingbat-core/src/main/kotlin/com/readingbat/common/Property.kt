@@ -403,13 +403,13 @@ sealed class Property(
   object DBMS_DRIVER_CLASSNAME :
     Property(
       propertyValue = "$DBMS.driverClassName",
-      initFunc = { setPropertyFromConfig(it, "com.impossibl.postgres.jdbc.PGDriver") },
+      initFunc = { setPropertyFromConfig(it, "org.postgresql.Driver") },
     )
 
   object DBMS_URL :
     Property(
       propertyValue = "$DBMS.jdbcUrl",
-      initFunc = { setPropertyFromConfig(it, "jdbc:pgsql://localhost:5432/readingbat") },
+      initFunc = { setPropertyFromConfig(it, "jdbc:postgresql://localhost:5432/readingbat") },
     )
 
   object DBMS_USERNAME :

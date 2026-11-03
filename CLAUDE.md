@@ -57,6 +57,11 @@ version comes from `gradle.properties` (`-PoverrideVersion=...` overrides on the
 - Running the server requires PostgreSQL locally (Docker setup in README.md). The tests do not: `TestDatabase` starts
   a PostgreSQL 17 container through Testcontainers 2.x, so they need only a running Docker daemon — no Docker API pin,
   Ryuk left on, and no database service in CI. `docs/TEST_CONTAINERS_DOCKER_SETUP.md` covers troubleshooting.
+- **The JDBC driver is the PostgreSQL driver (`org.postgresql.Driver`, `jdbc:postgresql:` URLs).** 3.6.0 dropped
+  pgjdbc-ng because its final release bundles a Netty 4.1.63 with CVEs it will never fix, so do not bring it back.
+  `DbmsSettings.requireSupportedDbmsSettings` stops startup on pgjdbc-ng's driver class, a `jdbc:pgsql:` URL, or a
+  leftover `ssl.mode` parameter. The PostgreSQL driver ignores parameters it does not know, so an unconverted
+  `ssl.mode=Require` would silently drop TLS. Old settings fail instead of being translated for the same reason.
 
 ### Secrets
 

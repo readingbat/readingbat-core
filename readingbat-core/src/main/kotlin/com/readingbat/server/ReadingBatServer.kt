@@ -123,12 +123,16 @@ object ReadingBatServer {
 
   /** Lazily initialized database connection using HikariCP connection pooling. */
   internal val dbms by lazy {
+    val dbmsDriverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(Property.DBMS_DRIVER_CLASSNAME.getRequiredProperty())
+    val dbmsUrl = EnvVar.DBMS_URL.getEnv(Property.DBMS_URL.getRequiredProperty())
+    DbmsSettings.requireSupportedDbmsSettings(dbmsDriverClassName, dbmsUrl)
+
     Database.connect(
       HikariDataSource(
         HikariConfig()
           .apply {
-            driverClassName = EnvVar.DBMS_DRIVER_CLASSNAME.getEnv(Property.DBMS_DRIVER_CLASSNAME.getRequiredProperty())
-            jdbcUrl = EnvVar.DBMS_URL.getEnv(Property.DBMS_URL.getRequiredProperty())
+            driverClassName = dbmsDriverClassName
+            jdbcUrl = dbmsUrl
             username = EnvVar.DBMS_USERNAME.getEnv(Property.DBMS_USERNAME.getRequiredProperty())
             password = EnvVar.DBMS_PASSWORD.getEnv(Property.DBMS_PASSWORD.getRequiredProperty())
 

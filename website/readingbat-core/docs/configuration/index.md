@@ -38,7 +38,7 @@ initialized from `application.conf` during application startup via `assignProper
 |----------|-----------|-------------|
 | **Content DSL** | `DSL_FILE_NAME`, `DSL_VARIABLE_NAME` | Content loading configuration |
 | **Site** | `IS_PRODUCTION`, `IS_TESTING`, `DBMS_ENABLED` | Runtime behavior flags |
-| **Database** | `DBMS_URL`, `DBMS_USERNAME`, `DBMS_PASSWORD` | PostgreSQL connection settings |
+| **Database** | `DBMS_URL`, `DBMS_DRIVER_CLASSNAME`, `DBMS_USERNAME`, `DBMS_PASSWORD` | PostgreSQL connection settings |
 | **OAuth** | `GITHUB_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_ID` | OAuth provider credentials |
 | **Email** | `RESEND_API_KEY`, `RESEND_SENDER_EMAIL` | Email sending via Resend |
 | **Script Pools** | `JAVA_SCRIPTS_POOL_SIZE`, `KOTLIN_SCRIPTS_POOL_SIZE` | JSR-223 engine pool sizes |
@@ -76,8 +76,8 @@ readingbat {
 }
 
 dbms {
-  driverClassName = "com.impossibl.postgres.jdbc.PGDriver"
-  jdbcUrl = "jdbc:pgsql://localhost:5432/readingbat"
+  driverClassName = "org.postgresql.Driver"
+  jdbcUrl = "jdbc:postgresql://localhost:5432/readingbat"
   username = "postgres"
   password = ""
   maxPoolSize = 10
@@ -109,7 +109,8 @@ precedence when defined:
 
 | Variable | Description | Sensitive |
 |----------|-------------|-----------|
-| `DBMS_URL` | Database JDBC URL | Yes |
+| `DBMS_URL` | Database JDBC URL, e.g. `jdbc:postgresql://host:port/readingbat?sslmode=require` (pgjdbc-ng's `jdbc:pgsql:` form is rejected at startup) | Yes |
+| `DBMS_DRIVER_CLASSNAME` | JDBC driver class; defaults to `org.postgresql.Driver` | No |
 | `DBMS_USERNAME` | Database username | No |
 | `DBMS_PASSWORD` | Database password | Yes |
 | `GITHUB_OAUTH_CLIENT_ID` | GitHub OAuth client ID | No |

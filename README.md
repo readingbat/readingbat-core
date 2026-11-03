@@ -38,7 +38,7 @@ A Kotlin-based framework for creating interactive programming challenges and edu
 ReadingBat Core is built using modern Kotlin technologies:
 
 - **Web Framework**: Ktor 3.6.1 with CIO engine
-- **Database**: PostgreSQL with Exposed ORM (`exposed-kotlin-datetime`) and HikariCP connection pooling
+- **Database**: PostgreSQL through the PostgreSQL JDBC driver, with Exposed ORM (`exposed-kotlin-datetime`) and HikariCP connection pooling
 - **Authentication**: OAuth (GitHub, Google, verified-email required) with signed + encrypted session cookies
 - **Script Execution**: JSR-223 scripting engines for safe code evaluation
 - **Build System**: Gradle 9.8 with Kotlin DSL, multi-module structure, and configuration cache enabled
@@ -106,7 +106,7 @@ Create application configuration file or set environment variables:
 
 ```bash
 # Database
-export DBMS_URL="jdbc:pgsql://localhost:5432/readingbat"
+export DBMS_URL="jdbc:postgresql://localhost:5432/readingbat"
 export DBMS_USERNAME="postgres"
 export DBMS_PASSWORD="docker"
 

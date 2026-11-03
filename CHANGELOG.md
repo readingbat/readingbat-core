@@ -4,6 +4,27 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.6.0] - 2026-11-02
+
+The server connects to PostgreSQL with the PostgreSQL JDBC driver instead of pgjdbc-ng, whose last release bundles a Netty with a critical CVE and no fix coming. The minor version moves because deployments must change their database URL.
+
+**Upgrade step required.** `DBMS_URL` must move to the PostgreSQL driver's form: `jdbc:pgsql://host:port/readingbat?ssl.mode=Require` becomes `jdbc:postgresql://host:port/readingbat?sslmode=require`. Leave `DBMS_DRIVER_CLASSNAME` unset, or set it to `org.postgresql.Driver`. A deployment still on the old settings fails at startup with a message naming the replacement, rather than starting with settings the new driver would misread.
+
+### Changed
+
+- **The database driver is now the PostgreSQL JDBC driver (`org.postgresql:postgresql`).** It was already on the runtime classpath for Cloud SQL, and the database tests already run against it. `DBMS_DRIVER_CLASSNAME` now defaults to `org.postgresql.Driver` and `DBMS_URL` to `jdbc:postgresql://localhost:5432/readingbat`. Exposed picks its `PostgreSQLDialect` for the new URL in place of `PostgreSQLNGDialect`, which differs only in forcing auto-commit around `SchemaUtils` create and drop calls, which the server does not make; migrations run through Flyway
+- **pgjdbc-ng settings are rejected at startup.** `DbmsSettings.requireSupportedDbmsSettings` runs before the connection pool is built and fails on the pgjdbc-ng driver class, on a `jdbc:pgsql:` URL, and on a `jdbc:postgresql:` URL that still carries pgjdbc-ng's `ssl.mode` parameter, which the PostgreSQL driver would ignore without a word. The messages never echo the URL, which can carry a password. Old settings are not translated, since any other pgjdbc-ng-only URL parameter would be dropped silently
+- The test configs, the configuration examples, the `TransferUsers` utility, `README.md`, `llms.txt`, `docs/deployments.md`, and the docs site's configuration page use the `jdbc:postgresql:` form
+- Bumped version to 3.6.0
+
+### Removed
+
+- `com.impossibl.pgjdbc-ng:pgjdbc-ng-all`
+
+### Security
+
+- **The server's database connection no longer runs through Netty 4.1.63.** `pgjdbc-ng-all` 0.8.9, its final release (May 2021), bundles Netty 4.1.63 relocated under `com.impossibl.shadow.io.netty`, and the server's TLS connection to the database went through it. Docker Scout reports one critical (CVE-2026-75595) and seven high CVEs against that Netty, all fixed in later 4.1.x releases that pgjdbc-ng will never ship. Because its `pom.properties` also won the duplicate in consumers' fat jars, scanners reported that Netty and missed the 4.2.x the server actually uses for HTTP
+
 ## [3.5.1] - 2026-11-02
 
 A memory-fix release. 3.5.0 moved Kotlin script evaluation to Kotlin 2.4.21, whose JSR-223 engine keeps every script state reachable while the script pools start a new state for every evaluation, so heap grew with every Kotlin challenge a server evaluated — enough to exhaust a 2 GB heap over `readingbat-java-content`'s Kotlin challenges. The scripting runtime is pinned back to 2.4.10, and the pin is published, so consumers get it without one of their own. The test setup also moves to Testcontainers 2.x and drops the Docker workarounds and the unused CI database that had built up around it, and `make ci` runs the GitHub checks locally.
@@ -538,7 +559,8 @@ A security-hardening release. A multi-agent security review surfaced 48 confirme
 
 - Initial tracked release
 
-[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.5.1...HEAD
+[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.6.0...HEAD
+[3.6.0]: https://github.com/readingbat/readingbat-core/compare/3.5.1...3.6.0
 [3.5.1]: https://github.com/readingbat/readingbat-core/compare/3.5.0...3.5.1
 [3.5.0]: https://github.com/readingbat/readingbat-core/compare/3.4.0...3.5.0
 [3.4.0]: https://github.com/readingbat/readingbat-core/compare/3.3.1...3.4.0
