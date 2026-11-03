@@ -4,6 +4,22 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.6.1] - 2026-11-03
+
+An admin-page release. The Sessions page shows when each session logged in and where it was, and no longer splits one session across several rows. No configuration or upgrade steps are required; this is a drop-in bump from 3.6.0.
+
+### Changed
+
+- **The Sessions page shows each session's login time.** The "Last Activity" column, which showed how long ago the session's latest request was, is now a "Date" column with the login time as `MM/dd/yy HH:mm` in the server's time zone, which the header names (for example `Date (UTC)`). Logging in rotates the browser session to a fresh id, and its `browser_sessions` row is written on the first request after that, so the row's `created` is the login time. Rows are sorted by it, newest first, in place of most recent activity
+- **City, State, and Country are one Location column**, joined with commas, leaving out blank and `Unknown` parts
+- **The Remote Host, ISP, and User Agent columns are gone, and they no longer split a session.** The sessions query grouped by IP address, ISP, and user agent along with the session, so a session whose IP or user agent changed partway through showed as several rows with its request count divided among them. It now groups by session, user, and location, so a session is one row unless its IP moves to a different city
+- The Sessions page covers the last 7 days by default, up from 2, including from the Current Sessions link on the Admin Preferences page
+- Bumped version to 3.6.1
+
+### Dependencies
+
+- Resend 4.29.0 → 4.30.0
+
 ## [3.6.0] - 2026-11-02
 
 The server connects to PostgreSQL with the PostgreSQL JDBC driver instead of pgjdbc-ng, whose last release bundles a Netty with a critical CVE and no fix coming. The minor version moves because deployments must change their database URL.
@@ -559,7 +575,8 @@ A security-hardening release. A multi-agent security review surfaced 48 confirme
 
 - Initial tracked release
 
-[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.6.0...HEAD
+[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.6.1...HEAD
+[3.6.1]: https://github.com/readingbat/readingbat-core/compare/3.6.0...3.6.1
 [3.6.0]: https://github.com/readingbat/readingbat-core/compare/3.5.1...3.6.0
 [3.5.1]: https://github.com/readingbat/readingbat-core/compare/3.5.0...3.5.1
 [3.5.0]: https://github.com/readingbat/readingbat-core/compare/3.4.0...3.5.0
