@@ -1,5 +1,32 @@
 # Release Notes
 
+## v3.6.0 — 2026-11-02
+
+A security release that replaces the database driver. The server now connects to PostgreSQL with the PostgreSQL JDBC driver (`org.postgresql:postgresql`) instead of pgjdbc-ng, whose final release (0.8.9, May 2021) bundles its own copy of Netty 4.1.63 — one critical and seven high CVEs, none of which pgjdbc-ng will ever pick up a fix for — and the server's TLS connection to the database ran through it.
+
+**Upgrade step required.** Change `DBMS_URL` from pgjdbc-ng's form to the PostgreSQL driver's, keeping the host, port, and database:
+
+```
+jdbc:pgsql://<host>:<port>/readingbat?ssl.mode=Require        # before
+jdbc:postgresql://<host>:<port>/readingbat?sslmode=require    # after
+```
+
+Leave `DBMS_DRIVER_CLASSNAME` unset (it now defaults to `org.postgresql.Driver`), or remove it if it names `com.impossibl.postgres.jdbc.PGDriver`. `DBMS_USERNAME` and `DBMS_PASSWORD` are unchanged. A server still on the old settings stops at startup with a message naming the replacement. `sslmode=require` encrypts without verifying the server's certificate, as `ssl.mode=Require` did; `sslmode=verify-full` with `sslrootcert` adds verification.
+
+### Highlights
+
+- **The database connection no longer runs through Netty 4.1.63.** pgjdbc-ng relocated that Netty under `com.impossibl.shadow.io.netty`, so it never resolved against the 4.2.x the server uses for HTTP. Docker Scout reports CVE-2026-75595 (critical) and seven high CVEs against it. Its `pom.properties` also won the duplicate in consumers' fat jars, so scanners reported the old Netty and missed the 4.2.x the server actually runs.
+- **The PostgreSQL driver was already in place.** It was on the runtime classpath for Cloud SQL, and the database tests already ran against it, so queries go through the driver the suite exercises. Exposed now picks `PostgreSQLDialect` in place of `PostgreSQLNGDialect`; the two differ only in auto-commit around `SchemaUtils` create and drop calls, which the server does not make.
+- **Old settings fail fast instead of being translated.** `DbmsSettings.requireSupportedDbmsSettings` runs before the connection pool is built and rejects the pgjdbc-ng driver class, a `jdbc:pgsql:` URL, and a migrated URL that still says `ssl.mode`, which the PostgreSQL driver would ignore without a word. The messages never echo the URL, which can carry a password. Translating old URLs was rejected because any other pgjdbc-ng-only parameter would be dropped silently.
+
+### Dependencies
+
+Removed `com.impossibl.pgjdbc-ng:pgjdbc-ng-all` 0.8.9 (and with it the bundled Netty 4.1.63)
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.5.1...3.6.0
+
+---
+
 ## v3.5.1 — 2026-11-02
 
 A memory-fix release. 3.5.0 moved Kotlin script evaluation to Kotlin 2.4.21, and from 2.4.20 its JSR-223 engine keeps every script state reachable — about 27 MB apiece — while the script pools start a new state for every evaluation. Heap grew with every Kotlin challenge a server evaluated, enough to exhaust a 2 GB heap over `readingbat-java-content`'s Kotlin challenges. 3.5.1 pins the scripting runtime back to 2.4.10. The test setup also moves to Testcontainers 2.x and drops the workarounds that had built up around it. No configuration or upgrade steps are required; this is a drop-in bump from 3.5.0.

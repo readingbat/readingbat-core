@@ -37,7 +37,6 @@ dependencies {
   implementation(libs.hikari)
 
   runtimeOnly(libs.postgres)
-  implementation(libs.pgjdbc)
   implementation(libs.socket)
 
   implementation(libs.resend)

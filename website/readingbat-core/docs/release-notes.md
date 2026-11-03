@@ -6,6 +6,36 @@ icon: lucide/tag
 
 For the complete, commit-level history see [`CHANGELOG.md`](https://github.com/readingbat/readingbat-core/blob/master/CHANGELOG.md) in the repository.
 
+## v3.6.0 — 2026-11-02
+
+Security release. The server connects to PostgreSQL with the PostgreSQL JDBC driver (`org.postgresql:postgresql`) instead of pgjdbc-ng, whose final release (0.8.9, May 2021) bundles Netty 4.1.63 — one critical and seven high CVEs, never to be fixed there — and the database's TLS connection ran through it.
+
+### Upgrade
+
+`DBMS_URL` changes form; keep the host, port, and database:
+
+```
+jdbc:pgsql://<host>:<port>/readingbat?ssl.mode=Require        # before
+jdbc:postgresql://<host>:<port>/readingbat?sslmode=require    # after
+```
+
+Leave `DBMS_DRIVER_CLASSNAME` unset (the default is now `org.postgresql.Driver`), or remove it if it names `com.impossibl.postgres.jdbc.PGDriver`. A server still on the old settings stops at startup with a message naming the replacement. See [Configuration](configuration/index.md).
+
+### Changed
+
+- **PostgreSQL JDBC driver** — already on the runtime classpath for Cloud SQL and already what the database tests ran against. Exposed now picks `PostgreSQLDialect` in place of `PostgreSQLNGDialect`, which differ only in auto-commit around `SchemaUtils` create and drop calls the server does not make.
+- **Old settings fail fast** — the pgjdbc-ng driver class, a `jdbc:pgsql:` URL, and a migrated URL that still says `ssl.mode` (which the new driver would ignore) are rejected before the connection pool is built. The messages never echo the URL, which can carry a password.
+
+### Security
+
+- **No more Netty 4.1.63 in the database path** — pgjdbc-ng relocated it under `com.impossibl.shadow.io.netty`, out of reach of the 4.2.x the server uses for HTTP, and Docker Scout reports CVE-2026-75595 (critical) and seven high CVEs against it. Its `pom.properties` also hid the real 4.2.x from scanners in consumers' fat jars.
+
+### Dependencies
+
+Removed `com.impossibl.pgjdbc-ng:pgjdbc-ng-all` 0.8.9
+
+[Full changelog: 3.5.1…3.6.0](https://github.com/readingbat/readingbat-core/compare/3.5.1...3.6.0)
+
 ## v3.5.1 — 2026-11-02
 
 Memory-fix release. 3.5.0 moved Kotlin script evaluation to Kotlin 2.4.21, and from 2.4.20 its JSR-223 engine keeps every script state reachable — about 27 MB apiece — while the script pools start a new state for every evaluation. Heap grew with every Kotlin challenge a server evaluated, enough to exhaust a 2 GB heap over `readingbat-java-content`'s Kotlin challenges. 3.5.1 pins the scripting runtime back to 2.4.10. No configuration or upgrade steps — a drop-in bump from 3.5.0.

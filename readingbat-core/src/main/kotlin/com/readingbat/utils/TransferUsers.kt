@@ -28,9 +28,9 @@ internal object TransferUsers {
     HikariDataSource(
       HikariConfig()
         .apply {
-          driverClassName = "com.impossibl.postgres.jdbc.PGDriver"
+          driverClassName = "org.postgresql.Driver"
           jdbcUrl =
-            "jdbc:pgsql://readingbat-postgres-do-user-329986-0.b.db.ondigitalocean.com:25060/readingbat?ssl.mode=Require"
+            "jdbc:postgresql://readingbat-postgres-do-user-329986-0.b.db.ondigitalocean.com:25060/readingbat?sslmode=require"
           username = "readingbat"
           maximumPoolSize = 10
           isAutoCommit = false

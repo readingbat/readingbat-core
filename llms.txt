@@ -6,7 +6,7 @@ ReadingBat Core is a web application built with Ktor that serves programming cha
 
 ## Key Technologies
 
-- Kotlin 2.4.21 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.6.1 (CIO engine), Exposed ORM 1.6.0 with kotlinx-datetime, PostgreSQL
+- Kotlin 2.4.21 (with experimental collection-literal syntax `[...]` enabled via `-Xcollection-literals`), Ktor 3.6.1 (CIO engine), Exposed ORM 1.6.0 with kotlinx-datetime, PostgreSQL through the PostgreSQL JDBC driver (`org.postgresql.Driver`, `jdbc:postgresql:` URLs; pgjdbc-ng's `jdbc:pgsql:` settings are rejected at startup by `DbmsSettings`)
 - Kotlin JSR-223 scripting runtime pinned `strictly` to 2.4.10 (the `kotlin-scripting` catalog version), apart from the Kotlin the project builds with: from 2.4.20 the engine keeps every script state (~27 MB) reachable and the script pools start one per evaluation, so heap grows with every Kotlin evaluation. The strict version is published, so consumers inherit it
 - Kotlinx.html for server-side HTML generation (no templates)
 - Static assets (images, icons, Prism files, tailwind.css) are packaged in the jar and served at `/static`; a CDN is optional via `STATIC_URL_PREFIX`
