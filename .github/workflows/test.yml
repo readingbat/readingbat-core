@@ -25,7 +25,7 @@ jobs:
           distribution: 'temurin'
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
 
       # Playwright's Java driver downloads the browser binaries but not the OS libraries they need,
       # and WebKit needs a long list of them (libgtk-4, gstreamer, flite) that ubuntu-latest does not
