@@ -226,7 +226,6 @@ Required environment variables for production:
   `openssl rand -hex 32` and use the **same value across all nodes**. The server will not start
   without it, and rotating it invalidates existing sessions (users are logged out once).
 - `AGENT_ENABLED=true` (for monitoring)
-- `RESEND_API_KEY` (for email notifications)
 - `STATIC_URL_PREFIX` — *optional*; defaults to `/static`, serving images and icons from the jar.
   Set it to a CDN origin to serve them from there instead. The app serves them either way.
 - `JAVA_TOOL_OPTIONS` — *optional but recommended*:

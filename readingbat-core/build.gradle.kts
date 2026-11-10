@@ -20,7 +20,12 @@ application {
 dependencies {
   implementation(libs.serialization)
 
-  api(libs.bundles.common.utils)
+  // email-utils brings in resend-java for its ResendService, which ReadingBat doesn't use. The Email
+  // type it also provides doesn't reference Resend. A dependency-level exclude is written to the
+  // published POM, so consumers don't get the jar either.
+  api(libs.bundles.common.utils) {
+    exclude(group = "com.resend", module = "resend-java")
+  }
   implementation(libs.prometheus.proxy)
 
   implementation(libs.bundles.ktor.client)
@@ -38,8 +43,6 @@ dependencies {
 
   runtimeOnly(libs.postgres)
   implementation(libs.socket)
-
-  implementation(libs.resend)
 
   implementation(libs.commons)
   implementation(libs.flexmark)

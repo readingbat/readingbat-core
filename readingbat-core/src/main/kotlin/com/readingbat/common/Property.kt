@@ -17,8 +17,6 @@
 
 package com.readingbat.common
 
-import com.pambrose.common.email.Email
-import com.pambrose.common.email.Email.Companion.toResendEmail
 import com.pambrose.common.util.obfuscate
 import com.readingbat.common.Constants.UNASSIGNED
 import com.readingbat.common.PropertyNames.AGENT
@@ -177,7 +175,6 @@ open class KtorProperty(
  * - **Site behavior**: [IS_PRODUCTION], [DBMS_ENABLED], [MULTI_SERVER_ENABLED], etc.
  * - **Database**: [DBMS_URL], [DBMS_USERNAME], [DBMS_PASSWORD], [DBMS_MAX_POOL_SIZE], etc.
  * - **OAuth**: [GITHUB_OAUTH_CLIENT_ID], [GOOGLE_OAUTH_CLIENT_ID], and their secrets
- * - **Email**: [RESEND_API_KEY], [RESEND_SENDER_EMAIL]
  * - **Script pools**: [JAVA_SCRIPTS_POOL_SIZE], [KOTLIN_SCRIPTS_POOL_SIZE], [PYTHON_SCRIPTS_POOL_SIZE]
  * - **Monitoring**: [ANALYTICS_ID], [PROMETHEUS_URL], [GRAFANA_URL], [PINGDOM_BANNER_ID]
  *
@@ -247,19 +244,6 @@ sealed class Property(
     Property(
       propertyValue = "$READINGBAT.$SITE.staticUrlPrefix",
       initFunc = { setProperty(EnvVar.STATIC_URL_PREFIX.getEnv(configValue(it, Endpoints.STATIC_PATH))) },
-    )
-
-  object RESEND_API_KEY :
-    Property(
-      propertyValue = "$READINGBAT.$SITE.resendApiKey",
-      initFunc = { setProperty(EnvVar.RESEND_API_KEY.getEnv(configValue(it, ""))) },
-      maskFunc = { getPropertyOrNull(false)?.maskSecret() ?: UNASSIGNED },
-    )
-
-  object RESEND_SENDER_EMAIL :
-    Property(
-      propertyValue = "$READINGBAT.$SITE.resendSenderEmail",
-      initFunc = { setProperty(EnvVar.RESEND_SENDER_EMAIL.getEnv(configValue(it, ""))) },
     )
 
   object FORWARDED_ENABLED :
@@ -471,9 +455,6 @@ sealed class Property(
     )
 
   companion object {
-    val envResendApiKey: String by lazy { RESEND_API_KEY.getRequiredProperty() }
-    val envResendSender: Email by lazy { RESEND_SENDER_EMAIL.getRequiredProperty().toResendEmail() }
-
     /** Returns the ordered list of properties that should be initialized at application startup. */
     fun initProperties() =
       [
@@ -482,8 +463,6 @@ sealed class Property(
         PROXY_HOSTNAME,
         OAUTH_CALLBACK_URL_PREFIX,
         STATIC_URL_PREFIX,
-        RESEND_API_KEY,
-        RESEND_SENDER_EMAIL,
         ANALYTICS_ID,
         KTOR_PORT,
         KTOR_WATCH,
