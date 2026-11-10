@@ -37,7 +37,6 @@ postgres = "42.7.14"
 prometheus = "1.10.0"
 prometheus-proxy = "4.4.1"
 python = "2.7.4"
-resend = "4.30.0"
 serialization = "1.12.0"
 testcontainers = "2.0.5"
 utils = "5.2.0"
@@ -102,7 +101,6 @@ socket = { module = "com.google.cloud.sql:postgres-socket-factory", version.ref 
 commons = { module = "org.apache.commons:commons-text", version.ref = "commons" }
 flexmark = { module = "com.vladsch.flexmark:flexmark", version.ref = "flexmark" }
 github = { module = "org.kohsuke:github-api", version.ref = "github-api" }
-resend = { group = "com.resend", name = "resend-java", version.ref = "resend" }
 
 # Logging
 logging = { module = "io.github.oshai:kotlin-logging-jvm", version.ref = "logging" }

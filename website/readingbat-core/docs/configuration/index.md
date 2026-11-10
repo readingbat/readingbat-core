@@ -40,7 +40,6 @@ initialized from `application.conf` during application startup via `assignProper
 | **Site** | `IS_PRODUCTION`, `IS_TESTING`, `DBMS_ENABLED` | Runtime behavior flags |
 | **Database** | `DBMS_URL`, `DBMS_DRIVER_CLASSNAME`, `DBMS_USERNAME`, `DBMS_PASSWORD` | PostgreSQL connection settings |
 | **OAuth** | `GITHUB_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_ID` | OAuth provider credentials |
-| **Email** | `RESEND_API_KEY`, `RESEND_SENDER_EMAIL` | Email sending via Resend |
 | **Script Pools** | `JAVA_SCRIPTS_POOL_SIZE`, `KOTLIN_SCRIPTS_POOL_SIZE` | JSR-223 engine pool sizes |
 | **Monitoring** | `ANALYTICS_ID`, `PROMETHEUS_URL`, `GRAFANA_URL` | Observability configuration |
 | **Static Assets** | `STATIC_URL_PREFIX` | Where pages point for images, icons, and Prism files |
@@ -117,8 +116,6 @@ precedence when defined:
 | `GITHUB_OAUTH_CLIENT_SECRET` | GitHub OAuth client secret | Yes |
 | `GOOGLE_OAUTH_CLIENT_ID` | Google OAuth client ID | No |
 | `GOOGLE_OAUTH_CLIENT_SECRET` | Google OAuth client secret | Yes |
-| `RESEND_API_KEY` | Resend email API key | Yes |
-| `RESEND_SENDER_EMAIL` | Resend sender email address | No |
 | `IPGEOLOCATION_KEY` | IP geolocation API key; request logging, which records logged-in users only, is off without it | Yes |
 | `STATIC_URL_PREFIX` | URL prefix for static assets (default `/static`) | No |
 | `JAVA_TOOL_OPTIONS` | JVM flags; set `-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=<dir>` | No |
@@ -145,7 +142,6 @@ SESSION_SECRET=<openssl rand -hex 32>
 DBMS_PASSWORD=my-database-password
 GITHUB_OAUTH_CLIENT_SECRET=ghp_xxxxxxxxxxxx
 GOOGLE_OAUTH_CLIENT_SECRET=GOCSPX-xxxxxxxxxxxx
-RESEND_API_KEY=re_xxxxxxxxxxxx
 ```
 
 !!! warning "`SESSION_SECRET` is required in production"

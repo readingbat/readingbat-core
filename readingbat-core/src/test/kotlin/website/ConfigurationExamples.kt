@@ -15,7 +15,7 @@ fun propertyExamples() {
   val analyticsId = Property.ANALYTICS_ID.getPropertyOrNull()
 
   // Read a required property (throws if missing)
-  val apiKey = Property.RESEND_API_KEY.getRequiredProperty()
+  val sessionSecret = Property.SESSION_SECRET.getRequiredProperty()
 
   // Check if a property has been defined
   val isDefined = Property.DBMS_ENABLED.isADefinedProperty()
