@@ -174,6 +174,35 @@ so a local run that dies of an OOM leaves a heap dump in `build/`.
 make tests          # Run all tests
 ```
 
+### Publishing
+
+```bash
+make publish-local            # Publish to the local Maven repository
+make publish-local-snapshot   # Publish a -SNAPSHOT to the local Maven repository
+make publish-snapshot         # Publish a signed -SNAPSHOT to Maven Central
+make publish-maven-central    # Publish and release a signed version to Maven Central
+```
+
+The two Maven Central targets run only on macOS, because they read their secrets from the keychain rather than from a
+file:
+
+- **Signing key.** `GPG_SIGNING_KEY_ID` must name a secret key in your GPG keyring, and the key's passphrase must be in
+  the keychain entry `gradle-signing-password` (account `gpg-signing`).
+- **Maven Central credentials.** A user token's name and password, generated at
+  [central.sonatype.com](https://central.sonatype.com), go in the entries `maven-central-username` and
+  `maven-central-password` (account `maven-central`). Add each one once. `security` prompts for the value, so it stays
+  out of your shell history, and running the same command again replaces a rotated token:
+
+  ```bash
+  security add-generic-password -a maven-central -s maven-central-username -U -w
+  security add-generic-password -a maven-central -s maven-central-password -U -w
+  ```
+
+Before Gradle starts, both targets check for every entry and stop with an error naming any that is missing, without
+printing a value. The credentials reach only the publishing command, as the `mavenCentralUsername` and
+`mavenCentralPassword` Gradle properties, so delete any copies from `~/.gradle/gradle.properties`, which every Gradle
+build on the machine reads.
+
 ## 🎯 Creating Content
 
 ReadingBat uses a powerful DSL for creating programming challenges:

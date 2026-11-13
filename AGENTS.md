@@ -69,6 +69,17 @@ Secrets are loaded from `secrets/secrets.env` (not committed). The root `build.g
 `ValueSource` (registered via `configureSecrets()`) and wires the resulting map as a task input on every `JavaExec` and
 `Test` task. Edits to `secrets/secrets.env` invalidate the configuration cache and trigger a re-run of affected tasks.
 
+### Publishing
+
+`make publish-snapshot` and `make publish-maven-central` take every secret from the macOS keychain, never from a file.
+The GPG key's passphrase comes from `gradle-signing-password` (account `gpg-signing`), for the key that
+`GPG_SIGNING_KEY_ID` names. Maven Central's user-token name and password come from `maven-central-username` and
+`maven-central-password` (account `maven-central`). The Makefile's `GPG_ENV` and `MAVEN_CENTRAL_ENV` pass them to that
+one Gradle command as `ORG_GRADLE_PROJECT_*` variables. `_check-gpg-env` and `_check-maven-central-env` run first and
+fail on a missing entry, naming it but never printing a value. **Do not move the Maven Central credentials into
+`~/.gradle/gradle.properties`**: every Gradle build on the machine is given that file. `publish-local` and
+`publish-local-snapshot` need none of this, because the build signs only when `signingInMemoryKey` is set.
+
 ### Docs Site
 
 The zensical site lives in `website/readingbat-core/` (`make site` serves it). **Name Markdown extensions in
