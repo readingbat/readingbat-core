@@ -1,5 +1,5 @@
 .PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests \
-		ci ci-css ci-build ci-docs remote-tests \
+        ci ci-css ci-build ci-docs remote-tests \
         coverage coverage-html coverage-xml coverage-log \
         coverage-verify coverage-open coverage-packages coverage-clean \
         dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline zizmor \
