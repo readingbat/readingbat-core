@@ -1,7 +1,11 @@
-.PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests ci ci-css ci-build ci-docs remote-tests \
-        coverage coverage-html coverage-xml coverage-log coverage-verify coverage-open coverage-packages coverage-clean \
-        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline zizmor depends versions versions-all kdocs check-site upgrade-site \
-        clean-docs site publish-local publish-local-snapshot publish-snapshot publish-maven-central upgrade-wrapper \
+.PHONY: default help stop tw-css tw-full-css clean clean-all build scan uberjar uber run tests \
+		ci ci-css ci-build ci-docs remote-tests \
+        coverage coverage-html coverage-xml coverage-log \
+        coverage-verify coverage-open coverage-packages coverage-clean \
+        dbinfo dbclean dbmigrate dbvalidate lint detekt detekt-baseline zizmor \
+        depends versions versions-all kdocs check-site upgrade-site upgrade-wrapper \
+        clean-docs site \
+        publish-local publish-local-snapshot publish-snapshot publish-maven-central \
         _check-gpg-env _check-maven-central-env _require-version _require-gradle-version
 
 VERSION := $(shell sed -n 's/^version=\(.*\)/\1/p' gradle.properties)
