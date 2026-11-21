@@ -1,5 +1,23 @@
 # Release Notes
 
+## v3.6.2 — 2026-11-21
+
+A dependency release: ReadingBat no longer pulls in the Resend email client, which takes `org.json:json` and its medium-severity advisory (CVE-2026-59171) off the classpath, for the server and for anything that depends on `readingbat-core`. No configuration or upgrade steps are required; this is a drop-in bump from 3.6.1.
+
+### Highlights
+
+- **No more Resend.** ReadingBat sends no email through Resend, but common-utils' `email-utils` brought in `resend-java` for a service ReadingBat never used, and with it OkHttp and `org.json:json`. The dependency now excludes it, and the exclude is published, so consumers lose those jars too. The `RESEND_API_KEY` and `RESEND_SENDER_EMAIL` settings, which nothing read, are gone; a deployment that still sets them can drop them.
+- **Dependabot alerts cover the Gradle dependencies.** A new workflow submits the resolved runtime classpath to GitHub's dependency graph on each push to master. Before, the graph listed no Gradle manifests, so an empty alert list said nothing about the Kotlin and Java dependencies.
+- **Publishing credentials come from the macOS keychain.** `make publish-snapshot` and `make publish-maven-central` read Maven Central's user token from the keychain, as they already read the GPG passphrase, so the token no longer has to sit in `~/.gradle/gradle.properties`, which every Gradle build on the machine is given.
+
+### Dependencies
+
+Gradle 9.8.2 → 9.9.2 · Dokka 2.2.0 → 2.3.0 · Exposed 1.6.0 → 1.6.1 · Flyway 13.12.0 → 13.13.0 · prometheus-proxy 4.4.1 → 4.6.0 · kotlinx-serialization 1.12.0 → 1.13.0 · Cloud SQL socket factory 1.30.2 → 1.31.0 · Kotest 6.2.6 → 6.2.7 · Playwright 1.64.0 → 1.65.1 · Resend 4.30.0 → removed · setup-java action 6.1.0 → 6.2.0 · setup-gradle action 6.4.0 → 6.4.1 · zizmor action 0.8.0 → 0.8.1 · zensical 0.0.74 → 0.1.3 · pymdown-extensions 12.3 → 13.1.2
+
+**Full Changelog**: https://github.com/readingbat/readingbat-core/compare/3.6.1...3.6.2
+
+---
+
 ## v3.6.1 — 2026-11-03
 
 An admin-page release: the Sessions page shows when each session logged in and where it was, and no longer splits one session across several rows. No configuration or upgrade steps are required; this is a drop-in bump from 3.6.0.
