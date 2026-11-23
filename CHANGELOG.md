@@ -38,7 +38,7 @@ A dependency release. ReadingBat no longer pulls in the Resend email client, whi
 - Cloud SQL socket factory 1.30.2 → 1.31.0
 - Kotest 6.2.6 → 6.2.7, Playwright 1.64.0 → 1.65.1
 - Resend 4.30.0 → removed
-- GitHub Actions: setup-java 6.1.0 → 6.2.0, setup-gradle 6.4.0 → 6.4.1, zizmor-action 0.8.0 → 0.8.1
+- GitHub Actions: setup-java 6.1.0 → 6.3.0, setup-gradle 6.4.0 → 6.4.1, zizmor-action 0.8.0 → 0.8.1
 - Website: zensical 0.0.74 → 0.1.3 (zensical-ui 0.0.41 → 0.0.43, and deepmerge is no longer needed), pymdown-extensions 12.3 → 13.1.2, Markdown 3.11.2 → 3.11.3, PyYAML 6.0.3 → 6.0.4, click 8.5.0 → 8.5.1
 
 ## [3.6.1] - 2026-11-03
