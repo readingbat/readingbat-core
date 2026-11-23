@@ -4,6 +4,43 @@ All notable changes to ReadingBat Core are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [3.6.2] - 2026-11-21
+
+A dependency release. ReadingBat no longer pulls in the Resend email client, which takes `org.json:json` and its medium-severity advisory (CVE-2026-59171) off the classpath, for the server and for anything that depends on `readingbat-core`. Gradle and a set of libraries are also bumped. No configuration or upgrade steps are required; this is a drop-in bump from 3.6.1.
+
+### Added
+
+- **Gradle dependencies are submitted to GitHub's dependency graph.** The new `dependency-submission.yml` workflow resolves `runtimeClasspath` on each push to master and submits it, so Dependabot alerts now cover the Kotlin and Java dependencies. Before, the graph listed no Gradle manifests, and an empty alert list said nothing about them. Build tools are left out, because alerts cannot tell them from runtime libraries
+
+### Changed
+
+- **`make publish-snapshot` and `make publish-maven-central` read Maven Central's credentials from the macOS keychain**, from the entries `maven-central-username` and `maven-central-password` (account `maven-central`), as they already read the GPG key's passphrase. They pass them to the publishing command alone, so the credentials no longer need to live in `~/.gradle/gradle.properties`, which every Gradle build on the machine is given. A missing entry fails before Gradle starts, naming the entry but never a value. The README's Development Commands section lists the `security` commands that add them
+- `CLAUDE.md` is renamed `AGENTS.md`
+- Bumped version to 3.6.2
+
+### Removed
+
+- **The Resend email client (`com.resend:resend-java`).** ReadingBat sends no email through Resend. common-utils' `email-utils` still provides the `Email` type, but it also brought in `resend-java` for a `ResendService` that ReadingBat never used. The dependency now excludes it, and the exclude is written to the published POM and module metadata, so consumers of `readingbat-core` stop getting the jar as well, along with OkHttp and `org.json:json`, which came in only through it
+- The `RESEND_API_KEY` and `RESEND_SENDER_EMAIL` environment variables and the `readingbat.site.resendApiKey` and `readingbat.site.resendSenderEmail` properties, which nothing read, along with `Property.RESEND_API_KEY`, `Property.RESEND_SENDER_EMAIL`, their `EnvVar` entries, and `Property.envResendApiKey` and `Property.envResendSender`. A deployment that still sets them can drop them; they are ignored
+
+### Security
+
+- **`org.json:json` is off the classpath.** It came in only through `resend-java`, and version 20250517 carries a medium-severity advisory (CVE-2026-59171)
+
+### Dependencies
+
+- Gradle 9.8.2 → 9.9.2
+- Dokka 2.2.0 → 2.3.0
+- Exposed 1.6.0 → 1.6.1
+- Flyway 13.12.0 → 13.13.0
+- prometheus-proxy 4.4.1 → 4.6.0
+- kotlinx-serialization 1.12.0 → 1.13.0
+- Cloud SQL socket factory 1.30.2 → 1.31.0
+- Kotest 6.2.6 → 6.2.7, Playwright 1.64.0 → 1.65.1
+- Resend 4.30.0 → removed
+- GitHub Actions: setup-java 6.1.0 → 6.3.0, setup-gradle 6.4.0 → 6.4.1, zizmor-action 0.8.0 → 0.8.1
+- Website: zensical 0.0.74 → 0.1.3 (zensical-ui 0.0.41 → 0.0.43, and deepmerge is no longer needed), pymdown-extensions 12.3 → 13.1.2, Markdown 3.11.2 → 3.11.3, PyYAML 6.0.3 → 6.0.4, click 8.5.0 → 8.5.1
+
 ## [3.6.1] - 2026-11-03
 
 An admin-page release. The Sessions page shows when each session logged in and where it was, and no longer splits one session across several rows. No configuration or upgrade steps are required; this is a drop-in bump from 3.6.0.
@@ -575,7 +612,8 @@ A security-hardening release. A multi-agent security review surfaced 48 confirme
 
 - Initial tracked release
 
-[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.6.1...HEAD
+[Unreleased]: https://github.com/readingbat/readingbat-core/compare/3.6.2...HEAD
+[3.6.2]: https://github.com/readingbat/readingbat-core/compare/3.6.1...3.6.2
 [3.6.1]: https://github.com/readingbat/readingbat-core/compare/3.6.0...3.6.1
 [3.6.0]: https://github.com/readingbat/readingbat-core/compare/3.5.1...3.6.0
 [3.5.1]: https://github.com/readingbat/readingbat-core/compare/3.5.0...3.5.1
